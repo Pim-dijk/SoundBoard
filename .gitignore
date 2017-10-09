@@ -1,4 +1,9 @@
 .vs/
 WpfPractice/WpfPractice/.vs
 *.cache
+
 *.lref
+
+WpfPractice/WpfPractice/obj/Debug*
+
+WpfPractice/WpfPractice/bin/Debug*
