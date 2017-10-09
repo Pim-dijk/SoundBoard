@@ -1,9 +1,6 @@
 .vs/
 WpfPractice/WpfPractice/.vs
 *.cache
-
 *.lref
-
-WpfPractice/WpfPractice/obj/Debug*
-
-WpfPractice/WpfPractice/bin/Debug*
+SoundBoard/WpfPractice/WpfPractice/obj/Debug*
+SoundBoard/WpfPractice/WpfPractice/bin/Debug*
