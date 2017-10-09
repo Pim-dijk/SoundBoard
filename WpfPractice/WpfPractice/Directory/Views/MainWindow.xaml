@@ -1,0 +1,94 @@
+﻿<Window x:Class="WpfPractice.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfPractice"
+        xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+        mc:Ignorable="d"
+        Title="My test wpf application (c)" x:Name="Window" MinHeight="350" MinWidth="350" Width="auto" Height="500"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
+        FontSize="15" Background="WhiteSmoke">
+
+    <Window.Resources>
+
+    </Window.Resources>
+
+    <Grid>
+        <!--Grid column and row definitions-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
+            <RowDefinition Height="45" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="25" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        
+
+        <!--The menu-->
+        <Menu Grid.ColumnSpan="1">
+            <MenuItem Header="File">
+                <MenuItem Header="Add Sound" Command="{Binding AddSound}" />
+                <MenuItem Header="Add Folder" Command="{Binding AddFolder}" />
+                <!--<MenuItem Header="Remove Sound" />-->
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Refresh files" Command="{Binding RefreshFiles}" />
+                <MenuItem Header="Change Directory" Command="{Binding ChangeDefaultDirectory}" />
+            </MenuItem>
+        </Menu>
+
+        <!--Button to stop all sounds from playing-->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="3">
+            <Button Grid.ColumnSpan="3" Style="{StaticResource stopButton}" Command="{Binding StopSound}" Content="Stop all Sounds" Background="DarkRed"/>
+        </StackPanel>
+
+        <!--Enables the use of the scrollbar when needed-->
+        <ScrollViewer Grid.ColumnSpan="3" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <!--Items control to create a button for every item in the collection-->
+            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
+                <!--Defines the template to use a wrappanel-->
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <!--Sets the itemtemplate for every item-->
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <Button Style="{StaticResource mainButton}" 
+                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
+                                    CommandParameter="{Binding Path=Tag, RelativeSource={RelativeSource Self}}"
+                                    Tag="{Binding Path=Name}">
+                                <TextBlock Text="{Binding Path=NormalizedName}" TextWrapping="Wrap" Height="auto" />
+                            </Button>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Label Grid.Row="3" Grid.ColumnSpan="2" Content="{Binding DefaultDirectory}" FontSize="11" />
+        <Label x:Name="TimerLabel" Grid.Row="3" Grid.Column="2" Content="{Binding TimeLabel}" FontSize="11"/>
+    </Grid>
+    
+</Window>
+
+<!--Outcommented items-->
+        
+    <!-- Simpel animation to change the border thickness in .5 seconds
+        <Trigger.EnterActions>
+            <BeginStoryboard>
+                <Storyboard>
+                    <ThicknessAnimation Duration="0:0:0.500" To="3" Storyboard.TargetProperty="BorderThickness" />
+                </Storyboard>
+            </BeginStoryboard>
+        </Trigger.EnterActions> 
+        -->
