@@ -6,10 +6,11 @@ namespace SoundBoard
     {
         #region Public Properties
 
+        //gets the name of the file, without it's directory
         public string Name { get { return FolderContents.GetFileName(this.AudioLocation); } }
-
+        //gets the name of the file, without directory or extention
         public string NormalizedName { get { return System.IO.Path.GetFileNameWithoutExtension(this.AudioLocation); } }
-
+        //location of the file, full path
         public string AudioLocation { get; set; }
         
         #endregion
