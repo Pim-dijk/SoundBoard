@@ -10,7 +10,7 @@ using System.Windows.Threading;
 using System.IO;
 using System.Configuration;
 
-namespace WpfPractice
+namespace SoundBoard
 {
     public partial class MainWindowViewModel : BaseViewModel
     {

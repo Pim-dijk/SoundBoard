@@ -1,7 +1,7 @@
-﻿<Application x:Class="WpfPractice.App"
+﻿<Application x:Class="SoundBoard.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:WpfPractice"
+             xmlns:local="clr-namespace:SoundBoard"
              StartupUri="Directory/Views/MainWindow.xaml">
     <Application.Resources>
 

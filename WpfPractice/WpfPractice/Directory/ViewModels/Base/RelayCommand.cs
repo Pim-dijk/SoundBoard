@@ -5,7 +5,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Diagnostics;
 
-namespace WpfPractice
+namespace SoundBoard
 {
     public class RelayCommand : ICommand
     {

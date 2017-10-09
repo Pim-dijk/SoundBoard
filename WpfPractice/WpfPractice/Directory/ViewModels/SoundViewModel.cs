@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace WpfPractice
+namespace SoundBoard
 {
     public class SoundViewModel : BaseViewModel
     {

@@ -1,4 +1,4 @@
-﻿namespace WpfPractice
+﻿namespace SoundBoard
 {
     public class Sound
     {

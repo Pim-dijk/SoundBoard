@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace WpfPractice
+namespace SoundBoard
 {
     class FolderContents
     {

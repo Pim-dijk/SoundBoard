@@ -1,7 +1,7 @@
 ﻿using PropertyChanged;
 using System.ComponentModel;
 
-namespace WpfPractice
+namespace SoundBoard
 {
     [AddINotifyPropertyChangedInterface]
 

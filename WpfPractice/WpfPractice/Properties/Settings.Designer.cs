@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WpfPractice.Properties
+namespace SoundBoard.Properties
 {
 
 
