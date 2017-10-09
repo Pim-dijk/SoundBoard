@@ -13,72 +13,71 @@
     <Window.Resources>
 
     </Window.Resources>
-
     <Grid>
-        <!--Grid column and row definitions-->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="20" />
-            <RowDefinition Height="45" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="25" />
-        </Grid.RowDefinitions>
+            <!--Grid column and row definitions-->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20" />
+                <RowDefinition Height="45" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="25" />
+            </Grid.RowDefinitions>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
         
 
-        <!--The menu-->
-        <Menu Grid.ColumnSpan="1">
-            <MenuItem Header="File">
-                <MenuItem Header="Add Sound" Command="{Binding AddSound}" />
-                <MenuItem Header="Add Folder" Command="{Binding AddFolder}" />
-                <!--<MenuItem Header="Remove Sound" />-->
-                <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
-            </MenuItem>
-            <MenuItem Header="Edit">
-                <MenuItem Header="Refresh files" Command="{Binding RefreshFiles}" />
-                <MenuItem Header="Change Directory" Command="{Binding ChangeDefaultDirectory}" />
-            </MenuItem>
-        </Menu>
+            <!--The menu-->
+            <Menu Grid.ColumnSpan="1">
+                <MenuItem Header="File">
+                    <MenuItem Header="Add Sound" Command="{Binding AddSound}" />
+                    <MenuItem Header="Add Folder" Command="{Binding AddFolder}" />
+                    <!--<MenuItem Header="Remove Sound" />-->
+                    <MenuItem Header="Exit" Command="{Binding ExitCommand}" />
+                </MenuItem>
+                <MenuItem Header="Edit">
+                    <MenuItem Header="Refresh files" Command="{Binding RefreshFiles}" />
+                    <MenuItem Header="Change Directory" Command="{Binding ChangeDefaultDirectory}" />
+                </MenuItem>
+            </Menu>
 
-        <!--Button to stop all sounds from playing-->
-        <StackPanel Grid.Row="1" Grid.ColumnSpan="3">
-            <Button Grid.ColumnSpan="3" Style="{StaticResource stopButton}" Command="{Binding StopSound}" Content="Stop all Sounds" Background="DarkRed"/>
-        </StackPanel>
+            <!--Button to stop all sounds from playing-->
+            <StackPanel Grid.Row="1" Grid.ColumnSpan="3">
+                <Button Grid.ColumnSpan="3" Style="{StaticResource stopButton}" Command="{Binding StopSound}" Content="Stop all Sounds" Background="DarkRed"/>
+            </StackPanel>
 
-        <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer Grid.ColumnSpan="3" Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <!--Items control to create a button for every item in the collection-->
-            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
-                <!--Defines the template to use a wrappanel-->
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <!--Sets the itemtemplate for every item-->
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <Button Style="{StaticResource mainButton}" 
-                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
-                                    CommandParameter="{Binding Path=Tag, RelativeSource={RelativeSource Self}}"
-                                    Tag="{Binding Path=Name}">
-                                <TextBlock Text="{Binding Path=NormalizedName}" TextWrapping="Wrap" Height="auto" />
-                            </Button>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            <!--Enables the use of the scrollbar when needed-->
+            <ScrollViewer Grid.ColumnSpan="3" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <!--Items control to create a button for every item in the collection-->
+                <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
+                    <!--Defines the template to use a wrappanel-->
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <!--Sets the itemtemplate for every item-->
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <Button Style="{StaticResource mainButton}" 
+                                        Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
+                                        CommandParameter="{Binding Path=Tag, RelativeSource={RelativeSource Self}}"
+                                        Tag="{Binding Path=Name}">
+                                    <TextBlock Text="{Binding Path=NormalizedName}" TextWrapping="Wrap" Height="auto" />
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
 
-        <Label Grid.Row="3" Grid.ColumnSpan="2" Content="{Binding DefaultDirectory}" FontSize="11" />
-        <Label x:Name="TimerLabel" Grid.Row="3" Grid.Column="2" Content="{Binding TimeLabel}" FontSize="11"/>
-    </Grid>
-    
+            <Label Background="Black" Foreground="White" Grid.Row="3" Grid.ColumnSpan="2" Content="{Binding DefaultDirectory}" FontSize="11" />
+            <Label Background="Black" Foreground="White" x:Name="TimerLabel" Grid.Row="3" Grid.Column="2" Content="{Binding TimeLabel}" FontSize="11"/>
+        </Grid>
+
 </Window>
 
 <!--Outcommented items-->

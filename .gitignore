@@ -1,6 +1,8 @@
-.vs/
-WpfPractice/WpfPractice/.vs
+/.vs
 *.cache
 *.lref
-SoundBoard/WpfPractice/WpfPractice/obj/Debug*
-SoundBoard/WpfPractice/WpfPractice/bin/Debug*
+*.tmp
+*.resources
+*.exe
+/bin
+/obj

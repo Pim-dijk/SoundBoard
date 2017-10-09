@@ -13,3 +13,4 @@ C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\Sou
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\SoundBoard.csproj.CoreCompileInputs.cache
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\WpfPractice.exe
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\WpfPractice.pdb
+C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\SoundBoard.csprojResolveAssemblyReference.cache
