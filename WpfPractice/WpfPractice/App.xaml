@@ -5,7 +5,7 @@
              StartupUri="Directory/Views/MainWindow.xaml">
     <Application.Resources>
 
-        <!--Set the source of the background image-->
+        <!--Set the source of the background image for the buttons-->
         <ImageBrush x:Key="ButtonImage" ImageSource="\WpfPractice;component\Images\MonkeyIcon.png" Stretch="Uniform" />
 
         <!--Style template for the buttons-->
@@ -17,8 +17,8 @@
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Foreground" Value="DarkBlue" />
             <Setter Property="Opacity" Value="0.8" />
-            <Setter Property="Height" Value="100"/>
-            <Setter Property="Width" Value="150" />
+            <Setter Property="Height" Value="80"/>
+            <Setter Property="Width" Value="105" />
             <Setter Property="Margin" Value="3" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -40,6 +40,9 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="BorderBrush" Value="White" />
                             </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter Property="BorderThickness" Value="3" />
+                            </Trigger>
                         </ControlTemplate.Triggers>
 
                     </ControlTemplate>
@@ -48,6 +51,63 @@
             </Setter>
         </Style>
 
+        <!--Sets the image for the mute button based on boolean-->
+        <Style x:Key="mutedButtonImage" TargetType="Button">
+            <Setter Property="Width" Value="25"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="BorderThickness" Value="0"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+
+                        <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                            Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
+                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" RecognizesAccessKey="True"/>
+                        </Border>
+
+                        <!--Action on mouse enter, because we don't set the background it won't disappear on mouse enter-->
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Cursor" Value="Hand" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+
+                </Setter.Value>
+            </Setter>
+            
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Muted}" Value="False">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <ImageBrush ImageSource="/WpfPractice;component/Images/unmuteIcon.png" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Muted}" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <ImageBrush ImageSource="/WpfPractice;component/Images/muteIcon.png" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+
+        </Style>
+
+        <!--Style for the remove button-->
+        <Style x:Key="removeButton" TargetType="Button">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
+            <Setter Property="Background" Value="Red" />
+            <Setter Property="Foreground" Value="Black" />
+        </Style>
+        
         <!--Style for the stop button, overrides button-->
         <Style x:Key="stopButton" TargetType="Button" BasedOn="{StaticResource mainButton}">
             <Setter Property="Background" Value="Red" />

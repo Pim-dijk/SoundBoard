@@ -19,10 +19,5 @@ namespace SoundBoard
             InitializeComponent();
             this.DataContext = new MainWindowViewModel();
         }
-
-        private void volumSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            
-        }
     }
 }

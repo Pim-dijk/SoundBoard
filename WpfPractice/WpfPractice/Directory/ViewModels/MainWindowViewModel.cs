@@ -25,7 +25,20 @@ namespace SoundBoard
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
+        //Create statuslistview collection
         private ObservableCollection<string> statusListView;
+
+        //Timelabel string to display the running time
+        private string timeLabel;
+
+        //Volume control
+        private double volume;
+
+        //Restore volume
+        private double restoreVolume;
+
+        //Muted boolean
+        private bool muted;
         #endregion
 
         #region Properties
@@ -75,6 +88,52 @@ namespace SoundBoard
                 }
             }                           
         }
+
+        //Volume
+        public double Volume
+        {
+            get
+            {
+                return volume;
+            }
+            set
+            {
+                if(this.volume == value)
+                {
+                    return;
+                }
+                this.volume = value;
+                mediaPlayer.Volume = value;
+                if (volume == 0)
+                {
+                    Muted = true;
+                }
+                else
+                {
+                    Muted = false;
+                }
+            }
+        }
+
+        //Restore Volume
+        public double RestoreVolume { get; set; }
+
+        //Muted
+        public bool Muted
+        {
+            get
+            {
+                return muted;
+            }
+            set
+            {
+                if(this.muted == value)
+                {
+                    return;
+                }
+                this.muted = value;
+            }
+        }
         #endregion
 
         #region Constructor
@@ -96,10 +155,14 @@ namespace SoundBoard
 
             StatusListView.Clear();
             WriteStatusEntry("Application loaded");
+            TimeLabel = "No file selected...";
+            Volume = 0.5;
         }
         #endregion
 
         #region Methods
+
+        #region Get files
         /// <summary>
         /// Method to get the files from the directory
         /// </summary>
@@ -108,7 +171,9 @@ namespace SoundBoard
             this.Sounds = new ObservableCollection<SoundViewModel>
                 (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
         }
+        #endregion
 
+        #region Read Application settings
         private void ReadCustomSettings()
         {
             if(string.IsNullOrEmpty(ConfigurationManager.AppSettings["DefaultDirectory"]) == false)
@@ -116,7 +181,9 @@ namespace SoundBoard
                 DefaultDirectory = ConfigurationManager.AppSettings["DefaultDirectory"];
             }
         }
+        #endregion
 
+        #region Write status entry
         private void WriteStatusEntry(string statusText)
         {
             System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
@@ -124,6 +191,7 @@ namespace SoundBoard
                 StatusListView.Insert(0, DateTime.Now + ": " + statusText);
             }));
         }
+        #endregion
         #endregion
 
         #region Initialize Collections
@@ -142,7 +210,10 @@ namespace SoundBoard
         public RelayCommand ExitCommand { get; set; }
         public RelayCommand AddFolder { get; set; }
         public RelayCommand RefreshFiles { get; set; }
-        
+        public RelayCommand RemoveSound { get; set; }
+        public RelayCommand MuteSound { get; set; }
+        public RelayCommand DeleteSound { get; set; }
+
         #region Initialize Commands
         private void InitializeCommands()
         {
@@ -154,13 +225,16 @@ namespace SoundBoard
             ExitCommand = new RelayCommand(ExitCommand_Executed);
             AddFolder = new RelayCommand(AddFolder_Executed);
             RefreshFiles = new RelayCommand(RefreshFiles_Executed);
+            RemoveSound = new RelayCommand(RemoveSound_Executed);
+            MuteSound = new RelayCommand(MuteSound_Executed);
+            DeleteSound = new RelayCommand(DeleteSound_Executed);
         }
         #endregion
 
         #endregion
 
         #region Commands
-
+        
         #region Play Sound
         /// <summary>
         /// executes the play sound command
@@ -168,10 +242,6 @@ namespace SoundBoard
         /// <param name="param">the tag of the button, which is set with the files name + extention</param>
         private void PlaySound_Executed(object param)
         {
-            // Just for testing
-            // Outputs which button was pressed, gives param as string
-            //System.Diagnostics.Debug.WriteLine($"Clicked: {param as string}");
-            
             try
             {
                 string tag = param as string;
@@ -181,12 +251,10 @@ namespace SoundBoard
 
                 DispatcherTimer timer = new DispatcherTimer();
                 timer.Interval = TimeSpan.FromSeconds(1);
-                timer.Tick += timer_Tick;
+                timer.Tick += Timer_Tick;
                 timer.Start();
-
             }
             catch { }
-
         }
         #endregion
 
@@ -196,7 +264,7 @@ namespace SoundBoard
         /// </summary>
         /// <param name="sender">the PlaySound_Executed command</param>
         /// <param name="e"></param>
-        void timer_Tick(object sender, EventArgs e)
+        void Timer_Tick(object sender, EventArgs e)
         {
             if (mediaPlayer.Source == null)
             {
@@ -221,6 +289,21 @@ namespace SoundBoard
         private void StopSound_Executed(object sender)
         {
             mediaPlayer.Stop();
+        }
+        #endregion
+
+        #region Mute
+        private void MuteSound_Executed(object sender)
+        {
+            if(Volume != 0)
+            {
+                RestoreVolume = Volume;
+                Volume = 0;
+            }
+            else
+            {
+                Volume = RestoreVolume;
+            }
         }
         #endregion
 
@@ -366,6 +449,44 @@ namespace SoundBoard
         {
             GetFiles();
             WriteStatusEntry("List refreshed.");
+        }
+        #endregion
+
+        #region Remove Sound
+        private void RemoveSound_Executed(object param)
+        {
+            var sound = param as string;
+            var audioLocation = DefaultDirectory + sound;
+            //Check if the file exists in the collection
+            if (Sounds.Any(x => x.AudioLocation == audioLocation))
+            {
+                try
+                {
+                    Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
+                    WriteStatusEntry("File " + sound +" removed from the list.");
+                }
+                catch
+                {
+                    WriteStatusEntry("Unknown exception, please try again.");
+                }
+            }
+        }
+        #endregion
+
+        #region Delete Sound
+        private void DeleteSound_Executed(object param)
+        {
+            //Remove the sound from the list
+            RemoveSound_Executed(param);
+
+            //Remove the file from the directory
+            var item = param as string;
+            var file = DefaultDirectory + item;
+            if(FileSystem.FileExists(file))
+            {
+                FileSystem.DeleteFile(file);
+                WriteStatusEntry("File " + item + " deleted from directory.");
+            }
         }
         #endregion
 

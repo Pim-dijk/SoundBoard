@@ -147,7 +147,23 @@
   <ItemGroup>
     <None Include="FodyWeavers.xml" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\addFolderIcon.png" />
+    <Resource Include="Images\addSoundIcon.png" />
+    <Resource Include="Images\deleteIcon.png" />
+    <Resource Include="Images\muteIcon.png" />
+    <Resource Include="Images\refreshIcon.png" />
+    <Resource Include="Images\unmuteIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\changeFolderIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\musicIcon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\delete.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets" Condition="Exists('..\packages\Fody.2.0.0\build\netstandard1.4\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
