@@ -3,12 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:SoundBoard"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         mc:Ignorable="d"
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="365" Width="auto" Height="500"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
-        FontSize="15" Background="WhiteSmoke" Icon="/WpfPractice;component/Images/musicIcon.png">
+        FontSize="16" Background="WhiteSmoke" Icon="/WpfPractice;component/Images/musicIcon.png">
 
     <Grid>
         <!--Grid column and row definitions-->
@@ -29,49 +30,61 @@
             <ColumnDefinition Width="5" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        
+
 
         <!--The menu-->
         <Menu Grid.ColumnSpan="7">
+            <!--File-->
             <MenuItem Header="_File">
-                <MenuItem Header="_Add Sound" Command="{Binding AddSound}" >
+                <MenuItem Header="_Add Sound" Command="{Binding AddSound}" ToolTip="Add one or more files" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/WpfPractice;component/Images/addSoundIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Add Folder" Command="{Binding AddFolder}" >
+                <MenuItem Header="Add Folder" Command="{Binding AddFolder}" ToolTip="Add contents of a folder" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/WpfPractice;component/Images/addFolderIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_Exit" Command="{Binding ExitCommand}" >
+                <Separator />
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/WpfPractice;component/Images/deleteIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
+            <!--Edit-->
             <MenuItem Header="_Edit">
-                <MenuItem Header="_Refresh files" Command="{Binding RefreshFiles}">
+                <MenuItem Header="_Refresh files" Command="{Binding RefreshFiles}" ToolTip="Reload the files in the folder">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/WpfPractice;component/Images/refreshIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="_Change Directory" Command="{Binding ChangeDefaultDirectory}">
+                <MenuItem Header="_Change Directory" Command="{Binding ChangeDefaultDirectory}" ToolTip="Change the directory">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/WpfPractice;component/Images/changeFolderIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
+            <!--Options-->
+            <MenuItem Header="_Options">
+                <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/WpfPractice;component/Images/infoIcon.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
         </Menu>
 
+        <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
             <Button x:Name="muteButton" Height="25" Width="25" Style="{StaticResource mutedButtonImage}" VerticalAlignment="Center" Command="{Binding MuteSound, Mode=TwoWay}" />
-            
+
             <!--Volume slider-->
             <Slider x:Name="volumSlider" VerticalAlignment="Center" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" Width="100" Margin="10, 0" />
         </StackPanel>
-        
+
 
         <!--Button to stop all sounds from playing-->
         <StackPanel Grid.Row="1" Grid.ColumnSpan="7">
@@ -92,30 +105,28 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
-                            <!--<Button Style="{StaticResource mainButton}"
-                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
-                                    CommandParameter="{Binding Path=Tag, RelativeSource={RelativeSource Self}}"
-                                    Tag="{Binding Path=Name}">
-                                <TextBlock Text="{Binding Path=NormalizedName}" TextWrapping="Wrap" Height="auto" />
-                                <Button.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="{Binding Path=Name}" 
-                                                  Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.RemoveSound}"
-                                                  CommandParameter="{Binding Path=Name}">
-                                            <MenuItem.Icon>
-                                                <Image Source="\WpfPractice;component\Images\CoffeeArt.png" Width="20" VerticalAlignment="Center"/>
-                                            </MenuItem.Icon>
-                                        </MenuItem>
-                                    </ContextMenu>
-                                </Button.ContextMenu>
-                            </Button>-->
                             <Button Style="{StaticResource mainButton}"
                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
                                 CommandParameter="{Binding Path=Name}"
-                                Tag="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}}">
-                                <TextBlock Text="{Binding Path=NormalizedName}" TextWrapping="Wrap" Height="auto" />
+                                Tag="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}}" >
+                                <TextBlock Text="{Binding Path=NormalizedName}" Style="{StaticResource textBlockStyle}" TextWrapping="Wrap" Height="auto" />
                                 <Button.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem Header="Add/Change image" 
+                                                Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.AddImage}" 
+                                                CommandParameter="{Binding Path=NormalizedName}">
+                                            <MenuItem.Icon>
+                                                <Image Source="/WpfPractice;component/Images/addImageIcon.png" Width="20" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <Separator/>
+                                        <MenuItem Header="Remove image" 
+                                                Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.RemoveImage}" 
+                                                CommandParameter="{Binding Path=NormalizedName}" >
+                                            <MenuItem.Icon>
+                                                <Image Source="/WpfPractice;component/Images/removeImageIcon.png" Width="20" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
                                         <MenuItem Header="Remove from list" 
                                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.RemoveSound}" 
                                                 CommandParameter="{Binding Path=Name}">
@@ -139,25 +150,14 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <GridSplitter Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" Background="LightBlue" BorderThickness="1" BorderBrush="Red"></GridSplitter>
-        
-        <Label Background="Black" Foreground="White" Grid.Row="4" Grid.ColumnSpan="2" Content="{Binding DefaultDirectory}" ContentStringFormat="Directory: {0}" FontSize="11" />
-        <GridSplitter Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch"/>
-        <ItemsControl Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" />
-        <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch"/>
+        <GridSplitter BorderBrush="Gray" Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" BorderThickness="1" ></GridSplitter>
+
+
+        <TextBlock Background="Black" Foreground="White" Grid.Row="4" Grid.ColumnSpan="2" Text="{Binding DefaultDirectory}" FontSize="11" Padding="5" />
+        <GridSplitter Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1"/>
+        <ItemsControl Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" Padding="5"/>
+        <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1"/>
         <Label x:Name="TimerLabel" Background="Black" Foreground="White" Grid.Row="4" Grid.Column="6" Content="{Binding TimeLabel}" ContentStringFormat="Time: {0}" HorizontalContentAlignment="Left" FontSize="11"/>
     </Grid>
 
 </Window>
-
-<!--Outcommented items-->
-        
-    <!-- Simpel animation to change the border thickness in .5 seconds
-        <Trigger.EnterActions>
-            <BeginStoryboard>
-                <Storyboard>
-                    <ThicknessAnimation Duration="0:0:0.500" To="3" Storyboard.TargetProperty="BorderThickness" />
-                </Storyboard>
-            </BeginStoryboard>
-        </Trigger.EnterActions> 
-        -->

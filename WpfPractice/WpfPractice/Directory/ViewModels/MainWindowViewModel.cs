@@ -12,6 +12,9 @@ using System.Configuration;
 using Microsoft.VisualBasic.FileIO;
 using SoundBoard.Services;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
+using System.ComponentModel;
+using WpfPractice.Views;
 
 namespace SoundBoard
 {
@@ -39,6 +42,7 @@ namespace SoundBoard
 
         //Muted boolean
         private bool muted;
+        
         #endregion
 
         #region Properties
@@ -48,6 +52,9 @@ namespace SoundBoard
         
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
+
+        //Omit Imagesource
+        public ImageSource ImageSource { get; set; }
         
         //Default Directory for the application to get the files from
         public string DefaultDirectory
@@ -94,6 +101,11 @@ namespace SoundBoard
         {
             get
             {
+                if(volume == 0)
+                {
+                    Muted = true;
+                    mediaPlayer.Volume = volume;
+                }
                 return volume;
             }
             set
@@ -102,8 +114,12 @@ namespace SoundBoard
                 {
                     return;
                 }
+
+                //Set the volume for the mediaplayer and the slider
                 this.volume = value;
                 mediaPlayer.Volume = value;
+                
+                //Dictates the mute button behaviour
                 if (volume == 0)
                 {
                     Muted = true;
@@ -146,44 +162,93 @@ namespace SoundBoard
             InitializeCommands();
             //Initialize collection lists
             InitializeCollections();
-
             //Sets the directory to the appSettings value
             ReadCustomSettings();
-            
             //Gets the files from the directory
             GetFiles();
-
+            //Clear the statusListView
             StatusListView.Clear();
+            //Write application loaded
             WriteStatusEntry("Application loaded");
+            //Set defualt for timelabel
             TimeLabel = "No file selected...";
-            Volume = 0.5;
+            //Add eventhandler for when the window closes
+            Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
         }
         #endregion
 
         #region Methods
 
-        #region Get files
+            #region Get files
         /// <summary>
         /// Method to get the files from the directory
         /// </summary>
         public void GetFiles()
         {
+            //Get all sounds and create SoundViewModels for each
             this.Sounds = new ObservableCollection<SoundViewModel>
                 (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
-        }
-        #endregion
+            //Get a list of all the found images
+            List<string> images = FolderContents.GetImages(DefaultDirectory);
 
-        #region Read Application settings
-        private void ReadCustomSettings()
-        {
-            if(string.IsNullOrEmpty(ConfigurationManager.AppSettings["DefaultDirectory"]) == false)
+            //Add the found images to the correct sound
+            foreach(var image in images)
             {
-                DefaultDirectory = ConfigurationManager.AppSettings["DefaultDirectory"];
+                //Get just the name of the image, no path, no extension
+                var normImage = Path.GetFileNameWithoutExtension(Path.GetFileName(image));
+                //If there is a Sound with the same name add the image to it
+                var item = Sounds.FirstOrDefault(i => i.NormalizedName == normImage);
+                if (item != null)
+                {
+                    item.ImageLocation = LoadImage(image);
+                    item.HasImage = true;
+                }
             }
         }
         #endregion
 
-        #region Write status entry
+            #region BitmapConverter
+        private ImageSource LoadImage(string path)
+        {
+            var bitmapImage = new BitmapImage();
+
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = stream;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze(); // optional
+            }
+
+            return bitmapImage;
+        }
+        #endregion
+
+            #region Read Application settings
+        private void ReadCustomSettings()
+        {
+            //If the default directory is not empty or null, read it's value
+            if(string.IsNullOrEmpty(ConfigurationManager.AppSettings["DefaultDirectory"]) == false)
+            {
+                DefaultDirectory = ConfigurationManager.AppSettings["DefaultDirectory"];
+            }
+
+            Volume = WpfPractice.Properties.Settings.Default.Volume;
+        }
+        #endregion
+
+            #region Application closing
+        public void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            //Store the current value of Volume in the settings
+            WpfPractice.Properties.Settings.Default.Volume = Volume;
+            //Save settings
+            WpfPractice.Properties.Settings.Default.Save();
+        }
+        #endregion
+
+            #region Write status entry
         private void WriteStatusEntry(string statusText)
         {
             System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
@@ -192,16 +257,28 @@ namespace SoundBoard
             }));
         }
         #endregion
+
+            #region SetPlaceholder_Executed
+        public void SetPlaceholder_Executed(SoundViewModel param)
+        {
+            var placeHolder = "\\WpfPractice;component\\Images\\soundIcon.png";
+            var item = param;
+            item.AudioLocation = placeHolder;
+        }
         #endregion
 
-        #region Initialize Collections
+        #endregion
+
+        #region Command
+
+            #region Initialize Collections
         private void InitializeCollections()
         {
             StatusListView = new ObservableCollection<string>();
         }
         #endregion
         
-        #region Command Initialization
+            #region Command Initialization
         //public CommandBase PlaySound { get; set; }
         public RelayCommand PlaySound { get; set; }
         public RelayCommand StopSound { get; set; }
@@ -213,6 +290,9 @@ namespace SoundBoard
         public RelayCommand RemoveSound { get; set; }
         public RelayCommand MuteSound { get; set; }
         public RelayCommand DeleteSound { get; set; }
+        public RelayCommand AddImage { get; set; }
+        public RelayCommand RemoveImage { get; set; }
+        public CommandBase OpenAbout { get; set; }
 
         #region Initialize Commands
         private void InitializeCommands()
@@ -228,6 +308,9 @@ namespace SoundBoard
             RemoveSound = new RelayCommand(RemoveSound_Executed);
             MuteSound = new RelayCommand(MuteSound_Executed);
             DeleteSound = new RelayCommand(DeleteSound_Executed);
+            AddImage = new RelayCommand(AddImage_Executed);
+            RemoveImage = new RelayCommand(RemoveImage_Executed);
+            OpenAbout = new CommandBase(OpenAbout_Execute);
         }
         #endregion
 
@@ -235,17 +318,37 @@ namespace SoundBoard
 
         #region Commands
         
-        #region Play Sound
+            #region Play Sound
         /// <summary>
         /// executes the play sound command
         /// </summary>
         /// <param name="param">the tag of the button, which is set with the files name + extention</param>
         private void PlaySound_Executed(object param)
         {
+            //tag is the name of the song.ext
+            //Location of the file
+            string tag = param as string;
+            string song = defaultDirectory + tag;
+
+            //If a sound is already playing stop that one
+            var isPlaying = this.Sounds.Where(p => p.IsPlaying == true);
+            if(isPlaying.Count() > 0)
+            {
+                var stopSound = isPlaying.First<SoundViewModel>();
+                stopSound.IsPlaying = false;
+            }
+
+            //Set the bool to true for the sound that is playing
+            var soundToPlay = this.Sounds.Where(s => s.Name == tag);
+            if(soundToPlay.Count() > 0)
+            {
+                var enableSound = soundToPlay.First<SoundViewModel>();
+                enableSound.IsPlaying = true;
+            }
+
+            //Start playing
             try
             {
-                string tag = param as string;
-                string song = defaultDirectory + tag;
                 mediaPlayer.Open(new Uri(song));
                 mediaPlayer.Play();
 
@@ -258,7 +361,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region timer
+            #region timer
         /// <summary>
         /// Timer that shows the current and total time of the playing sound
         /// </summary>
@@ -279,20 +382,28 @@ namespace SoundBoard
                 }
             }
         }
-        #endregion
+        #endregion  
 
-        #region Stop
+            #region Stop
         /// <summary>
         /// Stop playing the current sound
         /// </summary>
         /// <param name="sender"></param>
         private void StopSound_Executed(object sender)
         {
+            //If any sound is playing set the bool to false
+            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true);
+            if(soundToStop.Count() > 0)
+            {
+                var stopSound = soundToStop.First<SoundViewModel>();
+                stopSound.IsPlaying = false;
+            }
+            //Stop playing
             mediaPlayer.Stop();
         }
         #endregion
 
-        #region Mute
+            #region Mute
         private void MuteSound_Executed(object sender)
         {
             if(Volume != 0)
@@ -307,7 +418,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Change Directory
+            #region Change Directory
         /// <summary>
         /// Used to change the default directory
         /// </summary>
@@ -352,7 +463,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add Sound
+            #region Add Sound
         /// <summary>
         /// Open filedialog and add the selected file to the Songs collection
         /// </summary>
@@ -387,7 +498,7 @@ namespace SoundBoard
                         }
                         else
                         {
-                            WriteStatusEntry("File " + s1.Name + " already exists.");
+                            WriteStatusEntry("File '" + s1.Name + "' already exists.");
                         }
                     }
                     catch (FileNotFoundException)
@@ -411,7 +522,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add Folder
+            #region Add Folder
         private void AddFolder_Executed(object sender)
         {
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
@@ -444,7 +555,82 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Refresh list
+            #region Add Image
+        private void AddImage_Executed(object param)
+        {
+            //Normalized name of the sound
+            var soundName = param as string;
+
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
+            ofd.Filter = "All Graphics Types|*.jpg;*.gif;*.bmp;*.png;|All Files(*.*)|*.*";
+            ofd.Multiselect = false;
+
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                //path to the selected file
+                FileInfo imageFile = new FileInfo(ofd.FileName);
+                //the new imageLocation with original extention but new name
+                var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
+                
+                //Check if there already is an image with the same name in the folder
+                var location = DefaultDirectory + soundName;
+                List<FileInfo> list = new List<FileInfo>();
+                string[] extensions = { ".png", ".jpg", ".gif", ".bmp" };
+                foreach(string ext in extensions)
+                {
+                    list.AddRange(new DirectoryInfo(DefaultDirectory).GetFiles(soundName + ext).Where(p =>
+                    p.Extension.Equals(ext, StringComparison.CurrentCultureIgnoreCase)).ToArray());
+                }
+                foreach(var image in list)
+                {
+                    File.Delete(image.FullName);
+                    WriteStatusEntry("Existing image removed");
+                }
+
+                //Create bitmapimage from file
+                var bitmapImage = LoadImage(ofd.FileName);
+
+                //Check if the image with the same name as the sound exists and add it to the SoundViewModel
+                var item = Sounds.FirstOrDefault(i => i.NormalizedName == soundName);
+                if (item != null)
+                {
+                    //Move the file and rename it at the same time
+                    imageFile.CopyTo(newImageLocation, true);
+
+                    //Set the imagelocation to the new image
+                    item.ImageLocation = bitmapImage;
+                    GetFiles();
+                    WriteStatusEntry("New image added");
+                }
+            }
+        }
+        #endregion
+
+            #region Remove Image
+        private void RemoveImage_Executed(object param)
+        {
+            var soundName = param as string;
+            var sound = Sounds.Where(s => s.HasImage == true && s.NormalizedName == soundName);
+            if(sound.Count() > 0)
+            {
+                //unset the image and hasimage properties
+                var removeImage = sound.First<SoundViewModel>();
+                removeImage.ImageLocation = null;
+                removeImage.HasImage = false;
+                WriteStatusEntry("Image removed");
+                
+                //As of now the image does not get deleted from the folder
+                //so on refresh or reloading the application the image comes back.
+            }
+            else
+            {
+                WriteStatusEntry("No image found");
+            }
+            
+        }
+        #endregion
+
+            #region Refresh list
         public void RefreshFiles_Executed(object sender)
         {
             GetFiles();
@@ -452,7 +638,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Remove Sound
+            #region Remove Sound
         private void RemoveSound_Executed(object param)
         {
             var sound = param as string;
@@ -463,7 +649,7 @@ namespace SoundBoard
                 try
                 {
                     Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
-                    WriteStatusEntry("File " + sound +" removed from the list.");
+                    WriteStatusEntry("File '" + sound + "' removed from the list.");
                 }
                 catch
                 {
@@ -473,28 +659,46 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Delete Sound
+            #region Delete Sound
         private void DeleteSound_Executed(object param)
         {
-            //Remove the sound from the list
-            RemoveSound_Executed(param);
-
-            //Remove the file from the directory
-            var item = param as string;
-            var file = DefaultDirectory + item;
-            if(FileSystem.FileExists(file))
+            if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
             {
-                FileSystem.DeleteFile(file);
-                WriteStatusEntry("File " + item + " deleted from directory.");
+                //Remove the sound from the list
+                RemoveSound_Executed(param);
+
+                //Remove the file from the directory
+                var item = param as string;
+                var file = DefaultDirectory + item;
+                if (FileSystem.FileExists(file))
+                {
+                    FileSystem.DeleteFile(file);
+                    WriteStatusEntry("File '" + item + "' deleted from directory");
+                }
             }
+            else
+            {
+                WriteStatusEntry("Deletion cancelled");
+            }
+        }
+        #endregion
+
+            #region Open About
+        private void OpenAbout_Execute(object sender, EventArgs e)
+        {
+            AboutView view = new AboutView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.ShowDialog();
         }
         #endregion
 
         #region Exit
         private void ExitCommand_Executed(object sender)
         {
+            WpfPractice.Properties.Settings.Default.Save();
             Application.Current.Shutdown();
         }
+        #endregion
         #endregion
         #endregion
     }

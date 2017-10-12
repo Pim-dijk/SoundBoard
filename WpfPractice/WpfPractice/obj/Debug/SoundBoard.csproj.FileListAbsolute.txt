@@ -14,3 +14,5 @@ C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\Sou
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\WpfPractice.exe
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\WpfPractice.pdb
 C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\SoundBoard.csprojResolveAssemblyReference.cache
+C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\Directory\Views\AboutView.g.cs
+C:\Users\Admin\Documents\GitHub\SoundBoard\WpfPractice\WpfPractice\obj\Debug\Directory\Views\AboutView.baml

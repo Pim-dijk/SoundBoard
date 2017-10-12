@@ -5,17 +5,11 @@
              StartupUri="Directory/Views/MainWindow.xaml">
     <Application.Resources>
 
-        <!--Set the source of the background image for the buttons-->
-        <ImageBrush x:Key="ButtonImage" ImageSource="\WpfPractice;component\Images\MonkeyIcon.png" Stretch="Uniform" />
-
         <!--Style template for the buttons-->
         <Style x:Key="mainButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource ButtonImage}"/>
             <Setter Property="BorderBrush" Value="DarkGoldenrod" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="DarkBlue" />
             <Setter Property="Opacity" Value="0.8" />
             <Setter Property="Height" Value="80"/>
             <Setter Property="Width" Value="105" />
@@ -24,6 +18,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
 
+                        <!--Override the default behaviour so the background doesn't disappear and the button doesn't blink blue-->
                         <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
@@ -40,15 +35,47 @@
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="BorderBrush" Value="White" />
                             </Trigger>
-                            <Trigger Property="IsFocused" Value="True">
-                                <Setter Property="BorderThickness" Value="3" />
-                            </Trigger>
                         </ControlTemplate.Triggers>
 
                     </ControlTemplate>
-
                 </Setter.Value>
             </Setter>
+            
+            <!--Sets the image to a default if unset-->
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasImage}" Value="False">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <ImageBrush ImageSource="/WpfPractice;component/Images/soundIcon.png" Stretch="Uniform" Opacity="0.75" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <!--Sets the image to the bounds value if set-->
+                <DataTrigger Binding="{Binding HasImage}" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <ImageBrush ImageSource="{Binding Path=ImageLocation}" Stretch="UniformToFill" Opacity="0.75" />
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                
+                <!--Animation when the sound is playing-->
+                <DataTrigger Binding="{Binding IsPlaying}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard x:Name="isPlaying">
+                            <Storyboard>
+                                <DoubleAnimation From="0.5" To="1" Duration="0:0:0.5" Storyboard.TargetProperty="Opacity" AutoReverse="True" RepeatBehavior="Forever"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <!--Stop the animation-->
+                    <DataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="isPlaying"/>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+
+            </Style.Triggers>
+           
         </Style>
 
         <!--Sets the image for the mute button based on boolean-->
@@ -56,30 +83,24 @@
             <Setter Property="Width" Value="25"/>
             <Setter Property="Height" Value="25"/>
             <Setter Property="BorderThickness" Value="0"/>
-
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-
                         <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                             Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" 
                             SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" RecognizesAccessKey="True"/>
                         </Border>
-
                         <!--Action on mouse enter, because we don't set the background it won't disappear on mouse enter-->
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Cursor" Value="Hand" />
                             </Trigger>
                         </ControlTemplate.Triggers>
-
                     </ControlTemplate>
-
                 </Setter.Value>
             </Setter>
-            
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Muted}" Value="False">
                     <Setter Property="Background">
@@ -88,7 +109,6 @@
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
-
                 <DataTrigger Binding="{Binding Muted}" Value="True">
                     <Setter Property="Background">
                         <Setter.Value>
@@ -97,7 +117,6 @@
                     </Setter>
                 </DataTrigger>
             </Style.Triggers>
-
         </Style>
 
         <!--Style for the remove button-->
@@ -123,13 +142,51 @@
         <Style x:Key="textBlockStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="Navy" />
+            <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect
-                        ShadowDepth="1.5"
-                        Direction="315"
-                        Color="White"
-                        BlurRadius="0" />
+                        ShadowDepth="2.5"
+                        Direction="144"
+                        Color="LightGray"
+                        BlurRadius="1" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!--Border animation-->
+        <Style x:Key="BorderAnimation" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ControlTemplate.Resources>
+                            <Storyboard x:Key="Animation0" BeginTime="00:00:00.0" RepeatBehavior="Forever">
+                                <ColorAnimationUsingKeyFrames Storyboard.TargetName="ellipse0" Storyboard.TargetProperty="Opacity">
+                                </ColorAnimationUsingKeyFrames>
+                            </Storyboard>
+
+                            <Storyboard x:Key="Animation1" BeginTime="00:00:00.2" RepeatBehavior="Forever">
+                                <ColorAnimationUsingKeyFrames Storyboard.TargetName="ellipse1" Storyboard.TargetProperty="Opacity">
+                                </ColorAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </ControlTemplate.Resources>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsVisible" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard Storyboard="{StaticResource Animation0}" x:Name="Storyboard0" />
+                                    <BeginStoryboard Storyboard="{StaticResource Animation1}" x:Name="Storyboard1"/>
+                                </Trigger.EnterActions>
+
+                                <Trigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="Storyboard0"/>
+                                    <StopStoryboard BeginStoryboardName="Storyboard1"/>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>

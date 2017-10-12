@@ -7,32 +7,60 @@ namespace SoundBoard
     class FolderContents
     {
         /// <summary>
-        /// Create a list with all the items found in the directory location
+        /// Create a list with all the audio files found in the directory location
         /// </summary>
         /// <param name="audioLocation">The directory location specified</param>
         /// <returns></returns>
-        public static List<Sound> GetFolderContents(string audioLocation)
+        public static List<Sound> GetFolderContents(string defaultDirectory)
         {
             var items = new List<Sound>();
 
             try
             {
-                //Choose which fileextentions get imported
-                var files = Directory.EnumerateFiles(audioLocation).Where
+                //Choose which file extensions get imported
+                var files = Directory.EnumerateFiles(defaultDirectory).Where
                     (file => file.ToLower().EndsWith(".mp3") 
                     || file.ToLower().EndsWith(".wav")
                     || file.ToLower().EndsWith(".aac")
                     || file.ToLower().EndsWith(".flac"))
                     .ToList();
-
-                if(files.Count > 0)
+                
+                if (files.Count > 0)
                 {
-                    items.AddRange(files.Select(file => new Sound { AudioLocation = file }));
+                    items.AddRange(files.Select(file => new Sound { AudioLocation = file}));
                 }
             }
             catch { }
 
             return items;
+        }
+
+        /// <summary>
+        /// Get all the images in the folder
+        /// </summary>
+        /// <param name="defaultDirectory">The directory location specified</param>
+        /// <returns></returns>
+        public static List<string> GetImages(string defaultDirectory)
+        {
+            var images = new List<string>();
+
+            try
+            {
+                //List of all images in the directory
+                var files = Directory.EnumerateFiles(defaultDirectory).Where
+                    (file => file.ToLower().EndsWith(".jpg")
+                    || file.ToLower().EndsWith(".png")
+                    || file.ToLower().EndsWith(".gif")
+                    || file.ToLower().EndsWith(".bmp"))
+                    .ToList();
+                if(files.Count > 0)
+                {
+                    images.AddRange(files);
+                }
+            }
+            catch { }
+
+            return images;
         }
 
         /// <summary>
