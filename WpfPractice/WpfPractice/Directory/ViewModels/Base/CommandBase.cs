@@ -13,6 +13,15 @@ namespace SoundBoard
     /// Edit XML Comment Template for CommandBase
     public class CommandBase : ICommand
     {
+        private Action<object> _action;
+
+        public CommandBase(EventHandler executed, Action<object> action)
+        {
+            this.IsExecutionPossible = true;
+            this.Executed = executed;
+            _action = action;
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CommandBase"/> class.
         /// </summary>

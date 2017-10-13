@@ -101,7 +101,7 @@
                         <WrapPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <!--Sets the item template for every item-->
+                <!--Sets the item template for every button-->
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
@@ -117,6 +117,13 @@
                                                 CommandParameter="{Binding Path=NormalizedName}">
                                             <MenuItem.Icon>
                                                 <Image Source="/WpfPractice;component/Images/addImageIcon.png" Width="20" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Change name" 
+                                                Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.OpenChangeName}"
+                                                CommandParameter="{Binding Path=Name}">
+                                            <MenuItem.Icon>
+                                                <Image Source="/WpfPractice;component/Images/editTextIcon.png" />
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <Separator/>

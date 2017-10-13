@@ -42,6 +42,12 @@ namespace SoundBoard
 
         //Muted boolean
         private bool muted;
+
+        //current name used for changing name
+        private string currentName { get; set; }
+
+        //Name to display in the namechange dialog
+        private string nameToChange { get; set; }
         
         #endregion
 
@@ -150,6 +156,12 @@ namespace SoundBoard
                 this.muted = value;
             }
         }
+
+        //Current name
+        public string CurrentName { get; set; }
+
+        //Current name without extension
+        public string NameToChange { get; set; }
         #endregion
 
         #region Constructor
@@ -293,6 +305,8 @@ namespace SoundBoard
         public RelayCommand AddImage { get; set; }
         public RelayCommand RemoveImage { get; set; }
         public CommandBase OpenAbout { get; set; }
+        public RelayCommand ChangeSoundNameSaved { get; set; }
+        public RelayCommand OpenChangeName { get; set; }
 
         #region Initialize Commands
         private void InitializeCommands()
@@ -310,7 +324,9 @@ namespace SoundBoard
             DeleteSound = new RelayCommand(DeleteSound_Executed);
             AddImage = new RelayCommand(AddImage_Executed);
             RemoveImage = new RelayCommand(RemoveImage_Executed);
-            OpenAbout = new CommandBase(OpenAbout_Execute);
+            OpenAbout = new CommandBase(OpenAbout_Executed);
+            ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
+            OpenChangeName = new RelayCommand(OpenChangeName_Executed);
         }
         #endregion
 
@@ -608,7 +624,48 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Remove Image
+        #region Open Change Name
+        private void OpenChangeName_Executed(object param)
+        {
+            //Store the current name
+            //Name with extension
+            CurrentName = param as string;
+            //Name without extension
+            NameToChange = Path.GetFileNameWithoutExtension(CurrentName);
+            WriteStatusEntry(CurrentName);
+
+            ChangeNameView view = new ChangeNameView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.ShowDialog();
+        }
+        #endregion
+
+        #region Change name
+        private void ChangeSoundNameSaved_Executed(object param)
+        {
+            //Gets the name of the file with extension
+            var extension = Path.GetExtension(CurrentName);
+            var fullCurrentPath = DefaultDirectory + CurrentName;
+            
+            //If the sound is not currently playing...
+            if (Sounds.Any(p => p.IsPlaying == false && p.Name == CurrentName))
+            {
+                var newName = NameToChange + extension;
+                var sound = Sounds.Where(n => n.Name == CurrentName).First();
+                var fullNewPath = DefaultDirectory + newName;
+                sound.AudioLocation = fullNewPath;
+                File.Move(fullCurrentPath, fullNewPath);
+            }
+            //Sound is playing so unable to modify
+            else
+            {
+                DialogService.ShowErrorMessageBox("Cannot modify name when sound is playing");
+            }
+            App.Current.Windows.OfType<ChangeNameView>().First().Close();
+        }
+        #endregion
+
+        #region Remove Image
         private void RemoveImage_Executed(object param)
         {
             var soundName = param as string;
@@ -686,7 +743,7 @@ namespace SoundBoard
         #endregion
 
             #region Open About
-        private void OpenAbout_Execute(object sender, EventArgs e)
+        private void OpenAbout_Executed(object sender, EventArgs e)
         {
             AboutView view = new AboutView(this);
             view.Owner = Application.Current.MainWindow;

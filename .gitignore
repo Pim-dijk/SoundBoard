@@ -6,5 +6,5 @@
 *.exe
 /bin
 /obj
-SoundBoard/WpfPractice/Wpfpractice/bin/Debug
-SoundBoard/WpfPractice/Wpfpractice/obj/Debug
+WpfPractice/WpfPractice/bin/Debug
+WpfPractice/WpfPractice/obj/Debug
