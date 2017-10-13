@@ -12,7 +12,7 @@ namespace SoundBoard
         #region Fields
         readonly Action<object> _execute;
         readonly Predicate<object> _canExecute;
-
+        
         #endregion
 
         #region Constructors
