@@ -269,7 +269,7 @@ namespace SoundBoard
 
         #endregion
 
-        #region Command
+        #region Command Initialization
 
             #region Initialize Collections
         private void InitializeCollections()
@@ -316,8 +316,10 @@ namespace SoundBoard
 
         #endregion
 
-        #region Commands
-        
+        #endregion
+
+        #region Command Execution
+
             #region Play Sound
         /// <summary>
         /// executes the play sound command
@@ -692,14 +694,14 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Exit
+            #region Exit
         private void ExitCommand_Executed(object sender)
         {
             WpfPractice.Properties.Settings.Default.Save();
             Application.Current.Shutdown();
         }
         #endregion
-        #endregion
+
         #endregion
     }
 }
