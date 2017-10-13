@@ -1,11 +1,6 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Windows;
-using System.Windows.Media;
+﻿using System.Windows;
 using System.IO;
-using System.Collections.Generic;
-using System.Windows.Controls;
-using System.Windows.Threading;
+using System.Linq;
 
 namespace SoundBoard
 {
@@ -19,5 +14,40 @@ namespace SoundBoard
             InitializeComponent();
             this.DataContext = new MainWindowViewModel();
         }
+
+        //Drag and drop audio to add
+        private void MySounds_DragEnter(object sender, DragEventArgs e)
+        {
+            bool dropEnabled = true;
+            var allowedExtensions = new[] { ".mp3", ".wav", ".flac", ".aac" };
+
+            if (e.Data.GetDataPresent(DataFormats.FileDrop, true))
+            {
+                string[] filenames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+
+                dropEnabled = filenames.All(fn => allowedExtensions.Contains(Path.GetExtension(fn)));
+                e.Effects = DragDropEffects.Copy;
+            }
+            else
+            {
+                dropEnabled = false;
+            }
+
+            if (!dropEnabled)
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+        }
+
+        public void MySounds_Drop(object sender, DragEventArgs e)
+        {
+            string[] files = e.Data.GetData(DataFormats.FileDrop, true) as string[];
+            
+            //Specify which MainWindowViewModel you want to target, there is only one but you still need to specify it
+            //the DataContext already is set to the MainWindowViewModel
+            ((MainWindowViewModel)this.DataContext).DropList_Drop(files);
+        }
     }
 }
+

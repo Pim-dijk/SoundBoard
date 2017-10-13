@@ -58,7 +58,7 @@
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
-                
+
                 <!--Animation when the sound is playing-->
                 <DataTrigger Binding="{Binding IsPlaying}" Value="True">
                     <DataTrigger.EnterActions>
@@ -75,7 +75,6 @@
                 </DataTrigger>
 
             </Style.Triggers>
-           
         </Style>
 
         <!--Sets the image for the mute button based on boolean-->

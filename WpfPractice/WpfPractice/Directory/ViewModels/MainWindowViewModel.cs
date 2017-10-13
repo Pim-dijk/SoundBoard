@@ -162,6 +162,7 @@ namespace SoundBoard
 
         //Current name without extension
         public string NameToChange { get; set; }
+        
         #endregion
 
         #region Constructor
@@ -186,6 +187,7 @@ namespace SoundBoard
             TimeLabel = "No file selected...";
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
+            
         }
         #endregion
 
@@ -270,12 +272,27 @@ namespace SoundBoard
         }
         #endregion
 
-            #region SetPlaceholder_Executed
-        public void SetPlaceholder_Executed(SoundViewModel param)
+            #region Drop audio
+        public void DropList_Drop(string[] files)
         {
-            var placeHolder = "\\WpfPractice;component\\Images\\soundIcon.png";
-            var item = param;
-            item.AudioLocation = placeHolder;
+            string[] droppedFiles = files;
+            //For each selected file...
+            foreach (String sound in files)
+            {
+                //set the location of the file that has to be moved and it's destination
+                string fileLocation = sound;
+                string fileDestination = DefaultDirectory + FolderContents.GetFileName(sound);
+                FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
+
+                //If file has been succesfully moved, add it to the list.
+                SoundViewModel s1 = new SoundViewModel(sound);
+
+                //Check if file already exists in the collection
+                if (!Sounds.Any(x => x.Name == s1.Name))
+                {
+                    Sounds.Add(s1);
+                }
+            }
         }
         #endregion
 
@@ -283,7 +300,7 @@ namespace SoundBoard
 
         #region Command Initialization
 
-            #region Initialize Collections
+        #region Initialize Collections
         private void InitializeCollections()
         {
             StatusListView = new ObservableCollection<string>();
@@ -308,7 +325,7 @@ namespace SoundBoard
         public RelayCommand ChangeSoundNameSaved { get; set; }
         public RelayCommand OpenChangeName { get; set; }
 
-        #region Initialize Commands
+            #region Initialize Commands
         private void InitializeCommands()
         {
             //PlaySound = new CommandBase(PlaySound_Executed);
@@ -539,7 +556,7 @@ namespace SoundBoard
             }
         }
         #endregion
-
+        
             #region Add Folder
         private void AddFolder_Executed(object sender)
         {
@@ -624,48 +641,56 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Open Change Name
+            #region Open Change Name
         private void OpenChangeName_Executed(object param)
         {
             //Store the current name
             //Name with extension
             CurrentName = param as string;
-            //Name without extension
-            NameToChange = Path.GetFileNameWithoutExtension(CurrentName);
-            WriteStatusEntry(CurrentName);
 
-            ChangeNameView view = new ChangeNameView(this);
-            view.Owner = Application.Current.MainWindow;
-            view.ShowDialog();
-        }
-        #endregion
-
-        #region Change name
-        private void ChangeSoundNameSaved_Executed(object param)
-        {
-            //Gets the name of the file with extension
-            var extension = Path.GetExtension(CurrentName);
-            var fullCurrentPath = DefaultDirectory + CurrentName;
-            
             //If the sound is not currently playing...
             if (Sounds.Any(p => p.IsPlaying == false && p.Name == CurrentName))
             {
-                var newName = NameToChange + extension;
-                var sound = Sounds.Where(n => n.Name == CurrentName).First();
-                var fullNewPath = DefaultDirectory + newName;
-                sound.AudioLocation = fullNewPath;
-                File.Move(fullCurrentPath, fullNewPath);
+                //Name without extension
+                NameToChange = Path.GetFileNameWithoutExtension(CurrentName);
+                WriteStatusEntry(CurrentName);
+                //Display the view
+                ChangeNameView view = new ChangeNameView(this);
+                view.Owner = Application.Current.MainWindow;
+                view.ShowDialog();
             }
-            //Sound is playing so unable to modify
             else
             {
-                DialogService.ShowErrorMessageBox("Cannot modify name when sound is playing");
+                WriteStatusEntry("Cannot rename while playing (" + CurrentName + ")");
             }
+            
+        }
+        #endregion
+
+            #region Change file name
+        private void ChangeSoundNameSaved_Executed(object param)
+        {
+            //Gets the file extension
+            var extension = Path.GetExtension(CurrentName);
+            var fullCurrentPath = DefaultDirectory + CurrentName;
+            
+            var newName = NameToChange + extension;
+            var sound = Sounds.Where(n => n.Name == CurrentName).First();
+            var fullNewPath = DefaultDirectory + newName;
+            if(sound.HasImage == true)
+            {
+                var imageName = sound.ImageLocation;
+                var imagePath = DefaultDirectory + imageName;
+            }
+            sound.AudioLocation = fullNewPath;
+            File.Move(fullCurrentPath, fullNewPath);
+            
+            //Close the window on save
             App.Current.Windows.OfType<ChangeNameView>().First().Close();
         }
         #endregion
 
-        #region Remove Image
+        #region Remove Image //needs work
         private void RemoveImage_Executed(object param)
         {
             var soundName = param as string;
@@ -687,7 +712,7 @@ namespace SoundBoard
             }
             
         }
-        #endregion
+        #endregion 
 
             #region Refresh list
         public void RefreshFiles_Executed(object sender)

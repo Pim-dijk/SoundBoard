@@ -92,13 +92,13 @@
         </StackPanel>
 
         <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" DragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True">
             <!--Items control to create a button for every item in the collection-->
-            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
+            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}" >
                 <!--Defines the template to use a wrappanel-->
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
+                        <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <!--Sets the item template for every button-->
