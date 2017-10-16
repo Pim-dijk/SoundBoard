@@ -14,7 +14,9 @@ namespace SoundBoard
         //location of the file, full path
         public string AudioLocation { get; set; }
         //image file associated with this sound
-        public ImageSource ImageLocation { get; set; }
+        public ImageSource ImageBitMap { get; set; }
+        //image file path
+        public string ImagePath { get; set; }
         //has image
         public bool HasImage { get; set; }
         //Is playing

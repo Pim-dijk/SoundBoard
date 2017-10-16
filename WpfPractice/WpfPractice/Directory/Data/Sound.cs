@@ -8,7 +8,9 @@
 
         public string AudioLocation { get; set; }
 
-        public string ImageLocation { get; set; }
+        public string ImageBitMap { get; set; }
+
+        public string ImagePath { get; set; }
 
         public bool HasImage { get; set; }
 

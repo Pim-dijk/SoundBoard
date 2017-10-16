@@ -216,7 +216,8 @@ namespace SoundBoard
                 var item = Sounds.FirstOrDefault(i => i.NormalizedName == normImage);
                 if (item != null)
                 {
-                    item.ImageLocation = LoadImage(image);
+                    item.ImagePath = image;
+                    item.ImageBitMap = LoadImage(image);
                     item.HasImage = true;
                 }
             }
@@ -648,7 +649,8 @@ namespace SoundBoard
                     //Move the file and rename it at the same time
                     imageFile.CopyTo(newImageLocation, true);
                     //Set the imagelocation to the new image
-                    item.ImageLocation = bitmapImage;
+                    item.ImageBitMap = bitmapImage;
+                    item.ImagePath = newImageLocation;
                     GetFiles();
                     WriteStatusEntry("New image added");
                 }
@@ -685,7 +687,7 @@ namespace SoundBoard
             #region Change file name
         private void ChangeSoundNameSaved_Executed(object param)
         {
-            //Gets the file extension
+            //Gets the sound file extension
             var extension = Path.GetExtension(CurrentName);
             var fullCurrentPath = DefaultDirectory + CurrentName;
             
@@ -694,8 +696,11 @@ namespace SoundBoard
             var fullNewPath = DefaultDirectory + newName;
             if(sound.HasImage == true)
             {
-                var imageName = sound.ImageLocation;
-                var imagePath = DefaultDirectory + imageName;
+                var oldImageName = Path.GetFileName(sound.ImagePath);
+                var imageExt = Path.GetExtension(oldImageName);
+                var newPath = DefaultDirectory + NameToChange + imageExt;
+                var oldPath = sound.ImagePath;
+                File.Move(oldPath, newPath);
             }
             sound.AudioLocation = fullNewPath;
             File.Move(fullCurrentPath, fullNewPath);
@@ -714,13 +719,12 @@ namespace SoundBoard
             {
                 //unset the image and hasimage properties
                 var removeImage = sound.First<SoundViewModel>();
-                removeImage.ImageLocation = null;
+                removeImage.ImageBitMap = null;
                 removeImage.HasImage = false;
                 WriteStatusEntry("Image removed");
 
                 //As of now the image does not get deleted from the folder
                 //so on refresh or reloading the application the image comes back.
-                var image = removeImage.ImageLocation;
             }
             else
             {

@@ -54,7 +54,7 @@
                 <DataTrigger Binding="{Binding HasImage}" Value="True">
                     <Setter Property="Background">
                         <Setter.Value>
-                            <ImageBrush ImageSource="{Binding Path=ImageLocation}" Stretch="UniformToFill" Opacity="0.75" />
+                            <ImageBrush ImageSource="{Binding Path=ImageBitMap}" Stretch="UniformToFill" Opacity="0.75" />
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
