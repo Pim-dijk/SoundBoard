@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfPractice.Views"
         mc:Ignorable="d"
-        Title="ChangeNameView" Height="150" Width="300" ShowInTaskbar="False" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="11">
+        Title="Change name dialog" Icon="/WpfPractice;component/Images/musicIcon.png"  Height="150" Width="300" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="11">
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />

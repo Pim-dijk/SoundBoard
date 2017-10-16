@@ -46,6 +46,11 @@
                         <Image Height="18" Source="/WpfPractice;component/Images/addFolderIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Add stream" Command="{Binding AddStream}" ToolTip="Add audio stream" >
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/WpfPractice;component/Images/soundIcon.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" >
                     <MenuItem.Icon>
@@ -105,7 +110,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
-                            <Button Style="{StaticResource mainButton}"
+                            <Button Style="{StaticResource mainButton}" 
                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
                                 CommandParameter="{Binding Path=Name}"
                                 Tag="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}}" >
@@ -123,7 +128,7 @@
                                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.OpenChangeName}"
                                                 CommandParameter="{Binding Path=Name}">
                                             <MenuItem.Icon>
-                                                <Image Source="/WpfPractice;component/Images/editTextIcon.png" />
+                                                <Image Source="/WpfPractice;component/Images/editTextIcon.png" Width="20" VerticalAlignment="Center"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <Separator/>
@@ -157,9 +162,9 @@
             </ItemsControl>
         </ScrollViewer>
 
+        <!--<MediaElement x:Name="Player" Grid.Row="2" Grid.ColumnSpan="7" />-->
+
         <GridSplitter BorderBrush="Gray" Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" BorderThickness="1" ></GridSplitter>
-
-
         <TextBlock Background="Black" Foreground="White" Grid.Row="4" Grid.ColumnSpan="2" Text="{Binding DefaultDirectory}" FontSize="11" Padding="5" />
         <GridSplitter Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1"/>
         <ItemsControl Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" Padding="5"/>

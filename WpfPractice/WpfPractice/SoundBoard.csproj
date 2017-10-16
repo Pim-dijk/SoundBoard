@@ -52,6 +52,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="NAudio, Version=1.8.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.8.3\lib\net35\NAudio.dll</HintPath>
+    </Reference>
     <Reference Include="PropertyChanged, Version=2.1.4.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyChanged.Fody.2.1.4\lib\netstandard1.0\PropertyChanged.dll</HintPath>
       <Private>False</Private>

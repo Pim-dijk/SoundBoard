@@ -4,15 +4,15 @@
              xmlns:local="clr-namespace:SoundBoard"
              StartupUri="Directory/Views/MainWindow.xaml">
     <Application.Resources>
-
+        
         <!--Style template for the buttons-->
         <Style x:Key="mainButton" TargetType="Button">
             <Setter Property="BorderBrush" Value="DarkGoldenrod" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="Opacity" Value="0.8" />
-            <Setter Property="Height" Value="80"/>
-            <Setter Property="Width" Value="105" />
+            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="Height" Value="90"/>
+            <Setter Property="Width" Value="125" />
             <Setter Property="Margin" Value="3" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -141,15 +141,16 @@
         <Style x:Key="textBlockStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Foreground" Value="Navy" />
+            <Setter Property="Foreground" Value="Black" />
             <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="21" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect
-                        ShadowDepth="2.5"
-                        Direction="144"
-                        Color="LightGray"
-                        BlurRadius="1" />
+                        ShadowDepth="0"
+                        Color="#FF005FFF"
+                        Opacity="1"
+                        BlurRadius="5" />
                 </Setter.Value>
             </Setter>
         </Style>
@@ -190,5 +191,10 @@
             </Setter>
         </Style>
 
+        <!--ItemsControl style-->
+        <Style x:Name="itemsControlStyle" TargetType="ItemsControl">
+            <Setter Property="AllowDrop" Value="True" />
+        </Style>
+        
     </Application.Resources>
 </Application>

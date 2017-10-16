@@ -25,6 +25,9 @@ namespace SoundBoard
         //Create new instance of the MediaPlayer for audio/video playback
         private MediaPlayer mediaPlayer = new MediaPlayer();
 
+        //Create new instance of the MediaElement for audio/video stream playback
+        private MediaElement streamPlayer = new MediaElement();
+
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
@@ -187,7 +190,6 @@ namespace SoundBoard
             TimeLabel = "No file selected...";
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
-            
         }
         #endregion
 
@@ -234,7 +236,6 @@ namespace SoundBoard
                 bitmapImage.EndInit();
                 bitmapImage.Freeze(); // optional
             }
-
             return bitmapImage;
         }
         #endregion
@@ -281,16 +282,17 @@ namespace SoundBoard
             {
                 //set the location of the file that has to be moved and it's destination
                 string fileLocation = sound;
+                string fileName = FolderContents.GetFileName(sound);
                 string fileDestination = DefaultDirectory + FolderContents.GetFileName(sound);
-                FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
-
-                //If file has been succesfully moved, add it to the list.
-                SoundViewModel s1 = new SoundViewModel(sound);
 
                 //Check if file already exists in the collection
-                if (!Sounds.Any(x => x.Name == s1.Name))
+                if (!Sounds.Any(x => x.Name == fileName))
                 {
+                    FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
+                    //If file has been succesfully moved, add it to the list.
+                    SoundViewModel s1 = new SoundViewModel(sound);
                     Sounds.Add(s1);
+                    GetFiles();
                 }
             }
         }
@@ -324,6 +326,7 @@ namespace SoundBoard
         public CommandBase OpenAbout { get; set; }
         public RelayCommand ChangeSoundNameSaved { get; set; }
         public RelayCommand OpenChangeName { get; set; }
+        public RelayCommand AddStream { get; set; }
 
             #region Initialize Commands
         private void InitializeCommands()
@@ -344,6 +347,7 @@ namespace SoundBoard
             OpenAbout = new CommandBase(OpenAbout_Executed);
             ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             OpenChangeName = new RelayCommand(OpenChangeName_Executed);
+            AddStream = new RelayCommand(AddStream_Executed);
         }
         #endregion
 
@@ -392,7 +396,10 @@ namespace SoundBoard
                 timer.Tick += Timer_Tick;
                 timer.Start();
             }
-            catch { }
+            catch(ArgumentNullException anE)
+            {
+                WriteStatusEntry("Null exception");
+            }
         }
         #endregion
 
@@ -556,7 +563,16 @@ namespace SoundBoard
             }
         }
         #endregion
-        
+
+        #region Add stream
+        public void AddStream_Executed(object param)
+        {
+            Uri uri = new Uri("https://www.youtube.com/v/UmUVXOXiLeM", UriKind.Absolute);
+            streamPlayer.Source = uri;
+            streamPlayer.Play();
+        }
+        #endregion
+
             #region Add Folder
         private void AddFolder_Executed(object sender)
         {
@@ -631,7 +647,6 @@ namespace SoundBoard
                 {
                     //Move the file and rename it at the same time
                     imageFile.CopyTo(newImageLocation, true);
-
                     //Set the imagelocation to the new image
                     item.ImageLocation = bitmapImage;
                     GetFiles();
@@ -702,9 +717,10 @@ namespace SoundBoard
                 removeImage.ImageLocation = null;
                 removeImage.HasImage = false;
                 WriteStatusEntry("Image removed");
-                
+
                 //As of now the image does not get deleted from the folder
                 //so on refresh or reloading the application the image comes back.
+                var image = removeImage.ImageLocation;
             }
             else
             {
