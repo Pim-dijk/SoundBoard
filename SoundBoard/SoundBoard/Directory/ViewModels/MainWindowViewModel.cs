@@ -224,7 +224,39 @@ namespace SoundBoard
         }
         #endregion
 
+            #region FindImage
+        /// <summary>
+        /// Try to find an image with the same name as the file
+        /// </summary>
+        /// <param name="justName">The filename for which to search the image for, without extension</param>
+        public void FindImage(string justName)
+        {
+            //The name of the added image
+            var soundName = justName;
+            //A list of all images in the folder
+            var images = FolderContents.GetImages(DefaultDirectory);
+            foreach(var image in images)
+            {
+                //Normalize the name of the image, no path, no extension
+                var normImage = Path.GetFileNameWithoutExtension(Path.GetFileName(image));
+                if(soundName == normImage)
+                {
+                    var item = Sounds.FirstOrDefault(i => i.NormalizedName == normImage);
+                    item.ImagePath = image;
+                    item.ImageBitMap = LoadImage(image);
+                    item.HasImage = true;
+                    return;
+                }
+            }
+        }
+        #endregion
+
             #region BitmapConverter
+        /// <summary>
+        /// Convert a given image to a bitmap image to release it's source for other uses
+        /// </summary>
+        /// <param name="path">full path to the image</param>
+        /// <returns></returns>
         private ImageSource LoadImage(string path)
         {
             var bitmapImage = new BitmapImage();
@@ -242,6 +274,9 @@ namespace SoundBoard
         #endregion
 
             #region Read Application settings
+        /// <summary>
+        /// Read the stored application settings
+        /// </summary>
         private void ReadCustomSettings()
         {
             //If the default directory is not empty or null, read it's value
@@ -255,6 +290,11 @@ namespace SoundBoard
         #endregion
 
             #region Application closing
+        /// <summary>
+        /// When the application closes, save the status of the volume
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             //Store the current value of Volume in the settings
@@ -265,6 +305,10 @@ namespace SoundBoard
         #endregion
 
             #region Write status entry
+        /// <summary>
+        /// A listview for status message updates
+        /// </summary>
+        /// <param name="statusText">The message to display</param>
         private void WriteStatusEntry(string statusText)
         {
             System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
@@ -275,6 +319,10 @@ namespace SoundBoard
         #endregion
 
             #region Drop audio
+        /// <summary>
+        /// Add the files that are dropped on the application to the collection
+        /// </summary>
+        /// <param name="files">List of files that need to be added</param>
         public void DropList_Drop(string[] files)
         {
             string[] droppedFiles = files;
@@ -293,7 +341,9 @@ namespace SoundBoard
                     //If file has been succesfully moved, add it to the list.
                     SoundViewModel s1 = new SoundViewModel(sound);
                     Sounds.Add(s1);
-                    GetFiles();
+                    //Check if there is an image for this file and add it
+                    FindImage(s1.NormalizedName);
+
                 }
             }
         }
@@ -304,6 +354,9 @@ namespace SoundBoard
         #region Command Initialization
 
         #region Initialize Collections
+        /// <summary>
+        /// status view collection
+        /// </summary>
         private void InitializeCollections()
         {
             StatusListView = new ObservableCollection<string>();
@@ -328,6 +381,9 @@ namespace SoundBoard
         public RelayCommand ChangeSoundNameSaved { get; set; }
         public RelayCommand OpenChangeName { get; set; }
         public RelayCommand AddStream { get; set; }
+        public RelayCommand TestCommand { get; set; }
+
+        #endregion
 
             #region Initialize Commands
         private void InitializeCommands()
@@ -349,11 +405,10 @@ namespace SoundBoard
             ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             OpenChangeName = new RelayCommand(OpenChangeName_Executed);
             AddStream = new RelayCommand(AddStream_Executed);
+            TestCommand = new RelayCommand(TestCommand_Executed);
         }
         #endregion
-
-        #endregion
-
+        
         #endregion
 
         #region Command Execution
@@ -447,6 +502,10 @@ namespace SoundBoard
         #endregion
 
             #region Mute
+        /// <summary>
+        /// Mute or unmute the sound
+        /// </summary>
+        /// <param name="sender"></param>
         private void MuteSound_Executed(object sender)
         {
             if(Volume != 0)
@@ -529,43 +588,33 @@ namespace SoundBoard
                     try
                     {
                         FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
-                            
+
                         //If file has been succesfully moved, add it to the list.
                         SoundViewModel s1 = new SoundViewModel(sound);
 
                         //Check if file already exists in the collection
-                        if(!Sounds.Any(x => x.Name == s1.Name ))
+                        if (!Sounds.Any(x => x.Name == s1.Name))
                         {
                             Sounds.Add(s1);
-                            WriteStatusEntry("File(s) succesfully added.");
+                            //Search for same name image
+                            FindImage(s1.NormalizedName);
+                            WriteStatusEntry("File: " + sound +  " succesfully added.");
                         }
                         else
                         {
                             WriteStatusEntry("File '" + s1.Name + "' already exists.");
                         }
                     }
-                    catch (FileNotFoundException)
+                    catch (Exception e)
                     {
-                        DialogService.ShowErrorMessageBox("File could not be found or has it's access restricted.");
-                    }
-                    catch (IOException)
-                    {
-                        DialogService.ShowErrorMessageBox("Can not copy file to the same directory!");
-                    }
-                    catch(UnauthorizedAccessException)
-                    {
-                        DialogService.ShowErrorMessageBox("You do not have permissions to access the file or folder.");
-                    }
-                    catch
-                    {
-                        DialogService.ShowErrorMessageBox("404 error not found.");
+                        DialogService.ShowErrorMessageBox(e + "");
                     }
                 }
             }
         }
         #endregion
 
-        #region Add stream
+        #region Add stream // needs work
         public void AddStream_Executed(object param)
         {
             Uri uri = new Uri("https://www.youtube.com/v/UmUVXOXiLeM", UriKind.Absolute);
@@ -575,6 +624,10 @@ namespace SoundBoard
         #endregion
 
             #region Add Folder
+        /// <summary>
+        /// Open folderdialog and add all found files to the collection
+        /// </summary>
+        /// <param name="sender"></param>
         private void AddFolder_Executed(object sender)
         {
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
@@ -599,7 +652,8 @@ namespace SoundBoard
                         var destPath = DefaultDirectory + sound.Name;
                         FileSystem.CopyFile(filePath, destPath, UIOption.AllDialogs, UICancelOption.DoNothing);
                         WriteStatusEntry(sound.Name + " added");
-                        
+                        //Search for same name image
+                        FindImage(sound.NormalizedName);
                     }
                 }
                 WriteStatusEntry("Import completed.");
@@ -608,9 +662,12 @@ namespace SoundBoard
         #endregion
 
             #region Add Image
+        /// <summary>
+        /// Add image to the sound that requested it
+        /// </summary>
+        /// <param name="param">Normalized name of the sound that send the request</param>
         private void AddImage_Executed(object param)
         {
-            //Normalized name of the sound
             var soundName = param as string;
 
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
@@ -659,6 +716,10 @@ namespace SoundBoard
         #endregion
 
             #region Open Change Name
+        /// <summary>
+        /// Opens the change name view
+        /// </summary>
+        /// <param name="param"></param>
         private void OpenChangeName_Executed(object param)
         {
             //Store the current name
@@ -685,6 +746,10 @@ namespace SoundBoard
         #endregion
 
             #region Change file name
+        /// <summary>
+        /// Save the new name to the file
+        /// </summary>
+        /// <param name="param"></param>
         private void ChangeSoundNameSaved_Executed(object param)
         {
             //Gets the sound file extension
@@ -694,6 +759,7 @@ namespace SoundBoard
             var newName = NameToChange + extension;
             var sound = Sounds.Where(n => n.Name == CurrentName).First();
             var fullNewPath = DefaultDirectory + newName;
+            //If the file has an image attached, rename it aswell
             if(sound.HasImage == true)
             {
                 var oldImageName = Path.GetFileName(sound.ImagePath);
@@ -735,14 +801,28 @@ namespace SoundBoard
         #endregion 
 
             #region Refresh list
-        public void RefreshFiles_Executed(object sender)
+        /// <summary>
+        /// Refresh the list of sounds, full check of the directory
+        /// </summary>
+        /// <param name="sender"></param>
+        public async void RefreshFiles_Executed(object sender)
         {
-            GetFiles();
-            WriteStatusEntry("List refreshed.");
+            await Task.Factory.StartNew(() =>
+            {
+                GetFiles();
+            }
+            ).ContinueWith((t2) =>
+            {
+                WriteStatusEntry("List refreshed.");
+            });
         }
         #endregion
 
             #region Remove Sound
+        /// <summary>
+        /// Remove the sound that send it from the list
+        /// </summary>
+        /// <param name="param">Name of the sound that requested it</param>
         private void RemoveSound_Executed(object param)
         {
             var sound = param as string;
@@ -763,7 +843,11 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Delete Sound
+        #region Delete Sound // needs work
+        /// <summary>
+        /// Delete the sound that requested it from the directory aswell as the list
+        /// </summary>
+        /// <param name="param">Name of the file that requested it</param>
         private void DeleteSound_Executed(object param)
         {
             if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
@@ -788,6 +872,11 @@ namespace SoundBoard
         #endregion
 
             #region Open About
+        /// <summary>
+        /// Opens the About view
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OpenAbout_Executed(object sender, EventArgs e)
         {
             AboutView view = new AboutView(this);
@@ -797,10 +886,25 @@ namespace SoundBoard
         #endregion
 
             #region Exit
+        /// <summary>
+        /// Closes the application, saves volume state beforehand
+        /// </summary>
+        /// <param name="sender"></param>
         private void ExitCommand_Executed(object sender)
         {
             SoundBoard.Properties.Settings.Default.Save();
             Application.Current.Shutdown();
+        }
+        #endregion
+
+        #region Test
+        /// <summary>
+        /// Test command, do anything here
+        /// </summary>
+        /// <param name="param"></param>
+        private void TestCommand_Executed(object param)
+        {
+
         }
         #endregion
 
