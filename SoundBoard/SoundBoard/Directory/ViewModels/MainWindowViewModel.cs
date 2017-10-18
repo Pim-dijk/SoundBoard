@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.ComponentModel;
 using SoundBoard.Views;
+using VideoLibrary;
 
 namespace SoundBoard
 {
@@ -26,7 +27,7 @@ namespace SoundBoard
         private MediaPlayer mediaPlayer = new MediaPlayer();
 
         //Create new instance of the MediaElement for audio/video stream playback
-        private MediaElement streamPlayer = new MediaElement();
+        private MediaPlayer streamPlayer = new MediaPlayer();
 
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
@@ -222,7 +223,7 @@ namespace SoundBoard
 
         #region Methods
 
-            #region Get files
+        #region Get files
         /// <summary>
         /// Method to get the files from the directory
         /// </summary>
@@ -252,7 +253,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Add Audio files
+        #region Add Audio files
         public void AddAudioFiles(string[] files)
         {
             string[] sounds = files;
@@ -282,7 +283,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region FindImage
+        #region FindImage
         /// <summary>
         /// Try to find an image with the same name as the file
         /// </summary>
@@ -310,7 +311,7 @@ namespace SoundBoard
         }
         #endregion
         
-            #region BitmapConverter
+        #region BitmapConverter
         /// <summary>
         /// Convert a given image to a bitmap image to release it's source for other uses
         /// </summary>
@@ -349,7 +350,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Application closing
+        #region Application closing
         /// <summary>
         /// When the application closes, save the status of the volume
         /// </summary>
@@ -366,7 +367,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Write status entry
+        #region Write status entry
         /// <summary>
         /// A listview for status message updates
         /// </summary>
@@ -380,7 +381,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Initialize watcher
+        #region Initialize watcher
         private void InitializeWatcher()
         {
             //Folder watcher event handler
@@ -392,10 +393,47 @@ namespace SoundBoard
             //this event will check for any deletion of file in the watching folder
             fs.Deleted += new FileSystemEventHandler(fs_Deleted);
         }
-        #endregion
+    #endregion
+
+        #region Save link to folder
+        private async void SaveVideoToDisk(string link)
+        {
+                await Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        //Temporarely disable the folderwatch feature
+                        FolderWatch = false;
+
+                        var youTube = YouTube.Default; //starting point for YouTube actions
+                        var video = youTube.GetVideo(link); //gets a video object with information about the video
+                        string fileExt = video.Format.ToString(); //Sets the correct fileformat
+                        if (!fileExt.StartsWith(".")) //adds a dot before the extension
+                            fileExt = "." + fileExt;
+                        var output = DefaultDirectory + video.FullName;
+                        if (!output.EndsWith(fileExt))
+                            output += fileExt;
+                        //Write the data to the disk
+                        File.WriteAllBytes(output, video.GetBytes());
+                        //Create a new SoundViewItem for the added file
+                        String[] filePath = new String[] { DefaultDirectory + video.FullName };
+                        AddAudioFiles(filePath);
+                        AddImage(filePath);
+                    }
+                    catch
+                    {
+                        WriteStatusEntry("Error getting file from url, file is possibly download protected");
+                    }
+
+                }).ContinueWith((t2) =>
+                {
+                    //Re-enable the folderwatch feature
+                    FolderWatch = true;
+                });
+        }
         #endregion
 
-        #region Command Initialization
+        #endregion
 
         #region Initialize Collections
         /// <summary>
@@ -406,31 +444,44 @@ namespace SoundBoard
             StatusListView = new ObservableCollection<string>();
         }
         #endregion
-        
-            #region Command Initialization
-        //public CommandBase PlaySound { get; set; }
-        public RelayCommand PlaySound { get; set; }
-        public RelayCommand StopSound { get; set; }
-        public CommandBase ChangeDefaultDirectory { get; set; }
-        public RelayCommand AddSound { get; set; }
-        public RelayCommand ExitCommand { get; set; }
-        public RelayCommand AddFolder { get; set; }
-        public RelayCommand RefreshFiles { get; set; }
-        public RelayCommand RemoveSound { get; set; }
-        public RelayCommand MuteSound { get; set; }
-        public RelayCommand DeleteSound { get; set; }
-        public RelayCommand AddImage { get; set; }
-        public RelayCommand RemoveImage { get; set; }
-        public CommandBase OpenAbout { get; set; }
-        public RelayCommand ChangeSoundNameSaved { get; set; }
-        public RelayCommand OpenChangeName { get; set; }
-        public RelayCommand AddStream { get; set; }
-        public RelayCommand TestCommand { get; set; }
-        public RelayCommand ToggleFolderWatch { get; set; }
+
+        #region Command Initialization
+
+        #region Command Initialization
+
+            #region Sound control
+            public RelayCommand PlaySound { get; set; }
+            public RelayCommand StopSound { get; set; }
+            public RelayCommand MuteSound { get; set; }
+            #endregion
+
+            #region Collection
+            public RelayCommand AddSound { get; set; }
+            public RelayCommand AddFolder { get; set; }
+            public RelayCommand RefreshFiles { get; set; }
+            public RelayCommand RemoveSound { get; set; }
+            public RelayCommand DeleteSound { get; set; }
+            public RelayCommand AddImage { get; set; }
+            public RelayCommand RemoveImage { get; set; }
+            public RelayCommand ChangeSoundNameSaved { get; set; }
+            public RelayCommand OpenChangeName { get; set; }
+            public RelayCommand AddStream { get; set; }
+            #endregion
+
+            #region Application
+            public CommandBase ChangeDefaultDirectory { get; set; }
+            public RelayCommand ExitCommand { get; set; }
+            public CommandBase OpenAbout { get; set; }
+            public RelayCommand ToggleFolderWatch { get; set; }
+            #endregion
+
+            #region Test
+            public RelayCommand TestCommand { get; set; }
+            #endregion
 
         #endregion
 
-            #region Initialize Commands
+        #region Initialize Commands
         private void InitializeCommands()
         {
             //PlaySound = new CommandBase(PlaySound_Executed);
@@ -454,12 +505,14 @@ namespace SoundBoard
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
         }
         #endregion
-        
+
         #endregion
 
         #region Command Execution
 
-            #region Play Sound
+        #region Sound Controls
+
+        #region Play Sound
         /// <summary>
         /// executes the play sound command
         /// </summary>
@@ -505,7 +558,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region timer
+        #region timer
         /// <summary>
         /// Timer that shows the current and total time of the playing sound
         /// </summary>
@@ -528,7 +581,7 @@ namespace SoundBoard
         }
         #endregion  
 
-            #region Stop
+        #region Stop
         /// <summary>
         /// Stop playing the current sound
         /// </summary>
@@ -547,7 +600,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Mute
+        #region Mute
         /// <summary>
         /// Mute or unmute the sound
         /// </summary>
@@ -566,52 +619,11 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Change Directory
-        /// <summary>
-        /// Used to change the default directory
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void ChangeDefaultDirectory_Executed(object sender, EventArgs e)
-        {
-            System.Windows.Forms.FolderBrowserDialog pathSave = new System.Windows.Forms.FolderBrowserDialog();
-
-            //If the config is empty set browser dialog path to...
-            if(string.IsNullOrEmpty(DefaultDirectory))
-            {
-                pathSave.SelectedPath = @"C:\Temp";
-            }
-            else
-            {
-                pathSave.SelectedPath = DefaultDirectory;
-            }
-
-            //If result is ok...
-            if(pathSave.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                await Task.Factory.StartNew(() =>
-                {
-                    WriteStatusEntry("Changing directory...");
-                    //Set default directory to the newly selected folder
-                    DefaultDirectory = pathSave.SelectedPath.ToString() + "\\";
-
-                    //Save the default directory to the config file
-                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    config.AppSettings.Settings["DefaultDirectory"].Value = DefaultDirectory;
-                    config.Save(ConfigurationSaveMode.Modified);
-                    ConfigurationManager.RefreshSection("appSettings");
-                    WriteStatusEntry("Retreving files from new directory...");
-                    GetFiles();
-
-                }).ContinueWith((t2) =>
-                {
-                    WriteStatusEntry("Directory changed, contents updated.");
-                });
-            }
-        }
         #endregion
 
-            #region Add Sound
+        #region File Collection
+
+        #region Add Sound
         /// <summary>
         /// Open filedialog and add the selected file to the Songs collection
         /// </summary>
@@ -634,13 +646,13 @@ namespace SoundBoard
         #region Add stream // needs work
         public void AddStream_Executed(object param)
         {
-            Uri uri = new Uri("https://www.youtube.com/v/UmUVXOXiLeM", UriKind.Absolute);
-            streamPlayer.Source = uri;
-            streamPlayer.Play();
+            string link = "https://www.youtube.com/watch?v=u05HbfkoFQI";
+            link = link.Replace("https", "http");
+            SaveVideoToDisk(link);
         }
         #endregion
 
-            #region Add Folder
+        #region Add Folder
         /// <summary>
         /// Open folderdialog and add all found files to the collection
         /// </summary>
@@ -679,7 +691,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Add Image
+        #region Add Image
         /// <summary>
         /// Add image to the sound that requested it
         /// </summary>
@@ -733,7 +745,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Open Change Name
+        #region Open Change Name
         /// <summary>
         /// Opens the change name view
         /// </summary>
@@ -763,7 +775,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Change file name
+        #region Change file name
         /// <summary>
         /// Save the new name to the file
         /// </summary>
@@ -819,7 +831,7 @@ namespace SoundBoard
         }
         #endregion 
 
-            #region Refresh list
+        #region Refresh list
         /// <summary>
         /// Refresh the list of sounds, full check of the directory
         /// </summary>
@@ -837,7 +849,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Remove Sound
+        #region Remove Sound
         /// <summary>
         /// Remove the sound as sender from the collection of SoundViewModels
         /// </summary>
@@ -874,7 +886,7 @@ namespace SoundBoard
                 //Remove the sound from the list
                 RemoveSound_Executed(param);
 
-                //Remove the file from the directory
+                //Remove the sound file from the directory
                 var item = param as string;
                 var file = DefaultDirectory + item;
                 if (FileSystem.FileExists(file))
@@ -882,15 +894,67 @@ namespace SoundBoard
                     FileSystem.DeleteFile(file);
                     WriteStatusEntry("File '" + item + "' deleted from directory");
                 }
+
+                //Remove image associated with the sound aswell
+
             }
             else
             {
                 WriteStatusEntry("Deletion cancelled");
             }
         }
+    #endregion
+
+        #endregion
+        
+        #region Application
+
+        #region Change Directory
+        /// <summary>
+        /// Used to change the default directory
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ChangeDefaultDirectory_Executed(object sender, EventArgs e)
+        {
+            System.Windows.Forms.FolderBrowserDialog pathSave = new System.Windows.Forms.FolderBrowserDialog();
+
+            //If the config is empty set browser dialog path to...
+            if (string.IsNullOrEmpty(DefaultDirectory))
+            {
+                pathSave.SelectedPath = @"C:\Temp";
+            }
+            else
+            {
+                pathSave.SelectedPath = DefaultDirectory;
+            }
+
+            //If result is ok...
+            if (pathSave.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                await Task.Factory.StartNew(() =>
+                {
+                    WriteStatusEntry("Changing directory...");
+                    //Set default directory to the newly selected folder
+                    DefaultDirectory = pathSave.SelectedPath.ToString() + "\\";
+
+                    //Save the default directory to the config file
+                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                    config.AppSettings.Settings["DefaultDirectory"].Value = DefaultDirectory;
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("appSettings");
+                    WriteStatusEntry("Retreving files from new directory...");
+                    GetFiles();
+
+                }).ContinueWith((t2) =>
+                {
+                    WriteStatusEntry("Directory changed, contents updated.");
+                });
+            }
+        }
         #endregion
 
-            #region Folder watch
+        #region Folder watch
         private void ToggleFolderWatch_Executed(object param)
         {
             if (FolderWatch == false)
@@ -898,19 +962,19 @@ namespace SoundBoard
                 FolderWatch = true;
                 fs.EnableRaisingEvents = true;
                 fs.IncludeSubdirectories = false;
-                WriteStatusEntry("Watching folder for changes: " + FolderWatch.ToString());
+                WriteStatusEntry("Started watching folder for changes.");
             }
             else
             {
                 FolderWatch = false;
                 fs.EnableRaisingEvents = false;
                 fs.IncludeSubdirectories = false;
-                WriteStatusEntry("Watching folder for changes: " + FolderWatch.ToString());
+                WriteStatusEntry("Stopped watching folder for changes.");
             }
         }
         #endregion
 
-            #region Open About
+        #region Open About
         /// <summary>
         /// Opens the About view
         /// </summary>
@@ -924,7 +988,7 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Exit
+        #region Exit
         /// <summary>
         /// Closes the application, saves volume state beforehand
         /// </summary>
@@ -936,6 +1000,8 @@ namespace SoundBoard
         }
         #endregion
 
+        #endregion
+        
         #region Test
         /// <summary>
         /// Test command, do anything here
@@ -950,42 +1016,54 @@ namespace SoundBoard
         #endregion
 
         #region Events
-        /// <summary>
-        /// When a file gets added to the folder
-        /// </summary>
-        /// <param name="fscreated"></param>
-        /// <param name="Eventocc"></param>
-        protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
-        {
-            //Do logic here when a file gets added to the defaultDirectory
-            try
+
+            #region New file found
+            /// <summary>
+            /// When a file gets added to the folder
+            /// </summary>
+            /// <param name="fscreated"></param>
+            /// <param name="Eventocc"></param>
+            protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
             {
-                WriteStatusEntry("Added file: " + Eventocc.Name + " to the folder.");
-                WriteStatusEntry("Refresh list under 'Edit'.");
+                //Do logic here when a file gets added to the defaultDirectory
+                try
+                {
+                    String[] item = new String[] { Eventocc.FullPath } ;
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        AddAudioFiles(item);
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    WriteStatusEntry("File could not be added to the collection.");
+                }
             }
-            catch (Exception ex)
-            {
-                WriteStatusEntry("File could not be added to the collection.");
-            }
-        }
-        
-        /// <summary>
-        /// When a file gets deleted
-        /// </summary>
-        /// <param name="fschanged"></param>
-        /// <param name="changeEvent"></param>
-        protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
-        {
-            //Do logic here when a file gets deleted from the defaultDirectory
-            try
-            {
-                WriteStatusEntry("Folder contents have been modified, refresh list.");
-            }
-            catch (Exception ex)
-            {
-                WriteStatusEntry("Something strange happened in the sounds folder.");
-            }
-        }
             #endregion
-        }
+
+            #region File got deleted
+            /// <summary>
+            /// When a file gets deleted
+            /// </summary>
+            /// <param name="fschanged"></param>
+            /// <param name="changeEvent"></param>
+            protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+            {
+                //Do logic here when a file gets deleted from the defaultDirectory
+                try
+                { 
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        RemoveSound_Executed(changeEvent.Name);
+                    }));
+                    WriteStatusEntry("Folder contents have been modified, refresh list.");
+                }
+                catch (Exception ex)
+                {
+                    WriteStatusEntry("Something strange happened in the sounds folder.");
+                }
+            }
+            #endregion
+        #endregion
+    }
 }
