@@ -34,5 +34,17 @@ namespace SoundBoard.Properties {
                 this["Volume"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool FolderWatcher {
+            get {
+                return ((bool)(this["FolderWatcher"]));
+            }
+            set {
+                this["FolderWatcher"] = value;
+            }
+        }
     }
 }

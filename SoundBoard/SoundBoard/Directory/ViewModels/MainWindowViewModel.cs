@@ -51,6 +51,14 @@ namespace SoundBoard
 
         //Name to display in the namechange dialog
         private string nameToChange { get; set; }
+
+        //Folder watch enabled/disabled
+        private bool folderWatch;
+
+        //Array of file extensions (not currently used)
+        private String[] extensions = new String[] { ".mp3", ".mp4", ".wav", ".flac", ".aac" };
+
+        private FileSystemWatcher fs;
         
         #endregion
 
@@ -165,6 +173,23 @@ namespace SoundBoard
 
         //Current name without extension
         public string NameToChange { get; set; }
+
+        //Folder watch enabled/disabled
+        public bool FolderWatch
+        {
+            get
+            {
+                return this.folderWatch;
+            }
+            set
+            {
+                if(this.folderWatch == value)
+                {
+                    return;
+                }
+                this.folderWatch = value;
+            }
+        }
         
         #endregion
 
@@ -188,6 +213,8 @@ namespace SoundBoard
             WriteStatusEntry("Application loaded");
             //Set default for timelabel
             TimeLabel = "No file selected...";
+            //Initialize folder watcher
+            InitializeWatcher();
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
         }
@@ -204,6 +231,7 @@ namespace SoundBoard
             //Get all sounds and create SoundViewModels for each
             this.Sounds = new ObservableCollection<SoundViewModel>
                 (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
+
             //Get a list of all the found images
             List<string> images = FolderContents.GetImages(DefaultDirectory);
 
@@ -219,6 +247,36 @@ namespace SoundBoard
                     item.ImagePath = image;
                     item.ImageBitMap = LoadImage(image);
                     item.HasImage = true;
+                }
+            }
+        }
+        #endregion
+
+            #region Add Audio files
+        public void AddAudioFiles(string[] files)
+        {
+            string[] sounds = files;
+
+            foreach (String sound in sounds)
+            {
+                string fileLocation = sound;
+                string fileName = FolderContents.GetFileName(sound);
+                string fileDestination = DefaultDirectory + fileName;
+
+                //Check if file already exists in the collection...
+                if (!Sounds.Any(x => x.Name == fileName))
+                {
+                    if (fileLocation != fileDestination)
+                    {
+                        FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
+                    }
+                    //If file has been succesfully moved, add it to the list.
+                    SoundViewModel s1 = new SoundViewModel(sound);
+                    Sounds.Add(s1);
+                    WriteStatusEntry("File: " + sound + " succesfully added.");
+
+                    //Check if there is an image for this file and add it
+                    FindImage(s1.NormalizedName);
                 }
             }
         }
@@ -245,12 +303,13 @@ namespace SoundBoard
                     item.ImagePath = image;
                     item.ImageBitMap = LoadImage(image);
                     item.HasImage = true;
+                    WriteStatusEntry("Image added to the sound file " + justName);
                     return;
                 }
             }
         }
         #endregion
-
+        
             #region BitmapConverter
         /// <summary>
         /// Convert a given image to a bitmap image to release it's source for other uses
@@ -272,8 +331,8 @@ namespace SoundBoard
             return bitmapImage;
         }
         #endregion
-
-            #region Read Application settings
+        
+        #region Read Application settings
         /// <summary>
         /// Read the stored application settings
         /// </summary>
@@ -286,6 +345,7 @@ namespace SoundBoard
             }
 
             Volume = SoundBoard.Properties.Settings.Default.Volume;
+            FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
         }
         #endregion
 
@@ -299,6 +359,8 @@ namespace SoundBoard
         {
             //Store the current value of Volume in the settings
             SoundBoard.Properties.Settings.Default.Volume = Volume;
+            //Store the current value of FolderWatcher in the settings
+            SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
         }
@@ -318,37 +380,19 @@ namespace SoundBoard
         }
         #endregion
 
-            #region Drop audio
-        /// <summary>
-        /// Add the files that are dropped on the application to the collection
-        /// </summary>
-        /// <param name="files">List of files that need to be added</param>
-        public void DropList_Drop(string[] files)
+            #region Initialize watcher
+        private void InitializeWatcher()
         {
-            string[] droppedFiles = files;
-            //For each selected file...
-            foreach (String sound in files)
-            {
-                //set the location of the file that has to be moved and it's destination
-                string fileLocation = sound;
-                string fileName = FolderContents.GetFileName(sound);
-                string fileDestination = DefaultDirectory + FolderContents.GetFileName(sound);
-
-                //Check if file already exists in the collection
-                if (!Sounds.Any(x => x.Name == fileName))
-                {
-                    FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
-                    //If file has been succesfully moved, add it to the list.
-                    SoundViewModel s1 = new SoundViewModel(sound);
-                    Sounds.Add(s1);
-                    //Check if there is an image for this file and add it
-                    FindImage(s1.NormalizedName);
-
-                }
-            }
+            //Folder watcher event handler
+            fs = new FileSystemWatcher(DefaultDirectory, "*.*");
+            fs.EnableRaisingEvents = FolderWatch;
+            fs.IncludeSubdirectories = false;
+            //This event will check for  new files added to the watching folder
+            fs.Created += new FileSystemEventHandler(newfile);
+            //this event will check for any deletion of file in the watching folder
+            fs.Deleted += new FileSystemEventHandler(fs_Deleted);
         }
         #endregion
-
         #endregion
 
         #region Command Initialization
@@ -382,6 +426,7 @@ namespace SoundBoard
         public RelayCommand OpenChangeName { get; set; }
         public RelayCommand AddStream { get; set; }
         public RelayCommand TestCommand { get; set; }
+        public RelayCommand ToggleFolderWatch { get; set; }
 
         #endregion
 
@@ -406,6 +451,7 @@ namespace SoundBoard
             OpenChangeName = new RelayCommand(OpenChangeName_Executed);
             AddStream = new RelayCommand(AddStream_Executed);
             TestCommand = new RelayCommand(TestCommand_Executed);
+            ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
         }
         #endregion
         
@@ -578,38 +624,9 @@ namespace SoundBoard
 
             if(ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                //For each selected file...
-                foreach (String sound in ofd.FileNames)
-                {
-                    //set the location of the file that has to be moved and it's destination
-                    string fileLocation = sound;
-                    string fileDestination = DefaultDirectory + FolderContents.GetFileName(sound);
-                    //Try to copy the file the the destination, prompt for override if necessary
-                    try
-                    {
-                        FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
-
-                        //If file has been succesfully moved, add it to the list.
-                        SoundViewModel s1 = new SoundViewModel(sound);
-
-                        //Check if file already exists in the collection
-                        if (!Sounds.Any(x => x.Name == s1.Name))
-                        {
-                            Sounds.Add(s1);
-                            //Search for same name image
-                            FindImage(s1.NormalizedName);
-                            WriteStatusEntry("File: " + sound +  " succesfully added.");
-                        }
-                        else
-                        {
-                            WriteStatusEntry("File '" + s1.Name + "' already exists.");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        DialogService.ShowErrorMessageBox(e + "");
-                    }
-                }
+                String[] files = ofd.FileNames;
+                AddAudioFiles(files);
+                WriteStatusEntry("Import completed.");
             }
         }
         #endregion
@@ -631,18 +648,19 @@ namespace SoundBoard
         private void AddFolder_Executed(object sender)
         {
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
-           
+            
             if(fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 //Create new collection
-                ObservableCollection<SoundViewModel> newSounds;
-                //Fill collection with the contents of the selected folder
+                ObservableCollection<SoundViewModel> newSounds = new ObservableCollection<SoundViewModel>();
+
+                //Add all found items with correct extension to collection
                 newSounds = new ObservableCollection<SoundViewModel>
-                 (FolderContents.GetFolderContents(fbd.SelectedPath).Select(content => new SoundViewModel(content.AudioLocation)));
-                
+                (FolderContents.GetFolderContents(fbd.SelectedPath).Select(content => new SoundViewModel(content.AudioLocation)));
+
                 //Check if the files already exist in the current collection
                 var newSound = newSounds.Where(x => !Sounds.Any(y => x.Name == y.Name));
-                if(newSound.Count() > 0)
+                if (newSound.Count() > 0)
                 {
                     foreach (var sound in newSound)
                     {
@@ -682,19 +700,19 @@ namespace SoundBoard
                 var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
                 
                 //Check if there already is an image with the same name in the folder
-                var location = DefaultDirectory + soundName;
-                List<FileInfo> list = new List<FileInfo>();
-                string[] extensions = { ".png", ".jpg", ".gif", ".bmp" };
-                foreach(string ext in extensions)
-                {
-                    list.AddRange(new DirectoryInfo(DefaultDirectory).GetFiles(soundName + ext).Where(p =>
-                    p.Extension.Equals(ext, StringComparison.CurrentCultureIgnoreCase)).ToArray());
-                }
-                foreach(var image in list)
-                {
-                    File.Delete(image.FullName);
-                    WriteStatusEntry("Existing image removed");
-                }
+                //var location = DefaultDirectory + soundName;
+                //List<FileInfo> list = new List<FileInfo>();
+                //string[] extensions = { ".png", ".jpg", ".gif", ".bmp" };
+                //foreach(string ext in extensions)
+                //{
+                //    list.AddRange(new DirectoryInfo(DefaultDirectory).GetFiles(soundName + ext).Where(p =>
+                //    p.Extension.Equals(ext, StringComparison.CurrentCultureIgnoreCase)).ToArray());
+                //}
+                //foreach(var image in list)
+                //{
+                //    File.Delete(image.FullName);
+                //    WriteStatusEntry("Existing image removed");
+                //}
 
                 //Create bitmapimage from file
                 var bitmapImage = LoadImage(ofd.FileName);
@@ -759,6 +777,7 @@ namespace SoundBoard
             var newName = NameToChange + extension;
             var sound = Sounds.Where(n => n.Name == CurrentName).First();
             var fullNewPath = DefaultDirectory + newName;
+
             //If the file has an image attached, rename it aswell
             if(sound.HasImage == true)
             {
@@ -766,6 +785,7 @@ namespace SoundBoard
                 var imageExt = Path.GetExtension(oldImageName);
                 var newPath = DefaultDirectory + NameToChange + imageExt;
                 var oldPath = sound.ImagePath;
+                sound.ImagePath = newPath;
                 File.Move(oldPath, newPath);
             }
             sound.AudioLocation = fullNewPath;
@@ -796,7 +816,6 @@ namespace SoundBoard
             {
                 WriteStatusEntry("No image found");
             }
-            
         }
         #endregion 
 
@@ -820,7 +839,7 @@ namespace SoundBoard
 
             #region Remove Sound
         /// <summary>
-        /// Remove the sound that send it from the list
+        /// Remove the sound as sender from the collection of SoundViewModels
         /// </summary>
         /// <param name="param">Name of the sound that requested it</param>
         private void RemoveSound_Executed(object param)
@@ -845,9 +864,9 @@ namespace SoundBoard
 
         #region Delete Sound // needs work
         /// <summary>
-        /// Delete the sound that requested it from the directory aswell as the list
+        /// Delete the sound that requested it from the directory aswell as the collection
         /// </summary>
-        /// <param name="param">Name of the file that requested it</param>
+        /// <param name="param">Name of the sound that requested it</param>
         private void DeleteSound_Executed(object param)
         {
             if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
@@ -867,6 +886,26 @@ namespace SoundBoard
             else
             {
                 WriteStatusEntry("Deletion cancelled");
+            }
+        }
+        #endregion
+
+            #region Folder watch
+        private void ToggleFolderWatch_Executed(object param)
+        {
+            if (FolderWatch == false)
+            {
+                FolderWatch = true;
+                fs.EnableRaisingEvents = true;
+                fs.IncludeSubdirectories = false;
+                WriteStatusEntry("Watching folder for changes: " + FolderWatch.ToString());
+            }
+            else
+            {
+                FolderWatch = false;
+                fs.EnableRaisingEvents = false;
+                fs.IncludeSubdirectories = false;
+                WriteStatusEntry("Watching folder for changes: " + FolderWatch.ToString());
             }
         }
         #endregion
@@ -909,5 +948,44 @@ namespace SoundBoard
         #endregion
 
         #endregion
-    }
+
+        #region Events
+        /// <summary>
+        /// When a file gets added to the folder
+        /// </summary>
+        /// <param name="fscreated"></param>
+        /// <param name="Eventocc"></param>
+        protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
+        {
+            //Do logic here when a file gets added to the defaultDirectory
+            try
+            {
+                WriteStatusEntry("Added file: " + Eventocc.Name + " to the folder.");
+                WriteStatusEntry("Refresh list under 'Edit'.");
+            }
+            catch (Exception ex)
+            {
+                WriteStatusEntry("File could not be added to the collection.");
+            }
+        }
+        
+        /// <summary>
+        /// When a file gets deleted
+        /// </summary>
+        /// <param name="fschanged"></param>
+        /// <param name="changeEvent"></param>
+        protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+        {
+            //Do logic here when a file gets deleted from the defaultDirectory
+            try
+            {
+                WriteStatusEntry("Folder contents have been modified, refresh list.");
+            }
+            catch (Exception ex)
+            {
+                WriteStatusEntry("Something strange happened in the sounds folder.");
+            }
+        }
+            #endregion
+        }
 }

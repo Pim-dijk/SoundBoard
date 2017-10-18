@@ -46,7 +46,7 @@ namespace SoundBoard
             
             //Specify which MainWindowViewModel you want to target, there is only one but you still need to specify it
             //the DataContext already is set to the MainWindowViewModel
-            ((MainWindowViewModel)this.DataContext).DropList_Drop(files);
+            ((MainWindowViewModel)this.DataContext).AddAudioFiles(files);
         }
     }
 }
