@@ -75,6 +75,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Vlc.DotNet.Core.Interops, Version=2.2.1.0, Culture=neutral, PublicKeyToken=84529da31f4eb963, processorArchitecture=MSIL">
+      <HintPath>..\packages\Vlc.DotNet.Core.Interops.2.2.1\lib\net45\Vlc.DotNet.Core.Interops.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -87,6 +90,9 @@
     <Compile Include="Directory\Views\AboutView.xaml.cs">
       <DependentUpon>AboutView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Directory\Views\AddStreamView.xaml.cs">
+      <DependentUpon>AddStreamView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Directory\Views\ChangeNameView.xaml.cs">
       <DependentUpon>ChangeNameView.xaml</DependentUpon>
     </Compile>
@@ -95,6 +101,10 @@
     <Page Include="Directory\Views\AboutView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Directory\Views\AddStreamView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Directory\Views\ChangeNameView.xaml">
       <SubType>Designer</SubType>

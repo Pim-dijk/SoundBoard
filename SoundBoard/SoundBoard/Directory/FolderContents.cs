@@ -28,7 +28,9 @@ namespace SoundBoard
                     || file.ToLower().EndsWith(".wmv")
                     || file.ToLower().EndsWith(".mov")
                     || file.ToLower().EndsWith(".avi")
-                    || file.ToLower().EndsWith(".mpeg4"))
+                    || file.ToLower().EndsWith(".mpeg4")
+                    || file.ToLower().EndsWith(".webm")
+                    || file.ToLower().EndsWith(".mpegps"))
                     .ToList();
                 
                 if (files.Count > 0)

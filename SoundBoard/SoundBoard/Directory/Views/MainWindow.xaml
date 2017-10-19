@@ -46,7 +46,7 @@
                         <Image Height="18" Source="/SoundBoard;component/Images/addFolderIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Add stream" Command="{Binding AddStream}" ToolTip="Add audio stream" >
+                <MenuItem Header="Add stream" Command="{Binding OpenUrl}" ToolTip="Download a audio/video file from a url" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/soundIcon.png" />
                     </MenuItem.Icon>

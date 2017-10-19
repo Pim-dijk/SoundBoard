@@ -23,17 +23,12 @@ namespace SoundBoard
     {
         #region Fields
 
+        #region Controls
         //Create new instance of the MediaPlayer for audio/video playback
         private MediaPlayer mediaPlayer = new MediaPlayer();
 
         //Create new instance of the MediaElement for audio/video stream playback
         private MediaPlayer streamPlayer = new MediaPlayer();
-
-        //Set the default folder location, want this to be changeable via application
-        private string defaultDirectory;
-
-        //Create statuslistview collection
-        private ObservableCollection<string> statusListView;
 
         //Timelabel string to display the running time
         private string timeLabel;
@@ -46,12 +41,28 @@ namespace SoundBoard
 
         //Muted boolean
         private bool muted;
+        #endregion
 
+        #region Collection
         //current name used for changing name
         private string currentName { get; set; }
 
         //Name to display in the namechange dialog
         private string nameToChange { get; set; }
+
+        //New url string
+        private string urlUri { get; set; }
+
+        //new url name
+        private string urlName { get; set; }
+        #endregion
+
+        #region Application
+        //Set the default folder location, want this to be changeable via application
+        private string defaultDirectory;
+
+        //Create statuslistview collection
+        private ObservableCollection<string> statusListView;
 
         //Folder watch enabled/disabled
         private bool folderWatch;
@@ -59,67 +70,27 @@ namespace SoundBoard
         //Array of file extensions (not currently used)
         private String[] extensions = new String[] { ".mp3", ".mp4", ".wav", ".flac", ".aac" };
 
+        //Filewatcher
         private FileSystemWatcher fs;
-        
+
+        //Restore FolderWatch
+        private bool restoreFolderWatch;
+        #endregion
+
         #endregion
 
         #region Properties
 
+        #region Controls
         //Create an accessible object to display the time in a label
         public string TimeLabel { get; set; }
-        
-        //Create a list for all the files in the folder
-        public ObservableCollection<SoundViewModel> Sounds { get; set; }
-
-        //Omit Imagesource
-        public ImageSource ImageSource { get; set; }
-        
-        //Default Directory for the application to get the files from
-        public string DefaultDirectory
-        {
-            get
-            {
-                return this.defaultDirectory;
-            }
-            set
-            {
-                if (this.defaultDirectory == value)
-                {
-                    return;
-                }
-                else
-                {
-                    this.defaultDirectory = value;
-                }
-            }
-        }
-        
-        //Status list view
-        public ObservableCollection<string> StatusListView
-        {
-            get
-            {
-                return this.statusListView;
-            }
-            private set
-            {
-                if(this.statusListView == value)
-                {
-                    return;
-                }
-                else
-                {
-                    this.statusListView = value;
-                }
-            }                           
-        }
 
         //Volume
         public double Volume
         {
             get
             {
-                if(volume == 0)
+                if (volume == 0)
                 {
                     Muted = true;
                     mediaPlayer.Volume = volume;
@@ -128,7 +99,7 @@ namespace SoundBoard
             }
             set
             {
-                if(this.volume == value)
+                if (this.volume == value)
                 {
                     return;
                 }
@@ -136,7 +107,7 @@ namespace SoundBoard
                 //Set the volume for the mediaplayer and the slider
                 this.volume = value;
                 mediaPlayer.Volume = value;
-                
+
                 //Dictates the mute button behaviour
                 if (volume == 0)
                 {
@@ -161,11 +132,59 @@ namespace SoundBoard
             }
             set
             {
-                if(this.muted == value)
+                if (this.muted == value)
                 {
                     return;
                 }
                 this.muted = value;
+            }
+        }
+        #endregion
+
+        #region Collection
+        //Create a list for all the files in the folder
+        public ObservableCollection<SoundViewModel> Sounds { get; set; }
+
+        //Omit Imagesource
+        public ImageSource ImageSource { get; set; }
+
+        //Default Directory for the application to get the files from
+        public string DefaultDirectory
+        {
+            get
+            {
+                return this.defaultDirectory;
+            }
+            set
+            {
+                if (this.defaultDirectory == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.defaultDirectory = value;
+                }
+            }
+        }
+
+        //Status list view
+        public ObservableCollection<string> StatusListView
+        {
+            get
+            {
+                return this.statusListView;
+            }
+            private set
+            {
+                if (this.statusListView == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.statusListView = value;
+                }
             }
         }
 
@@ -175,6 +194,14 @@ namespace SoundBoard
         //Current name without extension
         public string NameToChange { get; set; }
 
+        //New url Uri
+        public string UrlUri { get; set; }
+
+        //New url Name
+        public string UrlName { get; set; }
+        #endregion
+
+        #region application
         //Folder watch enabled/disabled
         public bool FolderWatch
         {
@@ -184,13 +211,17 @@ namespace SoundBoard
             }
             set
             {
-                if(this.folderWatch == value)
+                if (this.folderWatch == value)
                 {
                     return;
                 }
                 this.folderWatch = value;
             }
         }
+
+        //Restore FolderWatch
+        public bool RestoreFolderWatch { get; set; }
+        #endregion
         
         #endregion
 
@@ -274,7 +305,7 @@ namespace SoundBoard
                     //If file has been succesfully moved, add it to the list.
                     SoundViewModel s1 = new SoundViewModel(sound);
                     Sounds.Add(s1);
-                    WriteStatusEntry("File: " + sound + " succesfully added.");
+                    WriteStatusEntry("File: " + fileName + " succesfully added.");
 
                     //Check if there is an image for this file and add it
                     FindImage(s1.NormalizedName);
@@ -398,38 +429,45 @@ namespace SoundBoard
         #region Save link to folder
         private async void SaveVideoToDisk(string link)
         {
-                await Task.Factory.StartNew(() =>
+            await Task.Factory.StartNew(() =>
+            {
+                try
                 {
-                    try
-                    {
-                        //Temporarely disable the folderwatch feature
-                        FolderWatch = false;
+                    //Temporarely disable the folderwatch feature
+                    RestoreFolderWatch = FolderWatch;
+                    FolderWatch = false;
 
-                        var youTube = YouTube.Default; //starting point for YouTube actions
-                        var video = youTube.GetVideo(link); //gets a video object with information about the video
-                        string fileExt = video.Format.ToString(); //Sets the correct fileformat
-                        if (!fileExt.StartsWith(".")) //adds a dot before the extension
-                            fileExt = "." + fileExt;
-                        var output = DefaultDirectory + video.FullName;
-                        if (!output.EndsWith(fileExt))
-                            output += fileExt;
-                        //Write the data to the disk
-                        File.WriteAllBytes(output, video.GetBytes());
-                        //Create a new SoundViewItem for the added file
-                        String[] filePath = new String[] { DefaultDirectory + video.FullName };
+                    var youTube = YouTube.Default; //starting point for YouTube actions
+                    var video = youTube.GetVideo(link); //gets a video object with information about the video
+                    string fileExt = video.Format.ToString(); //Sets the correct fileformat
+                    if (!fileExt.StartsWith(".")) //adds a dot before the extension
+                        fileExt = "." + fileExt;
+                    var output = DefaultDirectory + UrlName + fileExt;
+                    if (!output.EndsWith(fileExt))
+                        output += fileExt;
+
+                    //Write the data to the disk
+                    File.WriteAllBytes(output, video.GetBytes());
+                    //Create a new SoundViewItem for the added file
+                    String[] filePath = new String[] { output };
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+                    {
                         AddAudioFiles(filePath);
-                        AddImage(filePath);
-                    }
-                    catch
-                    {
-                        WriteStatusEntry("Error getting file from url, file is possibly download protected");
-                    }
-
-                }).ContinueWith((t2) =>
+                    }));
+                }
+                catch
                 {
-                    //Re-enable the folderwatch feature
-                    FolderWatch = true;
-                });
+                    WriteStatusEntry("Error getting file from url, file is possibly download protected");
+                }
+
+            }).ContinueWith((t2) =>
+            {
+                //Re-enable the folderwatch feature
+                FolderWatch = RestoreFolderWatch;
+                //Reset the url variables
+                UrlUri = "";
+                UrlName = "";
+            });
         }
         #endregion
 
@@ -465,7 +503,7 @@ namespace SoundBoard
             public RelayCommand RemoveImage { get; set; }
             public RelayCommand ChangeSoundNameSaved { get; set; }
             public RelayCommand OpenChangeName { get; set; }
-            public RelayCommand AddStream { get; set; }
+            public RelayCommand AddUrl { get; set; }
             #endregion
 
             #region Application
@@ -473,6 +511,7 @@ namespace SoundBoard
             public RelayCommand ExitCommand { get; set; }
             public CommandBase OpenAbout { get; set; }
             public RelayCommand ToggleFolderWatch { get; set; }
+            public CommandBase OpenUrl { get; set; }
             #endregion
 
             #region Test
@@ -500,9 +539,10 @@ namespace SoundBoard
             OpenAbout = new CommandBase(OpenAbout_Executed);
             ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             OpenChangeName = new RelayCommand(OpenChangeName_Executed);
-            AddStream = new RelayCommand(AddStream_Executed);
+            AddUrl = new RelayCommand(AddUrl_Executed);
             TestCommand = new RelayCommand(TestCommand_Executed);
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
+            OpenUrl = new CommandBase(OpenUrl_Executed);
         }
         #endregion
 
@@ -643,13 +683,22 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add stream // needs work
-        public void AddStream_Executed(object param)
+        #region Add stream // needs testing
+        public void OpenUrl_Executed(object sender, EventArgs e)
         {
-            string link = "https://www.youtube.com/watch?v=u05HbfkoFQI";
-            link = link.Replace("https", "http");
-            SaveVideoToDisk(link);
+            AddStreamView view = new AddStreamView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.ShowDialog();
         }
+
+        private void AddUrl_Executed(object param)
+        {
+            var urlLink = UrlUri;
+            urlLink = urlLink.Replace("https", "http");
+            SaveVideoToDisk(urlLink);
+            App.Current.Windows.OfType<AddStreamView>().First().Close();
+        }
+
         #endregion
 
         #region Add Folder
