@@ -16,14 +16,15 @@ using System.Windows.Media.Imaging;
 using System.ComponentModel;
 using SoundBoard.Views;
 using VideoLibrary;
-using Vlc;
+using MediaToolkit.Model;
+using MediaToolkit;
 
 namespace SoundBoard
 {
     public partial class MainWindowViewModel : BaseViewModel
     {
         #region Fields
-
+        
         #region Controls
         //Create new instance of the MediaPlayer for audio/video playback
         private MediaPlayer mediaPlayer = new MediaPlayer();
@@ -69,13 +70,16 @@ namespace SoundBoard
         private bool folderWatch;
 
         //Array of file extensions (not currently used)
-        private String[] extensions = new String[] { ".mp3", ".mp4", ".wav", ".flac", ".aac" };
+        private String[] extensions = new String[] { ".mp3", ".wav", ".flac", ".aac", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4" };
 
         //Filewatcher
         private FileSystemWatcher fs;
 
         //Restore FolderWatch
         private bool restoreFolderWatch;
+        #endregion
+
+        #region Test
         #endregion
 
         #endregion
@@ -443,14 +447,26 @@ namespace SoundBoard
                     string fileExt = video.Format.ToString(); //Sets the correct fileformat
                     if (!fileExt.StartsWith(".")) //adds a dot before the extension
                         fileExt = "." + fileExt;
-                    var output = DefaultDirectory + UrlName + fileExt;
+                    var output = DefaultDirectory + "Downloads\\" + UrlName + fileExt;
                     if (!output.EndsWith(fileExt))
                         output += fileExt;
 
-                    //Write the data to the disk
+                    //Write data to Downloads folder
+                    Directory.CreateDirectory(DefaultDirectory + "Downloads");
                     File.WriteAllBytes(output, video.GetBytes());
+
+                    //Convert file to .mp3
+                    var inputFile = new MediaFile { Filename = output };
+                    var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
+
+                    using (var engine = new Engine())
+                    {
+                        engine.GetMetadata(inputFile);
+                        engine.Convert(inputFile, outputFile);
+                    }
+
                     //Create a new SoundViewItem for the added file
-                    String[] filePath = new String[] { output };
+                    String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                     {
                         AddAudioFiles(filePath);
@@ -761,26 +777,11 @@ namespace SoundBoard
                 //the new imageLocation with original extention but new name
                 var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
                 
-                //Check if there already is an image with the same name in the folder
-                //var location = DefaultDirectory + soundName;
-                //List<FileInfo> list = new List<FileInfo>();
-                //string[] extensions = { ".png", ".jpg", ".gif", ".bmp" };
-                //foreach(string ext in extensions)
-                //{
-                //    list.AddRange(new DirectoryInfo(DefaultDirectory).GetFiles(soundName + ext).Where(p =>
-                //    p.Extension.Equals(ext, StringComparison.CurrentCultureIgnoreCase)).ToArray());
-                //}
-                //foreach(var image in list)
-                //{
-                //    File.Delete(image.FullName);
-                //    WriteStatusEntry("Existing image removed");
-                //}
-
                 //Create bitmapimage from file
                 var bitmapImage = LoadImage(ofd.FileName);
 
                 //Check if the image with the same name as the sound exists and add it to the SoundViewModel
-                var item = Sounds.FirstOrDefault(i => i.NormalizedName == soundName);
+                var item = Sounds.First(i => i.NormalizedName == soundName);
                 if (item != null)
                 {
                     //Move the file and rename it at the same time
@@ -788,7 +789,8 @@ namespace SoundBoard
                     //Set the imagelocation to the new image
                     item.ImageBitMap = bitmapImage;
                     item.ImagePath = newImageLocation;
-                    GetFiles();
+                    item.HasImage = true;
+
                     WriteStatusEntry("New image added");
                 }
             }
@@ -933,6 +935,13 @@ namespace SoundBoard
         {
             if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
             {
+                //Remove image associated with the sound
+                var sounds = Sounds.Where(s => s.HasImage == true && s.Name == param as string);
+                foreach(var sound in sounds)
+                {
+                    FileSystem.DeleteFile(sound.ImagePath);
+                }
+
                 //Remove the sound from the list
                 RemoveSound_Executed(param);
 
@@ -944,9 +953,6 @@ namespace SoundBoard
                     FileSystem.DeleteFile(file);
                     WriteStatusEntry("File '" + item + "' deleted from directory");
                 }
-
-                //Remove image associated with the sound aswell
-
             }
             else
             {
@@ -1067,53 +1073,63 @@ namespace SoundBoard
 
         #region Events
 
-            #region New file found
-            /// <summary>
-            /// When a file gets added to the folder
-            /// </summary>
-            /// <param name="fscreated"></param>
-            /// <param name="Eventocc"></param>
-            protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
+        #region New file found
+        /// <summary>
+        /// When a file gets added to the folder
+        /// </summary>
+        /// <param name="fscreated"></param>
+        /// <param name="Eventocc"></param>
+        protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
+        {
+            //Do logic here when a file gets added to the defaultDirectory
+            try
             {
-                //Do logic here when a file gets added to the defaultDirectory
-                try
+                String[] item = new String[] { Eventocc.FullPath } ;
+                foreach(var file in item)
                 {
-                    String[] item = new String[] { Eventocc.FullPath } ;
+                    var ext = Path.GetExtension(file);
+                    if(!extensions.Contains(ext))
+                    {
+                        WriteStatusEntry("Unsupported file added to directory");
+                        break;
+                    }
+
                     Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
                     {
                         AddAudioFiles(item);
                     }));
                 }
-                catch (Exception ex)
-                {
-                    WriteStatusEntry("File could not be added to the collection.");
-                }
             }
-            #endregion
-
-            #region File got deleted
-            /// <summary>
-            /// When a file gets deleted
-            /// </summary>
-            /// <param name="fschanged"></param>
-            /// <param name="changeEvent"></param>
-            protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+            catch (Exception ex)
             {
-                //Do logic here when a file gets deleted from the defaultDirectory
-                try
-                { 
-                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
-                    {
-                        RemoveSound_Executed(changeEvent.Name);
-                    }));
-                    WriteStatusEntry("Folder contents have been modified, refresh list.");
-                }
-                catch (Exception ex)
-                {
-                    WriteStatusEntry("Something strange happened in the sounds folder.");
-                }
+                WriteStatusEntry("File could not be added to the collection.");
             }
-            #endregion
+        }
+        #endregion
+
+        #region File got deleted
+        /// <summary>
+        /// When a file gets deleted
+        /// </summary>
+        /// <param name="fschanged"></param>
+        /// <param name="changeEvent"></param>
+        protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+        {
+            //Do logic here when a file gets deleted from the defaultDirectory
+            try
+            { 
+                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                {
+                    RemoveSound_Executed(changeEvent.Name);
+                }));
+                WriteStatusEntry("Song " + changeEvent.Name + " got removed from the folder, updated list.");
+            }
+            catch (Exception ex)
+            {
+                WriteStatusEntry("Something changed in the folder.");
+            }
+        }
+        #endregion
         #endregion
     }
 }
