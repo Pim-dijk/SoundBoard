@@ -10,7 +10,6 @@
             <Setter Property="BorderBrush" Value="DarkGoldenrod" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="Opacity" Value="0.75" />
             <Setter Property="Height" Value="90"/>
             <Setter Property="Width" Value="125" />
             <Setter Property="Margin" Value="3" />
@@ -30,6 +29,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="BorderBrush" Value="Black" />
                                 <Setter Property="Opacity" Value="1" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
@@ -46,7 +46,7 @@
                 <DataTrigger Binding="{Binding HasImage}" Value="False">
                     <Setter Property="Background">
                         <Setter.Value>
-                            <ImageBrush ImageSource="/SoundBoard;component/Images/soundIcon.png" Stretch="Uniform" Opacity="0.75" />
+                            <ImageBrush ImageSource="/SoundBoard;component/Images/soundIcon.png" Stretch="Uniform" Opacity="0.50" />
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
@@ -54,7 +54,7 @@
                 <DataTrigger Binding="{Binding HasImage}" Value="True">
                     <Setter Property="Background">
                         <Setter.Value>
-                            <ImageBrush ImageSource="{Binding Path=ImageBitMap}" Stretch="UniformToFill" Opacity="0.75" />
+                            <ImageBrush ImageSource="{Binding Path=ImageBitMap}" Stretch="UniformToFill" Opacity="0.65" />
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
@@ -131,7 +131,7 @@
             <Setter Property="Background" Value="Red" />
             <Setter Property="Height" Value="45" />
             <Setter Property="Width" Value="{Binding ElementName=Window}" />
-            <Setter Property="Margin" Value="0" />
+            <Setter Property="Margin" Value="0, 0, 0, 3" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FontSize" Value="25" />
             <Setter Property="Foreground" Value="WhiteSmoke" />
@@ -148,7 +148,7 @@
                 <Setter.Value>
                     <DropShadowEffect
                         ShadowDepth="0"
-                        Color="#FF005FFF"
+                        Color="White"
                         Opacity="1"
                         BlurRadius="5" />
                 </Setter.Value>

@@ -18,6 +18,7 @@ using SoundBoard.Views;
 using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
+using System.Speech.Synthesis;
 
 namespace SoundBoard
 {
@@ -77,6 +78,9 @@ namespace SoundBoard
 
         //Restore FolderWatch
         private bool restoreFolderWatch;
+
+        //Download progress
+        private bool downloadProgress = false;
         #endregion
 
         #region Test
@@ -226,6 +230,9 @@ namespace SoundBoard
 
         //Restore FolderWatch
         public bool RestoreFolderWatch { get; set; }
+
+        //Download Progress
+        public bool DownloadProgress { get; set; }
         #endregion
         
         #endregion
@@ -254,6 +261,11 @@ namespace SoundBoard
             InitializeWatcher();
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
+            //Start the timer 
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(1000);
+            timer.Tick += Timer_Tick;
+            timer.Start();
         }
         #endregion
 
@@ -431,17 +443,24 @@ namespace SoundBoard
         }
     #endregion
 
+        private void RunSaveCommand(string link)
+        {
+            
+        }
+
         #region Save link to folder
         private async void SaveVideoToDisk(string link)
         {
-            await Task.Factory.StartNew(() =>
+            try
             {
-                try
-                {
-                    //Temporarely disable the folderwatch feature
-                    RestoreFolderWatch = FolderWatch;
-                    FolderWatch = false;
+                //Temporarely disable the folderwatch feature
+                RestoreFolderWatch = FolderWatch;
+                FolderWatch = false;
+                DownloadProgress = true;
 
+                //Do heavy tasks here, download file and convert file
+                await Task.Factory.StartNew(async() =>
+                {
                     var youTube = YouTube.Default; //starting point for YouTube actions
                     var video = youTube.GetVideo(link); //gets a video object with information about the video
                     string fileExt = video.Format.ToString(); //Sets the correct fileformat
@@ -454,37 +473,41 @@ namespace SoundBoard
                     //Write data to Downloads folder
                     Directory.CreateDirectory(DefaultDirectory + "Downloads");
                     File.WriteAllBytes(output, video.GetBytes());
-
-                    //Convert file to .mp3
+                    
+                    //Convert file to .mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = output };
                     var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
-
                     using (var engine = new Engine())
                     {
                         engine.GetMetadata(inputFile);
+                        engine.ConvertProgressEvent += ConvertProgressEvent;
+                        engine.ConversionCompleteEvent += ConvertCompleteEvent;
                         engine.Convert(inputFile, outputFile);
                     }
-
+                //After downloading and converting is done...
+                }).ContinueWith((t2) =>
+                {
                     //Create a new SoundViewItem for the added file
                     String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
+                    //Dispatcher to add item on the same thread as the creation of the collection
                     System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                     {
                         AddAudioFiles(filePath);
                     }));
-                }
-                catch
+                }).ContinueWith((t3) =>
                 {
-                    WriteStatusEntry("Error getting file from url, file is possibly download protected");
-                }
-
-            }).ContinueWith((t2) =>
+                    //Re-enable the folderwatch feature
+                    FolderWatch = RestoreFolderWatch;
+                    DownloadProgress = false;
+                    //Reset the url variables
+                    UrlUri = "";
+                    UrlName = "";
+                });
+            }
+            catch
             {
-                //Re-enable the folderwatch feature
-                FolderWatch = RestoreFolderWatch;
-                //Reset the url variables
-                UrlUri = "";
-                UrlName = "";
-            });
+                WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+            }
         }
         #endregion
 
@@ -582,33 +605,27 @@ namespace SoundBoard
             string song = defaultDirectory + tag;
 
             //If a sound is already playing stop that one
-            var isPlaying = this.Sounds.Where(p => p.IsPlaying == true);
-            if(isPlaying.Count() > 0)
+            var isPlaying = Sounds.Where(p => p.IsPlaying == true);
+            if (isPlaying.Count() > 0)
             {
                 var stopSound = isPlaying.First<SoundViewModel>();
                 stopSound.IsPlaying = false;
             }
-
-            //Set the bool to true for the sound that is playing
-            var soundToPlay = this.Sounds.Where(s => s.Name == tag);
-            if(soundToPlay.Count() > 0)
-            {
-                var enableSound = soundToPlay.First<SoundViewModel>();
-                enableSound.IsPlaying = true;
-            }
-
             //Start playing
             try
             {
                 mediaPlayer.Open(new Uri(song));
                 mediaPlayer.Play();
-
-                DispatcherTimer timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(1);
-                timer.Tick += Timer_Tick;
-                timer.Start();
+                
+                //Set the bool to true for the sound that is playing
+                var soundToPlay = Sounds.Where(s => s.Name == tag);
+                if (soundToPlay.Count() > 0)
+                {
+                    var enableSound = soundToPlay.First<SoundViewModel>();
+                    enableSound.IsPlaying = true;
+                }
             }
-            catch(ArgumentNullException anE)
+            catch (ArgumentNullException anE)
             {
                 WriteStatusEntry(anE + "Null exception");
             }
@@ -621,7 +638,7 @@ namespace SoundBoard
         /// </summary>
         /// <param name="sender">the PlaySound_Executed command</param>
         /// <param name="e"></param>
-        void Timer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object sender, EventArgs e)
         {
             if (mediaPlayer.Source == null)
             {
@@ -633,6 +650,10 @@ namespace SoundBoard
                 if (mediaPlayer.NaturalDuration.HasTimeSpan)
                 {
                     TimeLabel = String.Format("{0} / {1}", mediaPlayer.Position.ToString(@"mm\:ss"), mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss"));
+                    if(mediaPlayer.Position == mediaPlayer.NaturalDuration.TimeSpan)
+                    {
+                        StopSound_Executed(null);
+                    }
                 }
             }
         }
@@ -654,6 +675,8 @@ namespace SoundBoard
             }
             //Stop playing
             mediaPlayer.Stop();
+            mediaPlayer.Open(null);
+            TimeLabel = "No file selected...";
         }
         #endregion
 
@@ -1063,15 +1086,50 @@ namespace SoundBoard
         /// Test command, do anything here
         /// </summary>
         /// <param name="param"></param>
-        private void TestCommand_Executed(object param)
+        private async void TestCommand_Executed(object param)
         {
+            //string tts = "This is a test string that gets spoken by the program. <3";
+            //SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
+            //ttsSynt.Speak(tts);
+            await Task.Run(() =>
+            {
+                PromptBuilder promptBuilder = new PromptBuilder();
+                promptBuilder.AppendText("Hello world");
 
+                PromptStyle promptStyle = new PromptStyle();
+                promptStyle.Volume = PromptVolume.Soft;
+                promptStyle.Rate = PromptRate.Slow;
+                promptBuilder.StartStyle(promptStyle);
+                promptBuilder.AppendText("and hello to the universe too.");
+                promptBuilder.EndStyle();
+
+                promptBuilder.AppendText("On this day, ");
+                promptBuilder.AppendTextWithHint(DateTime.Now.ToShortDateString(), SayAs.Date);
+
+                promptBuilder.AppendText(", we're gathered here to learn");
+                promptBuilder.AppendText("all", PromptEmphasis.Strong);
+                promptBuilder.AppendText("about");
+                promptBuilder.AppendTextWithHint("WPF", SayAs.SpellOut);
+
+                SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
+                speechSynthesizer.Speak(promptBuilder);
+            });
         }
         #endregion
 
         #endregion
 
         #region Events
+
+        private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
+        {
+            WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
+        }
+
+        private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
+        {
+            WriteStatusEntry("File converted successfully");
+        }
 
         #region New file found
         /// <summary>

@@ -6,12 +6,15 @@
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:SoundBoard"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
-        xmlns:Vlc="clr-namespace:Vlc.DotNet.Wpf;assembly=Vlc.DotNet.Wpf"
         mc:Ignorable="d"
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="365" Width="auto" Height="500"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
         FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+    
     <Grid>
         <!--Grid column and row definitions-->
         <Grid.RowDefinitions>
@@ -95,6 +98,8 @@
             </MenuItem>
         </Menu>
 
+        <ProgressBar x:Name="downloadProgress" Grid.Column="3" Grid.ColumnSpan="2" Visibility="{Binding DownloadProgress, Converter={StaticResource BoolToVis}, Mode=OneWay}" HorizontalAlignment="Stretch" IsIndeterminate="True" />
+        
         <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
