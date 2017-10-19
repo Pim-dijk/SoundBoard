@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.ComponentModel;
 using SoundBoard.Views;
 using VideoLibrary;
+using Vlc;
 
 namespace SoundBoard
 {
