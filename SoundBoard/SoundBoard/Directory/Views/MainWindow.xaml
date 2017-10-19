@@ -6,6 +6,7 @@
         xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
         xmlns:local="clr-namespace:SoundBoard"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
+        xmlns:Vlc="clr-namespace:Vlc.DotNet.Wpf;assembly=Vlc.DotNet.Wpf"
         mc:Ignorable="d"
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="365" Width="auto" Height="500"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
@@ -46,7 +47,7 @@
                         <Image Height="18" Source="/SoundBoard;component/Images/addFolderIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem Header="Add stream" Command="{Binding AddStream}" ToolTip="Add audio stream" >
+                <MenuItem Header="Add Url" Command="{Binding OpenUrl}" ToolTip="Download a audio/video file from a url" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/soundIcon.png" />
                     </MenuItem.Icon>
@@ -73,20 +74,20 @@
             </MenuItem>
             <!--Options-->
             <MenuItem Header="_Options">
-                <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
-                    <MenuItem.Icon>
-                        <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
                 <MenuItem Header="Folder Watch" IsCheckable="True" IsChecked="{Binding FolderWatch, Mode=OneWay}" Command="{Binding ToggleFolderWatch}" ToolTip="Listen for changes in the folder and notify the user.">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/observeIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <!--Test-->
             <MenuItem Header="_Test">
-                <MenuItem Header="Test" Command="{Binding TestCommand}" >
+                <MenuItem Header="Test" Command="{Binding TestCommand}" ToolTip="Just a test button, might not actually do anything atm." >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
                     </MenuItem.Icon>
