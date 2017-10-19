@@ -95,8 +95,6 @@
             </MenuItem>
         </Menu>
 
-        <Vlc:VlcControl x:Name="MyControl" Grid.Column="3" Grid.ColumnSpan="2"/>
-
         <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
