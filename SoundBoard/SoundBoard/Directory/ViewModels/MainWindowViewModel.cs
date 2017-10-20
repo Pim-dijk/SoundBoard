@@ -19,6 +19,7 @@ using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
 using System.Speech.Synthesis;
+using MediaToolkit.Options;
 
 namespace SoundBoard
 {
@@ -81,6 +82,9 @@ namespace SoundBoard
 
         //Download progress
         private bool downloadProgress = false;
+
+        //Convertion enabled
+        private bool convertChecked = false;
         #endregion
 
         #region Test
@@ -233,8 +237,11 @@ namespace SoundBoard
 
         //Download Progress
         public bool DownloadProgress { get; set; }
+
+        //Conversion checkbox
+        public bool ConvertChecked { get; set; }
         #endregion
-        
+
         #endregion
 
         #region Constructor
@@ -442,12 +449,7 @@ namespace SoundBoard
             fs.Deleted += new FileSystemEventHandler(fs_Deleted);
         }
     #endregion
-
-        private void RunSaveCommand(string link)
-        {
-            
-        }
-
+        
         #region Save link to folder
         private async void SaveVideoToDisk(string link)
         {
@@ -459,34 +461,62 @@ namespace SoundBoard
                 DownloadProgress = true;
 
                 //Do heavy tasks here, download file and convert file
-                await Task.Factory.StartNew(async() =>
+                await Task.Factory.StartNew(() =>
                 {
                     var youTube = YouTube.Default; //starting point for YouTube actions
                     var video = youTube.GetVideo(link); //gets a video object with information about the video
                     string fileExt = video.Format.ToString(); //Sets the correct fileformat
                     if (!fileExt.StartsWith(".")) //adds a dot before the extension
                         fileExt = "." + fileExt;
-                    var output = DefaultDirectory + "Downloads\\" + UrlName + fileExt;
+                    var output = DefaultDirectory + UrlName + fileExt;
+                    var outputD = DefaultDirectory + "Downloads\\" + UrlName + fileExt;
                     if (!output.EndsWith(fileExt))
                         output += fileExt;
 
-                    //Write data to Downloads folder
-                    Directory.CreateDirectory(DefaultDirectory + "Downloads");
-                    File.WriteAllBytes(output, video.GetBytes());
-                    
-                    //Convert file to .mp3 and place it in the folder
-                    var inputFile = new MediaFile { Filename = output };
-                    var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
-                    using (var engine = new Engine())
+                    //If it is a unsupported file extension or if the conversion is checked, save it seperately and convert to mp3
+                    if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true)
                     {
-                        engine.GetMetadata(inputFile);
-                        engine.ConvertProgressEvent += ConvertProgressEvent;
-                        engine.ConversionCompleteEvent += ConvertCompleteEvent;
-                        engine.Convert(inputFile, outputFile);
+                        WriteStatusEntry("Downloading file to disk.");
+
+                        //Write data to Downloads folder
+                        Directory.CreateDirectory(DefaultDirectory + "Downloads");
+                        File.WriteAllBytes(outputD, video.GetBytes());
+
+                        WriteStatusEntry("-----Converting-----");
+
+                        //Convert file to .mp3 and place it in the folder
+                        var inputFile = new MediaFile { Filename = outputD };
+                        var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
+                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
+                        using (var engine = new Engine())
+                        {
+                            engine.GetMetadata(inputFile);
+                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                            engine.Convert(inputFile, outputFile);
+                            engine.GetThumbnail(inputFile, outputImage, options);
+                        }
                     }
-                //After downloading and converting is done...
+                    else
+                    {
+                        WriteStatusEntry("-----Downloading file to disk.-----");
+                        
+                        //Write data to folder
+                        File.WriteAllBytes(output, video.GetBytes());
+
+                        WriteStatusEntry("-----Grabbing thumbnail-----");
+                        //Grab the thumbnail
+                        var inputFile = new MediaFile { Filename = output };
+                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
+                        using (var engine = new Engine())
+                        {
+                            engine.GetMetadata(inputFile);
+                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                            engine.GetThumbnail(inputFile, outputImage, options);
+                        }
+                    }
                 }).ContinueWith((t2) =>
                 {
+                    WriteStatusEntry("-----Conversion done-----");
                     //Create a new SoundViewItem for the added file
                     String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
                     //Dispatcher to add item on the same thread as the creation of the collection
@@ -1091,29 +1121,29 @@ namespace SoundBoard
             //string tts = "This is a test string that gets spoken by the program. <3";
             //SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
             //ttsSynt.Speak(tts);
-            await Task.Run(() =>
+
+            var inputFile = new MediaFile { Filename = @"C:\Users\Public\Music\Sample Music\Downloads\LTT - Mini Review.Mp4" };
+            var outputFile = new MediaFile { Filename = @"C:\\Users\\Public\\Music\\Sample Music\\TestConversion.mp3" };
+            var outputImage = new MediaFile { Filename = @"C:\\Users\\Public\\Music\\Sample Music\\TestConversion.jpg" };
+            await Task.Factory.StartNew(() =>
             {
-                PromptBuilder promptBuilder = new PromptBuilder();
-                promptBuilder.AppendText("Hello world");
-
-                PromptStyle promptStyle = new PromptStyle();
-                promptStyle.Volume = PromptVolume.Soft;
-                promptStyle.Rate = PromptRate.Slow;
-                promptBuilder.StartStyle(promptStyle);
-                promptBuilder.AppendText("and hello to the universe too.");
-                promptBuilder.EndStyle();
-
-                promptBuilder.AppendText("On this day, ");
-                promptBuilder.AppendTextWithHint(DateTime.Now.ToShortDateString(), SayAs.Date);
-
-                promptBuilder.AppendText(", we're gathered here to learn");
-                promptBuilder.AppendText("all", PromptEmphasis.Strong);
-                promptBuilder.AppendText("about");
-                promptBuilder.AppendTextWithHint("WPF", SayAs.SpellOut);
-
-                SpeechSynthesizer speechSynthesizer = new SpeechSynthesizer();
-                speechSynthesizer.Speak(promptBuilder);
+                DownloadProgress = true;
+                using (var engine = new Engine())
+                {
+                    var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                    engine.Convert(inputFile, outputFile);
+                    engine.GetThumbnail(inputFile, outputImage, options);
+                }
+            }).ContinueWith((t2) =>
+            {
+                DownloadProgress = false;
+                String[] files = new String[] { outputFile.Filename };
+                System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+                {
+                    AddAudioFiles(files);
+                }));
             });
+
         }
         #endregion
 
@@ -1123,12 +1153,20 @@ namespace SoundBoard
 
         private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
         {
-            WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
+            //WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
+            Console.WriteLine("\n---------\n Converting... \n----------");
+            Console.WriteLine("Bitrate: {0}", e.Bitrate);
+            Console.WriteLine("Fps: {0}", e.Fps);
+            Console.WriteLine("SizeKB: {0}", e.SizeKb);
+            Console.WriteLine("TotalDuration {0}\n", e.TotalDuration);
         }
 
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
-            WriteStatusEntry("File converted successfully");
+            //DownloadProgress = false;
+            //WriteStatusEntry("File converted successfully");
+            Console.WriteLine("\n---------\n Conversion complete! \n-----------");
+            DownloadProgress = false;
         }
 
         #region New file found

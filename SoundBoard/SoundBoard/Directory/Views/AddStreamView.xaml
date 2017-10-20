@@ -32,6 +32,10 @@
         </StackPanel>
 
 
-        <Button Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Content="Add" Command="{Binding AddUrl}" Margin="0, 3" Width="65"/>
+        <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" >
+            <Button Content="Add" Command="{Binding AddUrl}" Margin="50, 3, 15, 3" Width="65"/>
+            <CheckBox x:Name="convert" Margin="0, 8" Content="Convert to .Mp3?" IsChecked="{Binding ConvertChecked}" />
+        </StackPanel>
+        
     </Grid>
 </Window>

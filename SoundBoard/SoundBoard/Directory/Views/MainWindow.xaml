@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:SoundBoard"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         mc:Ignorable="d"
-        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="365" Width="auto" Height="500"
+        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="425" Width="auto" Height="500"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
         FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png">
 
@@ -98,9 +98,9 @@
             </MenuItem>
         </Menu>
 
-        <ProgressBar x:Name="downloadProgress" Grid.Column="3" Grid.ColumnSpan="2" Visibility="{Binding DownloadProgress, Converter={StaticResource BoolToVis}, Mode=OneWay}" HorizontalAlignment="Stretch" IsIndeterminate="True" />
-        
-        <!--Volume controls-->
+        <ProgressBar x:Name="downloadProgress" Grid.Column="4" Visibility="{Binding DownloadProgress, Converter={StaticResource BoolToVis}, Mode=OneWay}" IsIndeterminate="True" Margin="5, 0" Height="15" />
+
+            <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
             <Button x:Name="muteButton" Height="25" Width="25" Style="{StaticResource mutedButtonImage}" VerticalAlignment="Center" Command="{Binding MuteSound, Mode=TwoWay}" />
