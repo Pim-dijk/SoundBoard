@@ -27,7 +27,7 @@ namespace SoundBoard
     {
         #region Fields
         
-        #region Controls
+        #region -Controls
         //Create new instance of the MediaPlayer for audio/video playback
         private MediaPlayer mediaPlayer = new MediaPlayer();
 
@@ -47,7 +47,7 @@ namespace SoundBoard
         private bool muted;
         #endregion
 
-        #region Collection
+        #region -Collection
         //current name used for changing name
         private string currentName { get; set; }
 
@@ -61,7 +61,7 @@ namespace SoundBoard
         private string urlName { get; set; }
         #endregion
 
-        #region Application
+        #region -Application
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
@@ -81,22 +81,36 @@ namespace SoundBoard
         private bool restoreFolderWatch;
 
         //Download progress
-        private bool downloadProgress = false;
+        private bool downloadProgress = true;
 
         //Convertion enabled
         private bool convertChecked = false;
         #endregion
 
-        #region Test
+        #region -Test
         #endregion
 
         #endregion
 
         #region Properties
 
-        #region Controls
+        #region -Controls
         //Create an accessible object to display the time in a label
-        public string TimeLabel { get; set; }
+        public string TimeLabel
+        {
+            get
+            {
+                return timeLabel;
+            }
+            set
+            {
+                if(this.timeLabel == value)
+                {
+                    return;
+                }
+                this.timeLabel = value;
+            }
+        }
 
         //Volume
         public double Volume
@@ -106,8 +120,8 @@ namespace SoundBoard
                 if (volume == 0)
                 {
                     Muted = true;
-                    mediaPlayer.Volume = volume;
                 }
+                mediaPlayer.Volume = volume;
                 return volume;
             }
             set
@@ -134,7 +148,21 @@ namespace SoundBoard
         }
 
         //Restore Volume
-        public double RestoreVolume { get; set; }
+        public double RestoreVolume
+        {
+            get
+            {
+                return restoreVolume;
+            }
+            set
+            {
+                if (this.restoreVolume == value)
+                {
+                    return;
+                }
+                this.restoreVolume = value;
+            }
+        }
 
         //Muted
         public bool Muted
@@ -154,7 +182,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Collection
+        #region -Collection
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
 
@@ -214,7 +242,7 @@ namespace SoundBoard
         public string UrlName { get; set; }
         #endregion
 
-        #region application
+        #region -application
         //Folder watch enabled/disabled
         public bool FolderWatch
         {
@@ -233,13 +261,55 @@ namespace SoundBoard
         }
 
         //Restore FolderWatch
-        public bool RestoreFolderWatch { get; set; }
+        public bool RestoreFolderWatch
+        {
+            get
+            {
+                return restoreFolderWatch;
+            }
+            set
+            {
+                if(this.restoreFolderWatch == value)
+                {
+                    return;
+                }
+                this.restoreFolderWatch = value;
+            }
+        }
 
         //Download Progress
-        public bool DownloadProgress { get; set; }
+        public bool DownloadProgress
+        {
+            get
+            {
+                return downloadProgress;
+            }
+            set
+            {
+                if (this.downloadProgress == value)
+                {
+                    return;
+                }
+                this.downloadProgress = value;
+            }
+        }
 
         //Conversion checkbox
-        public bool ConvertChecked { get; set; }
+        public bool ConvertChecked
+        {
+            get
+            {
+                return convertChecked;
+            }
+            set
+            {
+                if (this.convertChecked == value)
+                {
+                    return;
+                }
+                this.convertChecked = value;
+            }
+        }
         #endregion
 
         #endregion
@@ -278,7 +348,7 @@ namespace SoundBoard
 
         #region Methods
 
-        #region Get files
+        #region -Get files
         /// <summary>
         /// Method to get the files from the directory
         /// </summary>
@@ -308,7 +378,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add Audio files
+        #region -Add Audio files
         public void AddAudioFiles(string[] files)
         {
             string[] sounds = files;
@@ -338,7 +408,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region FindImage
+        #region -FindImage
         /// <summary>
         /// Try to find an image with the same name as the file
         /// </summary>
@@ -359,14 +429,14 @@ namespace SoundBoard
                     item.ImagePath = image;
                     item.ImageBitMap = LoadImage(image);
                     item.HasImage = true;
-                    WriteStatusEntry("Image added to the sound file " + justName);
+                    WriteStatusEntry("Image added to " + justName);
                     return;
                 }
             }
         }
         #endregion
         
-        #region BitmapConverter
+        #region -BitmapConverter
         /// <summary>
         /// Convert a given image to a bitmap image to release it's source for other uses
         /// </summary>
@@ -388,7 +458,7 @@ namespace SoundBoard
         }
         #endregion
         
-        #region Read Application settings
+        #region -Read Application settings
         /// <summary>
         /// Read the stored application settings
         /// </summary>
@@ -405,7 +475,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Application closing
+        #region -Application closing
         /// <summary>
         /// When the application closes, save the status of the volume
         /// </summary>
@@ -422,7 +492,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Write status entry
+        #region -Write status entry
         /// <summary>
         /// A listview for status message updates
         /// </summary>
@@ -436,7 +506,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Initialize watcher
+        #region -Initialize watcher
         private void InitializeWatcher()
         {
             //Folder watcher event handler
@@ -450,7 +520,7 @@ namespace SoundBoard
         }
     #endregion
         
-        #region Save link to folder
+        #region -Save link to folder
         private async void SaveVideoToDisk(string link)
         {
             try
@@ -476,7 +546,7 @@ namespace SoundBoard
                     //If it is a unsupported file extension or if the conversion is checked, save it seperately and convert to mp3
                     if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true)
                     {
-                        WriteStatusEntry("Downloading file to disk.");
+                        WriteStatusEntry("-----Downloading file to disk-----");
 
                         //Write data to Downloads folder
                         Directory.CreateDirectory(DefaultDirectory + "Downloads");
@@ -541,6 +611,29 @@ namespace SoundBoard
         }
         #endregion
 
+        #region -Test
+        public void ArrangeItems(SoundViewModel droppedItem, SoundViewModel target)
+        {
+            int draggedIdx = Sounds.IndexOf(droppedItem);
+            int targetIdx = Sounds.IndexOf(target);
+
+            if(draggedIdx < targetIdx)
+            {
+                Sounds.Insert(targetIdx + 1, droppedItem);
+                Sounds.RemoveAt(draggedIdx);
+            }
+            else
+            {
+                int remIdx = draggedIdx + 1;
+                if (Sounds.Count + 1 > remIdx)
+                {
+                    Sounds.Insert(targetIdx, droppedItem);
+                    Sounds.RemoveAt(remIdx);
+                }
+            }
+        }
+        #endregion
+
         #endregion
 
         #region Initialize Collections
@@ -555,15 +648,15 @@ namespace SoundBoard
 
         #region Command Initialization
 
-        #region Command Initialization
+        #region -Command Initialization
 
-            #region Sound control
+            #region --Sound control
             public RelayCommand PlaySound { get; set; }
             public RelayCommand StopSound { get; set; }
             public RelayCommand MuteSound { get; set; }
             #endregion
 
-            #region Collection
+            #region --Collection
             public RelayCommand AddSound { get; set; }
             public RelayCommand AddFolder { get; set; }
             public RelayCommand RefreshFiles { get; set; }
@@ -576,7 +669,7 @@ namespace SoundBoard
             public RelayCommand AddUrl { get; set; }
             #endregion
 
-            #region Application
+            #region --Application
             public CommandBase ChangeDefaultDirectory { get; set; }
             public RelayCommand ExitCommand { get; set; }
             public CommandBase OpenAbout { get; set; }
@@ -584,13 +677,13 @@ namespace SoundBoard
             public CommandBase OpenUrl { get; set; }
             #endregion
 
-            #region Test
+            #region --Test
             public RelayCommand TestCommand { get; set; }
             #endregion
 
         #endregion
 
-        #region Initialize Commands
+        #region -Initialize Commands
         private void InitializeCommands()
         {
             //PlaySound = new CommandBase(PlaySound_Executed);
@@ -620,9 +713,9 @@ namespace SoundBoard
 
         #region Command Execution
 
-        #region Sound Controls
+        #region -Sound Controls
 
-        #region Play Sound
+        #region --Play Sound
         /// <summary>
         /// executes the play sound command
         /// </summary>
@@ -662,7 +755,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region timer
+        #region --timer
         /// <summary>
         /// Timer that shows the current and total time of the playing sound
         /// </summary>
@@ -689,7 +782,7 @@ namespace SoundBoard
         }
         #endregion  
 
-        #region Stop
+        #region --Stop
         /// <summary>
         /// Stop playing the current sound
         /// </summary>
@@ -710,7 +803,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Mute
+        #region --Mute
         /// <summary>
         /// Mute or unmute the sound
         /// </summary>
@@ -731,9 +824,9 @@ namespace SoundBoard
 
         #endregion
 
-        #region File Collection
+        #region -File Collection
 
-        #region Add Sound
+        #region --Add Sound
         /// <summary>
         /// Open filedialog and add the selected file to the Songs collection
         /// </summary>
@@ -753,7 +846,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add stream // needs testing
+        #region --Add stream // needs testing
         public void OpenUrl_Executed(object sender, EventArgs e)
         {
             AddStreamView view = new AddStreamView(this);
@@ -771,7 +864,7 @@ namespace SoundBoard
 
         #endregion
 
-        #region Add Folder
+        #region --Add Folder
         /// <summary>
         /// Open folderdialog and add all found files to the collection
         /// </summary>
@@ -810,7 +903,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Add Image
+        #region --Add Image
         /// <summary>
         /// Add image to the sound that requested it
         /// </summary>
@@ -850,7 +943,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Open Change Name
+        #region --Open Change Name
         /// <summary>
         /// Opens the change name view
         /// </summary>
@@ -880,7 +973,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Change file name
+        #region --Change file name
         /// <summary>
         /// Save the new name to the file
         /// </summary>
@@ -913,7 +1006,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Remove Image //needs work
+        #region --Remove Image //needs work
         private void RemoveImage_Executed(object param)
         {
             var soundName = param as string;
@@ -936,7 +1029,7 @@ namespace SoundBoard
         }
         #endregion 
 
-        #region Refresh list
+        #region --Refresh list
         /// <summary>
         /// Refresh the list of sounds, full check of the directory
         /// </summary>
@@ -954,7 +1047,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Remove Sound
+        #region --Remove Sound
         /// <summary>
         /// Remove the sound as sender from the collection of SoundViewModels
         /// </summary>
@@ -979,7 +1072,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Delete Sound // needs work
+        #region --Delete Sound // needs work
         /// <summary>
         /// Delete the sound that requested it from the directory aswell as the collection
         /// </summary>
@@ -1012,13 +1105,13 @@ namespace SoundBoard
                 WriteStatusEntry("Deletion cancelled");
             }
         }
-    #endregion
-
         #endregion
         
-        #region Application
+        #endregion
 
-        #region Change Directory
+        #region -Application
+
+        #region --Change Directory
         /// <summary>
         /// Used to change the default directory
         /// </summary>
@@ -1063,7 +1156,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Folder watch
+        #region --Folder watch
         private void ToggleFolderWatch_Executed(object param)
         {
             if (FolderWatch == false)
@@ -1083,7 +1176,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Open About
+        #region --Open About
         /// <summary>
         /// Opens the About view
         /// </summary>
@@ -1097,7 +1190,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Exit
+        #region --Exit
         /// <summary>
         /// Closes the application, saves volume state beforehand
         /// </summary>
@@ -1118,32 +1211,22 @@ namespace SoundBoard
         /// <param name="param"></param>
         private async void TestCommand_Executed(object param)
         {
-            //string tts = "This is a test string that gets spoken by the program. <3";
-            //SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
-            //ttsSynt.Speak(tts);
+            await Task.Run(() =>
+            {
+                //TTS Style
+                PromptStyle promptStyle = new PromptStyle();
+                promptStyle.Rate = PromptRate.Slow;
+                //TTS string builder
+                PromptBuilder promptBuilder = new PromptBuilder();
 
-            var inputFile = new MediaFile { Filename = @"C:\Users\Public\Music\Sample Music\Downloads\LTT - Mini Review.Mp4" };
-            var outputFile = new MediaFile { Filename = @"C:\\Users\\Public\\Music\\Sample Music\\TestConversion.mp3" };
-            var outputImage = new MediaFile { Filename = @"C:\\Users\\Public\\Music\\Sample Music\\TestConversion.jpg" };
-            await Task.Factory.StartNew(() =>
-            {
-                DownloadProgress = true;
-                using (var engine = new Engine())
-                {
-                    var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                    engine.Convert(inputFile, outputFile);
-                    engine.GetThumbnail(inputFile, outputImage, options);
-                }
-            }).ContinueWith((t2) =>
-            {
-                DownloadProgress = false;
-                String[] files = new String[] { outputFile.Filename };
-                System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-                {
-                    AddAudioFiles(files);
-                }));
+                promptBuilder.StartStyle(promptStyle);
+                promptBuilder.AppendText("Owh boy what a great program. <3");
+                promptBuilder.AppendText("Kappa!");
+                promptBuilder.EndStyle();
+                
+                SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
+                ttsSynt.Speak(promptBuilder);
             });
-
         }
         #endregion
 
@@ -1151,6 +1234,7 @@ namespace SoundBoard
 
         #region Events
 
+        #region -Conversion progress
         private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
         {
             //WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
@@ -1160,7 +1244,9 @@ namespace SoundBoard
             Console.WriteLine("SizeKB: {0}", e.SizeKb);
             Console.WriteLine("TotalDuration {0}\n", e.TotalDuration);
         }
+        #endregion
 
+        #region -Conversion Completed
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
             //DownloadProgress = false;
@@ -1168,8 +1254,9 @@ namespace SoundBoard
             Console.WriteLine("\n---------\n Conversion complete! \n-----------");
             DownloadProgress = false;
         }
+        #endregion
 
-        #region New file found
+        #region -New file found
         /// <summary>
         /// When a file gets added to the folder
         /// </summary>
@@ -1203,7 +1290,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region File got deleted
+        #region -File got deleted
         /// <summary>
         /// When a file gets deleted
         /// </summary>

@@ -22,17 +22,18 @@
             <RowDefinition Height="45" />
             <RowDefinition Height="*" MinHeight="95"/>
             <RowDefinition Height="5" />
-            <RowDefinition Height="25" />
+            <RowDefinition Height="25" MinHeight="25" />
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="2*" MinWidth="25" />
+            <ColumnDefinition Width="2*" MinWidth="25" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="2*" MinWidth="65"/>
+            <ColumnDefinition Width="1" />
         </Grid.ColumnDefinitions>
 
 
@@ -98,9 +99,10 @@
             </MenuItem>
         </Menu>
 
+        <!--ProgressBar-->
         <ProgressBar x:Name="downloadProgress" Grid.Column="4" Visibility="{Binding DownloadProgress, Converter={StaticResource BoolToVis}, Mode=OneWay}" IsIndeterminate="True" Margin="5, 0" Height="15" />
 
-            <!--Volume controls-->
+        <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
             <Button x:Name="muteButton" Height="25" Width="25" Style="{StaticResource mutedButtonImage}" VerticalAlignment="Center" Command="{Binding MuteSound, Mode=TwoWay}" />
@@ -109,14 +111,13 @@
             <Slider x:Name="volumSlider" VerticalAlignment="Center" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" Width="100" Margin="10, 0" />
         </StackPanel>
 
-
         <!--Button to stop all sounds from playing-->
         <StackPanel Grid.Row="1" Grid.ColumnSpan="7">
             <Button Style="{StaticResource stopButton}" Command="{Binding StopSound}" Content="Stop all Sounds" Background="DarkRed"/>
         </StackPanel>
 
         <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" DragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True">
+        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" DragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True" >
             <!--Items control to create a button for every item in the collection-->
             <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}" >
                 <!--Defines the template to use a wrappanel-->
@@ -183,12 +184,13 @@
 
         <!--<MediaElement x:Name="Player" Grid.Row="2" Grid.ColumnSpan="7" />-->
 
-        <GridSplitter BorderBrush="Gray" Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" BorderThickness="1" ></GridSplitter>
+        <!--Footer-->
+        <GridSplitter BorderBrush="Gray" Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" BorderThickness="1" />
         <TextBlock Background="Black" Foreground="White" Grid.Row="4" Grid.ColumnSpan="2" Text="{Binding DefaultDirectory}" FontSize="11" Padding="5" />
-        <GridSplitter Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1"/>
-        <ItemsControl Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" Padding="5"/>
-        <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1"/>
-        <Label x:Name="TimerLabel" Background="Black" Foreground="White" Grid.Row="4" Grid.Column="6" Content="{Binding TimeLabel}" ContentStringFormat="Time: {0}" HorizontalContentAlignment="Left" FontSize="11"/>
+        <GridSplitter Grid.Row="4" Grid.Column="5" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1" />
+        <ItemsControl Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" Padding="5" />
+        <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1" />
+        <Label x:Name="TimerLabel" Background="Black" Foreground="White" Grid.Row="4" Grid.Column="6" Content="{Binding TimeLabel}" ContentStringFormat="Time: {0}" HorizontalContentAlignment="Right" FontSize="11" />
     </Grid>
 
 </Window>
