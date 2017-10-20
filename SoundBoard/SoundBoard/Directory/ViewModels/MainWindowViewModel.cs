@@ -81,7 +81,7 @@ namespace SoundBoard
         private bool restoreFolderWatch;
 
         //Download progress
-        private bool downloadProgress = true;
+        private bool downloadProgress = false;
 
         //Convertion enabled
         private bool convertChecked = false;
@@ -1220,7 +1220,7 @@ namespace SoundBoard
                 PromptBuilder promptBuilder = new PromptBuilder();
 
                 promptBuilder.StartStyle(promptStyle);
-                promptBuilder.AppendText("Owh boy what a great program. <3");
+                promptBuilder.AppendText("Owh boy what a great program <3. ");
                 promptBuilder.AppendText("Kappa!");
                 promptBuilder.EndStyle();
                 
