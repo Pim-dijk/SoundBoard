@@ -6,6 +6,5 @@
 *.exe
 /bin
 /obj
-SoundBoard/SoundBoard/bin/Debug
 SoundBoard/SoundBoard/obj/Debug
 SoundBoard/.vs
