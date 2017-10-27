@@ -22,6 +22,9 @@ using MediaToolkit.Model;
 using MediaToolkit;
 using System.Speech.Synthesis;
 using MediaToolkit.Options;
+using NAudio;
+using NAudio.Wave;
+using NAudio.CoreAudioApi;
 
 #endregion
 
@@ -32,20 +35,11 @@ namespace SoundBoard
         #region Fields
         
         #region -Controls
-        //Create new instance of the MediaPlayer for audio/video playback
-        private MediaPlayer mediaPlayer = new MediaPlayer();
-
-        //Create new instance of the MediaElement for audio/video stream playback
-        private MediaPlayer streamPlayer = new MediaPlayer();
-
-        //Timelabel string to display the running time
-        private string timeLabel;
-
         //Volume control
-        private double volume;
+        private float volume;
 
         //Restore volume
-        private double restoreVolume;
+        private float restoreVolume;
 
         //Muted boolean
         private bool muted;
@@ -63,9 +57,21 @@ namespace SoundBoard
 
         //new url name
         private string urlName { get; set; }
+
+        //amount of output devices
+        private int deviceCount { get; set; }
         #endregion
 
         #region -Application
+        //Wave player
+        private WaveOut wavePlayer;
+        
+        //Audiofilereader
+        private AudioFileReader file;
+        
+        //Timelabel string to display the running time
+        private string timeLabel;
+
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
@@ -89,9 +95,13 @@ namespace SoundBoard
 
         //Convertion enabled
         private bool convertChecked = false;
+
+        //Download succes
+        private bool succes = false;
         #endregion
 
         #region -Test
+        private List<WaveOutCapabilities> devicesList;
         #endregion
 
         #endregion
@@ -117,7 +127,7 @@ namespace SoundBoard
         }
 
         //Volume
-        public double Volume
+        public float Volume
         {
             get
             {
@@ -125,7 +135,10 @@ namespace SoundBoard
                 {
                     Muted = true;
                 }
-                mediaPlayer.Volume = volume;
+                if(this.file != null)
+                {
+                    this.file.Volume = volume;
+                }
                 return volume;
             }
             set
@@ -137,7 +150,10 @@ namespace SoundBoard
 
                 //Set the volume for the mediaplayer and the slider
                 this.volume = value;
-                mediaPlayer.Volume = value;
+                if (this.file != null)
+                {
+                    this.file.Volume = volume;
+                }
 
                 //Dictates the mute button behaviour
                 if (volume == 0)
@@ -152,7 +168,7 @@ namespace SoundBoard
         }
 
         //Restore Volume
-        public double RestoreVolume
+        public float RestoreVolume
         {
             get
             {
@@ -184,6 +200,7 @@ namespace SoundBoard
                 this.muted = value;
             }
         }
+        
         #endregion
 
         #region -Collection
@@ -244,6 +261,23 @@ namespace SoundBoard
 
         //New url Name
         public string UrlName { get; set; }
+
+        //Amount of output devices
+        public int DeviceCount
+        {
+            get
+            {
+                return deviceCount;
+            }
+            set
+            {
+                if(this.deviceCount == value)
+                {
+                    return;
+                }
+                this.deviceCount = value;
+            }
+        }
         #endregion
 
         #region -application
@@ -344,9 +378,12 @@ namespace SoundBoard
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
             //Start the timer 
             DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(1000);
+            timer.Interval = TimeSpan.FromMilliseconds(250);
             timer.Tick += Timer_Tick;
             timer.Start();
+
+            GetDeviceCount();
+
         }
         #endregion
 
@@ -548,10 +585,9 @@ namespace SoundBoard
                         output += fileExt;
 
                     //If it is a unsupported file extension or if the conversion is checked, save it seperately and convert to mp3
-                    if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true)
+                    if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true && fileExt != null)
                     {
                         WriteStatusEntry("-----Downloading file to disk-----");
-
                         //Write data to Downloads folder
                         Directory.CreateDirectory(DefaultDirectory + "Downloads");
                         File.WriteAllBytes(outputD, video.GetBytes());
@@ -569,8 +605,9 @@ namespace SoundBoard
                             engine.Convert(inputFile, outputFile);
                             engine.GetThumbnail(inputFile, outputImage, options);
                         }
+                        succes = true;
                     }
-                    else
+                    else if(fileExt != null)
                     {
                         WriteStatusEntry("-----Downloading file to disk.-----");
                         
@@ -587,17 +624,30 @@ namespace SoundBoard
                             var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
                             engine.GetThumbnail(inputFile, outputImage, options);
                         }
+                        succes = true;
+                    }
+                    else
+                    {
+                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                        succes = false;
                     }
                 }).ContinueWith((t2) =>
                 {
-                    WriteStatusEntry("-----Conversion done-----");
-                    //Create a new SoundViewItem for the added file
-                    String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
-                    //Dispatcher to add item on the same thread as the creation of the collection
-                    System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+                    if(succes == true)
                     {
-                        AddAudioFiles(filePath);
-                    }));
+                        WriteStatusEntry("-----Conversion done-----");
+                        //Create a new SoundViewItem for the added file
+                        String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
+                        //Dispatcher to add item on the same thread as the creation of the collection
+                        System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+                        {
+                            AddAudioFiles(filePath);
+                        }));
+                    }
+                    else
+                    {
+                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                    }
                 }).ContinueWith((t3) =>
                 {
                     //Re-enable the folderwatch feature
@@ -606,11 +656,23 @@ namespace SoundBoard
                     //Reset the url variables
                     UrlUri = "";
                     UrlName = "";
+                    succes = false;
                 });
             }
             catch
             {
-                WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                WriteStatusEntry("Unexpected error, you could try again. Maine you'll get lucky this time.");
+            }
+        }
+        #endregion
+
+        #region Device Count
+        private void GetDeviceCount()
+        {
+            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            foreach (MMDevice device in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All))
+            {
+                Console.WriteLine("{0}, {1}", device.FriendlyName, device.State);
             }
         }
         #endregion
@@ -726,31 +788,31 @@ namespace SoundBoard
         /// <param name="param">the tag of the button, which is set with the files name + extention</param>
         private void PlaySound_Executed(object param)
         {
-            //tag is the name of the song.ext
-            //Location of the file
-            string tag = param as string;
-            string song = defaultDirectory + tag;
-
-            //If a sound is already playing stop that one
-            var isPlaying = Sounds.Where(p => p.IsPlaying == true);
-            if (isPlaying.Count() > 0)
+            //Stop any other file that was playing
+            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true);
+            if (soundToStop.Count() > 0)
             {
-                var stopSound = isPlaying.First<SoundViewModel>();
+                var stopSound = soundToStop.First<SoundViewModel>();
                 stopSound.IsPlaying = false;
+                //Cleans up the waveplayer and stops everything
+                CleanUp();
             }
+
+            //new instance of waveplayer
+            wavePlayer = new WaveOut();
+
+            //Get the model from the given param
+            var sound = Sounds.First(s => s.Name == param as string);
+            //set file with the audio location
+            file = new AudioFileReader(sound.AudioLocation);
+            
             //Start playing
             try
             {
-                mediaPlayer.Open(new Uri(song));
-                mediaPlayer.Play();
-                
-                //Set the bool to true for the sound that is playing
-                var soundToPlay = Sounds.Where(s => s.Name == tag);
-                if (soundToPlay.Count() > 0)
-                {
-                    var enableSound = soundToPlay.First<SoundViewModel>();
-                    enableSound.IsPlaying = true;
-                }
+                sound.IsPlaying = true;
+                file.Volume = volume;
+                wavePlayer.Init(file);
+                wavePlayer.Play();
             }
             catch (ArgumentNullException anE)
             {
@@ -767,24 +829,41 @@ namespace SoundBoard
         /// <param name="e"></param>
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (mediaPlayer.Source == null)
+            if (file == null)
             {
                 TimeLabel = "No file selected...";
             }
             else
             {
                 //Check if the file has a timespan before writing it to the label, otherwise throws exception
-                if (mediaPlayer.NaturalDuration.HasTimeSpan)
+                if (file != null)
                 {
-                    TimeLabel = String.Format("{0} / {1}", mediaPlayer.Position.ToString(@"mm\:ss"), mediaPlayer.NaturalDuration.TimeSpan.ToString(@"mm\:ss"));
-                    if(mediaPlayer.Position == mediaPlayer.NaturalDuration.TimeSpan)
+                    TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"mm\:ss"), file.TotalTime.ToString(@"mm\:ss"));
+                    if(file.CurrentTime == file.TotalTime)
                     {
                         StopSound_Executed(null);
                     }
                 }
             }
         }
-        #endregion  
+        #endregion
+
+        #region --CleanUp
+
+        private void CleanUp()
+        {
+            if (this.file != null)
+            {
+                this.file.Dispose();
+                this.file = null;
+            }
+            if (this.wavePlayer != null)
+            {
+                this.wavePlayer.Dispose();
+                this.wavePlayer = null;
+            }
+        }
+        #endregion
 
         #region --Stop
         /// <summary>
@@ -801,8 +880,7 @@ namespace SoundBoard
                 stopSound.IsPlaying = false;
             }
             //Stop playing
-            mediaPlayer.Stop();
-            mediaPlayer.Open(null);
+            CleanUp();
             TimeLabel = "No file selected...";
         }
         #endregion

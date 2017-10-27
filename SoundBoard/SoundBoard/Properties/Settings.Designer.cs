@@ -26,9 +26,9 @@ namespace SoundBoard.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
-        public double Volume {
+        public float Volume {
             get {
-                return ((double)(this["Volume"]));
+                return ((float)(this["Volume"]));
             }
             set {
                 this["Volume"] = value;
@@ -44,17 +44,6 @@ namespace SoundBoard.Properties {
             }
             set {
                 this["FolderWatcher"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        public global::System.Collections.Specialized.StringCollection Setting {
-            get {
-                return ((global::System.Collections.Specialized.StringCollection)(this["Setting"]));
-            }
-            set {
-                this["Setting"] = value;
             }
         }
     }

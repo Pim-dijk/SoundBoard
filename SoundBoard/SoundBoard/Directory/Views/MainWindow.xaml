@@ -90,12 +90,8 @@
                 </MenuItem>
             </MenuItem>
             <!--Test-->
-            <MenuItem Header="_Test">
-                <MenuItem Header="Test" Command="{Binding TestCommand}" ToolTip="Just a test button, might not actually do anything atm." >
-                    <MenuItem.Icon>
-                        <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
+            <MenuItem ItemsSource="{Binding DevicesCount}">
+                
             </MenuItem>
         </Menu>
 
