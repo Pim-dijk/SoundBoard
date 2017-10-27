@@ -1,4 +1,5 @@
-﻿using System;
+﻿#region using
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -9,17 +10,20 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.IO;
 using System.Configuration;
-using Microsoft.VisualBasic.FileIO;
-using SoundBoard.Services;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.ComponentModel;
+using Microsoft.VisualBasic.FileIO;
+using SoundBoard.Services;
 using SoundBoard.Views;
+//NuGet packages
 using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
 using System.Speech.Synthesis;
 using MediaToolkit.Options;
+
+#endregion
 
 namespace SoundBoard
 {
