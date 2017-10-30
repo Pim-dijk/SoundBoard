@@ -90,7 +90,7 @@
                 </MenuItem>
             </MenuItem>
             <!--Test-->
-            <MenuItem ItemsSource="{Binding DevicesCount}">
+            <MenuItem Header="Test" ToolTip="A place to put testitems.">
                 
             </MenuItem>
         </Menu>
