@@ -144,8 +144,8 @@
                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
                                 CommandParameter="{Binding Path=Name}"
                                 Tag="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}}" >
-                                <TextBlock Text="{Binding Path=NormalizedName}" Style="{StaticResource textBlockStyle}" TextWrapping="Wrap" Height="auto" />
-                                <Button.ContextMenu>
+                                <TextBlock Text="{Binding Path=NormalizedName}" Style="{StaticResource textBlockStyle}" />
+                                    <Button.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Add/Change image" 
                                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.AddImage}" 

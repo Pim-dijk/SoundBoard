@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.IO;
@@ -17,14 +15,14 @@ using Microsoft.VisualBasic.FileIO;
 using SoundBoard.Services;
 using SoundBoard.Views;
 //NuGet packages
-using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
 using System.Speech.Synthesis;
-using MediaToolkit.Options;
-using NAudio;
 using NAudio.Wave;
-using NAudio.CoreAudioApi;
+using YoutubeExplode;
+using YoutubeExplode.Models.MediaStreams;
+using System.Net;
+
 
 #endregion
 
@@ -57,6 +55,12 @@ namespace SoundBoard
 
         //new url name
         private string urlName { get; set; }
+
+        //size of the downloaded file
+        private string fileSize { get; set; }
+
+        //filesize string collection
+        private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
         #endregion
 
         #region -Application
@@ -263,7 +267,38 @@ namespace SoundBoard
         public string UrlUri { get; set; }
 
         //New url Name
-        public string UrlName { get; set; }
+        public string UrlName
+        {
+            get
+            {
+                return urlName;
+            }
+            set
+            {
+                if(this.urlName == value)
+                {
+                    return;
+                }
+                this.urlName = value;
+            }
+        }
+
+        //Filesizee
+        public string FileSize
+        {
+            get
+            {
+                return fileSize;
+            }
+            set
+            {
+                if(this.fileSize == value)
+                {
+                    return;
+                }
+                this.fileSize = value;
+            }
+        }
         #endregion
 
         #region -application
@@ -516,6 +551,7 @@ namespace SoundBoard
             Volume = SoundBoard.Properties.Settings.Default.Volume;
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
             DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
+            ConvertChecked = SoundBoard.Properties.Settings.Default.ConvertChecked;
         }
         #endregion
 
@@ -533,6 +569,8 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
             //Save the selected output device
             SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
+            //Save the converter option
+            SoundBoard.Properties.Settings.Default.ConvertChecked = ConvertChecked;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
         }
@@ -567,7 +605,7 @@ namespace SoundBoard
     #endregion
         
         #region -Save link to folder
-        private async void SaveVideoToDisk(string link)
+        private async void SaveVideoToDisk(string param)
         {
             try
             {
@@ -577,68 +615,77 @@ namespace SoundBoard
                 DownloadProgress = true;
 
                 //Do heavy tasks here, download file and convert file
-                await Task.Factory.StartNew(() =>
+                await Task.Run(async() =>
                 {
-                    var youTube = YouTube.Default; //starting point for YouTube actions
-                    var video = youTube.GetVideo(link); //gets a video object with information about the video
-                    string fileExt = video.Format.ToString(); //Sets the correct fileformat
-                    if (!fileExt.StartsWith(".")) //adds a dot before the extension
-                        fileExt = "." + fileExt;
-                    var output = DefaultDirectory + UrlName + fileExt;
-                    var outputD = DefaultDirectory + "Downloads\\" + UrlName + fileExt;
-                    if (!output.EndsWith(fileExt))
-                        output += fileExt;
+                    YoutubeClient client = new YoutubeClient(); //starting point for YouTube actions
+                    var link = param;
+                    
+                    if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
+                        linkId = link;
+                    
+                    YoutubeExplode.Models.Video video = await client.GetVideoAsync(linkId); //gets a video object with information about the video
+                    
+                    var audioStreamInfo = video.AudioStreamInfos.FirstOrDefault(); //Get the highest quality audio stream
+                    //var videoStreamInfo = video.VideoStreamInfos.FirstOrDefault(); //Get the highest quality video stream
+                    //var videoFileExt = videoStreamInfo.Container.GetFileExtension();
 
-                    //If it is a unsupported file extension or if the conversion is checked, save it seperately and convert to mp3
-                    if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true && fileExt != null)
+                    var audioFileExt = audioStreamInfo.Container.GetFileExtension(); //Get file extension
+                    if (!audioFileExt.StartsWith(".")) //If fileextension doesn't contain a dot, add it.
+                        audioFileExt = "." + audioFileExt;
+
+                    var output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
+                    var outputD = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path when converting
+
+                    FileSize = ConvertFileSizeToString(video.AudioStreamInfos.FirstOrDefault().Size); // Get the filesize 
+                    var audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
+
+                    if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
                     {
-                        WriteStatusEntry("-----Downloading file to disk-----");
-                        //Write data to Downloads folder
-                        Directory.CreateDirectory(DefaultDirectory + "Downloads");
-                        File.WriteAllBytes(outputD, video.GetBytes());
+                        WriteStatusEntry("-----Downloading audio-----");
+                        WriteStatusEntry("---File size: " + FileSize);
+                        await client.DownloadMediaStreamAsync(audioStreamInfo, outputD); //Download file to disk
 
-                        WriteStatusEntry("-----Converting-----");
-
-                        //Convert file to .mp3 and place it in the folder
-                        var inputFile = new MediaFile { Filename = outputD };
-                        var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
-                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
-                        using (var engine = new Engine())
-                        {
-                            engine.GetMetadata(inputFile);
-                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                            engine.Convert(inputFile, outputFile);
-                            engine.GetThumbnail(inputFile, outputImage, options);
-                        }
-                        succes = true;
-                    }
-                    else if(fileExt != null)
-                    {
-                        WriteStatusEntry("-----Downloading file to disk.-----");
+                        var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
                         
-                        //Write data to folder
-                        File.WriteAllBytes(output, video.GetBytes());
+                        //Convert file to.mp3 and place it in the folder
+                        var inputFile = new MediaFile { Filename = outputD }; //Set the inputfile for conversion
+                        var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
+                        var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
 
-                        WriteStatusEntry("-----Grabbing thumbnail-----");
-                        //Grab the thumbnail
-                        var inputFile = new MediaFile { Filename = output };
-                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
-                        using (var engine = new Engine())
+                        WriteStatusEntry("-----Started Converting-----");
+                        using (var engine = new Engine()) //Convert the file to .mp3 if needed
                         {
                             engine.GetMetadata(inputFile);
-                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                            engine.GetThumbnail(inputFile, outputImage, options);
+                            engine.Convert(inputFile, outputFile);
                         }
+                        WriteStatusEntry("-----Grabbing the thumbnail-----");
+                        using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            imageClient.DownloadFile(thumbnailUrl, outputImage);
+                        }
+
                         succes = true;
                     }
-                    else
+                    else //if not converting the file
                     {
-                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
-                        succes = false;
+                        WriteStatusEntry("-----Downloading audio-----");
+                        await client.DownloadMediaStreamAsync(audioStreamInfo, output); //Download file to disk
+                        WriteStatusEntry("---File size: " + FileSize);
+                        var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+                        WriteStatusEntry("-----Grabbing the thumbnail-----");
+
+                        var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
+                        var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
+                        using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            imageClient.DownloadFile(thumbnailUrl, outputImage);
+                        }
+
+                        succes = true;
                     }
                 }).ContinueWith((t2) =>
                 {
-                    if(succes == true)
+                    if(succes == true) //Only add if either of the above succeeded
                     {
                         WriteStatusEntry("-----Conversion done-----");
                         //Create a new SoundViewItem for the added file
@@ -659,8 +706,6 @@ namespace SoundBoard
                     FolderWatch = RestoreFolderWatch;
                     DownloadProgress = false;
                     //Reset the url variables
-                    UrlUri = "";
-                    UrlName = "";
                     succes = false;
                 });
             }
@@ -671,7 +716,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Output Devices
+        #region -Output Devices
         private void GetDevices()
         {
             this.Devices = new ObservableCollection<DevicesViewModel>();
@@ -686,6 +731,25 @@ namespace SoundBoard
                     device.isChecked = true;
                 }
             }
+        }
+        #endregion
+
+        #region Convert filesize to string
+        public string ConvertFileSizeToString(long value)
+        {
+            if (value == 0)
+                throw new ArgumentNullException(nameof(value));
+
+            double size = (long)value;
+            var unit = 0;
+
+            while (size >= 1024)
+            {
+                size /= 1024;
+                ++unit;
+            }
+
+            return $"{size:0.#} {Units[unit]}";
         }
         #endregion
 

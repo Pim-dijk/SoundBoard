@@ -23,6 +23,6 @@
 
         <TextBox x:Name="textField" Grid.Row="1" Grid.ColumnSpan="4" Text="{Binding Path=NameToChange, Mode=TwoWay}" Margin="15, 0, 15, 0" Height="30" FontSize="17" />
 
-        <Button Grid.Row="2" Grid.Column="0" Content="Ok" Command="{Binding ChangeSoundNameSaved}" Margin="9, 5, 0, 5" Width="45"/>
+        <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" IsDefault="True" Content="Ok" Command="{Binding ChangeSoundNameSaved}" Margin="15, 5, 0, 5" Width="45"/>
     </Grid>
 </Window>

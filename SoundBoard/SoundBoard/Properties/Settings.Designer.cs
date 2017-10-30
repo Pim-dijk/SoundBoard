@@ -58,5 +58,17 @@ namespace SoundBoard.Properties {
                 this["DeviceId"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ConvertChecked {
+            get {
+                return ((bool)(this["ConvertChecked"]));
+            }
+            set {
+                this["ConvertChecked"] = value;
+            }
+        }
     }
 }
