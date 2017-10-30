@@ -46,5 +46,17 @@ namespace SoundBoard.Properties {
                 this["FolderWatcher"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int DeviceId {
+            get {
+                return ((int)(this["DeviceId"]));
+            }
+            set {
+                this["DeviceId"] = value;
+            }
+        }
     }
 }

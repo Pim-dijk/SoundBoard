@@ -57,9 +57,6 @@ namespace SoundBoard
 
         //new url name
         private string urlName { get; set; }
-
-        //amount of output devices
-        private int deviceCount { get; set; }
         #endregion
 
         #region -Application
@@ -98,6 +95,9 @@ namespace SoundBoard
 
         //Download succes
         private bool succes = false;
+
+        //Selected device ID
+        private int deviceId;
         #endregion
 
         #region -Test
@@ -210,6 +210,9 @@ namespace SoundBoard
         //Omit Imagesource
         public ImageSource ImageSource { get; set; }
 
+        //Output Devices
+        public ObservableCollection<DevicesViewModel> Devices { get; set; }
+
         //Default Directory for the application to get the files from
         public string DefaultDirectory
         {
@@ -261,23 +264,6 @@ namespace SoundBoard
 
         //New url Name
         public string UrlName { get; set; }
-
-        //Amount of output devices
-        public int DeviceCount
-        {
-            get
-            {
-                return deviceCount;
-            }
-            set
-            {
-                if(this.deviceCount == value)
-                {
-                    return;
-                }
-                this.deviceCount = value;
-            }
-        }
         #endregion
 
         #region -application
@@ -348,6 +334,23 @@ namespace SoundBoard
                 this.convertChecked = value;
             }
         }
+
+        //Selected device ID
+        public int DeviceId
+        {
+            get
+            {
+                return deviceId;
+            }
+            set
+            {
+                if(this.deviceId == value)
+                {
+                    return;
+                }
+                deviceId = value;
+            }
+        }
         #endregion
 
         #endregion
@@ -381,9 +384,8 @@ namespace SoundBoard
             timer.Interval = TimeSpan.FromMilliseconds(250);
             timer.Tick += Timer_Tick;
             timer.Start();
-
-            GetDeviceCount();
-
+            //Get the available output devices
+            GetDevices();
         }
         #endregion
 
@@ -513,6 +515,7 @@ namespace SoundBoard
 
             Volume = SoundBoard.Properties.Settings.Default.Volume;
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
+            DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
         }
         #endregion
 
@@ -528,6 +531,8 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.Volume = Volume;
             //Store the current value of FolderWatcher in the settings
             SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
+            //Save the selected output device
+            SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
         }
@@ -666,13 +671,20 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Device Count
-        private void GetDeviceCount()
+        #region Output Devices
+        private void GetDevices()
         {
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            foreach (MMDevice device in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All))
+            this.Devices = new ObservableCollection<DevicesViewModel>();
+            for (int deviceId = 0; deviceId < WaveOut.DeviceCount; deviceId++)
             {
-                Console.WriteLine("{0}, {1}", device.FriendlyName, device.State);
+                var capabilities = WaveOut.GetCapabilities(deviceId);
+                var device = new DevicesViewModel(capabilities.ProductName, deviceId);
+                Devices.Add(device);
+                //If this is the selected device read from settings, set as selected.
+                if (deviceId == this.DeviceId)
+                {
+                    device.isChecked = true;
+                }
             }
         }
         #endregion
@@ -707,7 +719,7 @@ namespace SoundBoard
         /// status view collection
         /// </summary>
         private void InitializeCollections()
-        {
+        { 
             StatusListView = new ObservableCollection<string>();
         }
         #endregion
@@ -1346,6 +1358,10 @@ namespace SoundBoard
         /// <param name="Eventocc"></param>
         protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
         {
+            if(FolderWatch == false)
+            {
+                return;
+            }
             //Do logic here when a file gets added to the defaultDirectory
             try
             {

@@ -53,7 +53,7 @@
                 </MenuItem>
                 <MenuItem Header="Add Url" Command="{Binding OpenUrl}" ToolTip="Download a audio/video file from a url" >
                     <MenuItem.Icon>
-                        <Image Height="18" Source="/SoundBoard;component/Images/soundIcon.png" />
+                        <Image Height="18" Source="/SoundBoard;component/Images/addUrlIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -78,11 +78,25 @@
             </MenuItem>
             <!--Options-->
             <MenuItem Header="_Options">
-                <MenuItem Header="Folder Watch" IsCheckable="True" IsChecked="{Binding FolderWatch, Mode=OneWay}" Command="{Binding ToggleFolderWatch}" ToolTip="Listen for changes in the folder and notify the user.">
+                <MenuItem Header="Output Devices" ItemsSource="{Binding Devices}" ToolTip="Select the output device.">
+                    <MenuItem.Icon>
+                        <Image Height="22" Source="/SoundBoard;component/Images/deviceIcon.png" />
+                    </MenuItem.Icon>
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Header" Value="{Binding Path=deviceName}"/>
+                            <Setter Property="Command" Value="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.SelectOutput}" />
+                            <Setter Property="CommandParameter" Value="{Binding Path=deviceId}" />
+                            <Setter Property="IsChecked" Value="{Binding Path=isChecked}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                <MenuItem Header="Folder Watch" IsCheckable="True" IsChecked="{Binding FolderWatch, Mode=OneWay}" Command="{Binding ToggleFolderWatch}" ToolTip="Listen for changes in the folder and take action accordingly.">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/observeIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <Separator/>
                 <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
