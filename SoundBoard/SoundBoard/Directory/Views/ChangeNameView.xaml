@@ -5,24 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SoundBoard.Views"
         mc:Ignorable="d"
-        Title="Change name dialog" Icon="/SoundBoard;component/Images/musicIcon.png"  Height="150" Width="300" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="11" >
-    <Grid Margin="15">
+        Title="Change name dialog" Icon="/SoundBoard;component/Images/musicIcon.png"  Height="150" Width="300" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" >
+    <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.ColumnSpan="4" Text="Change the name to:" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock Text="Change the name to:" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10"/>
 
-        <TextBox x:Name="textField" Grid.Row="1" Grid.ColumnSpan="4" Text="{Binding Path=NameToChange, Mode=TwoWay}" Margin="15, 0, 15, 0" Height="30" FontSize="17" />
+        <TextBox x:Name="textField" Grid.Row="1" Text="{Binding Path=NameToChange, Mode=TwoWay}" Margin="15, 0, 15, 0" Height="30" FontSize="17" />
 
-        <Button Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left" IsDefault="True" Content="Ok" Command="{Binding ChangeSoundNameSaved}" Margin="15, 5, 0, 5" Width="45"/>
+        <Button Grid.Row="2" HorizontalAlignment="Center" IsDefault="True" Content="Change"  Width="auto" Margin="0, 0, 0, 7" Padding="5, 2" Command="{Binding ChangeSoundNameSaved}" />
     </Grid>
 </Window>

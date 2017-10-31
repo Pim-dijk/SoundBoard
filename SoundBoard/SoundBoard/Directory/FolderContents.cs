@@ -21,8 +21,6 @@ namespace SoundBoard
                 var files = Directory.EnumerateFiles(defaultDirectory).Where
                     (file => file.ToLower().EndsWith(".mp3") //audio formats
                     || file.ToLower().EndsWith(".wav")
-                    || file.ToLower().EndsWith(".aac")
-                    || file.ToLower().EndsWith(".flac")
                     || file.ToLower().EndsWith(".mp4") //start of video formats
                     || file.ToLower().EndsWith(".flv")
                     || file.ToLower().EndsWith(".wmv")
