@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:SoundBoard"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         mc:Ignorable="d"
-        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="425" Width="671" Height="450"
+        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="425" Width="689" Height="450"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
         FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png">
 

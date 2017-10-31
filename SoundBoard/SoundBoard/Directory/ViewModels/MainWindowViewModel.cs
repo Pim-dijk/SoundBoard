@@ -838,10 +838,11 @@ namespace SoundBoard
             public RelayCommand ExitCommand { get; set; }
             public CommandBase OpenAbout { get; set; }
             public RelayCommand ToggleFolderWatch { get; set; }
+            public RelayCommand SelectOutput { get; set; }
             #endregion
 
-            #region --Test
-            public RelayCommand TestCommand { get; set; }
+        #region --Test
+        public RelayCommand TestCommand { get; set; }
             #endregion
 
         #endregion
@@ -870,6 +871,7 @@ namespace SoundBoard
             ExitCommand = new RelayCommand(ExitCommand_Executed);
             OpenAbout = new CommandBase(OpenAbout_Executed);
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
+            SelectOutput = new RelayCommand(SelectOutput_executed);
             //Test
             TestCommand = new RelayCommand(TestCommand_Executed);
         }
@@ -900,6 +902,7 @@ namespace SoundBoard
 
             //new instance of waveplayer
             wavePlayer = new WaveOut();
+            wavePlayer.DeviceNumber = DeviceId;
             
             //Start playing
             try
@@ -1343,6 +1346,20 @@ namespace SoundBoard
                     WriteStatusEntry("Directory changed, contents updated.");
                 });
             }
+        }
+        #endregion
+
+        #region --Change Output Device
+        private void SelectOutput_executed(object param)
+        {
+            //Unselect currently selected one
+            var unselect = Devices.FirstOrDefault(d => d.isChecked == true);
+            unselect.isChecked = false;
+            //Select new one
+            int deviceId = (int) param;
+            var device = Devices.Where(d => d.deviceId == deviceId).FirstOrDefault();
+            device.isChecked = true;
+            DeviceId = deviceId;
         }
         #endregion
 
