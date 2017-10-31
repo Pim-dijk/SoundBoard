@@ -79,17 +79,20 @@ namespace SoundBoard
         //Create statuslistview collection
         private ObservableCollection<string> statusListView;
 
+        //Folder watcher
+        private FileSystemWatcher fs;
+
         //Folder watch enabled/disabled
         private bool folderWatch;
 
-        //Array of file extensions (not currently used)
-        private static readonly string[] extensions = new string[] { ".mp3", ".wav", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps" };
-
-        //Filewatcher
-        private FileSystemWatcher fs;
-
         //Restore FolderWatch
         private bool restoreFolderWatch;
+
+        //Array of audio/video file extensions 
+        private static readonly string[] audioExtensions = new string[] { ".mp3", ".wav", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps" };
+
+        //Array of image file extensions
+        private static readonly string[] imageExtensions = new string[] { ".jpg", ".bmp", ".gif", ".png" };
 
         //Download progress
         private bool downloadProgress = false;
@@ -476,6 +479,7 @@ namespace SoundBoard
                     }
                     //If file has been succesfully moved, add it to the list.
                     SoundViewModel s1 = new SoundViewModel(sound);
+                    s1.AudioLocation = fileDestination;
                     Sounds.Add(s1);
                     WriteStatusEntry("File: " + fileName + " succesfully added.");
 
@@ -594,15 +598,15 @@ namespace SoundBoard
         private void InitializeWatcher()
         {
             //Folder watcher event handler
-            fs = new FileSystemWatcher(DefaultDirectory, "*.*");
-            fs.EnableRaisingEvents = FolderWatch;
-            fs.IncludeSubdirectories = false;
+            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
+            this.fs.IncludeSubdirectories = false;
             //This event will check for  new files added to the watching folder
-            fs.Created += new FileSystemEventHandler(newfile);
+            this.fs.Created += new FileSystemEventHandler(this.Newfile);
             //this event will check for any deletion of file in the watching folder
-            fs.Deleted += new FileSystemEventHandler(fs_Deleted);
+            this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            this.fs.EnableRaisingEvents = true;
         }
-    #endregion
+        #endregion
         
         #region -Save link to folder
         private async void SaveVideoToDisk(string param)
@@ -645,7 +649,7 @@ namespace SoundBoard
                     var audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
 
                     //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
-                    if (!extensions.Contains(audioFileExtLower))
+                    if (!audioExtensions.Contains(audioFileExtLower))
                     {
                         WriteStatusEntry("-----Downloading audio-----");
                         WriteStatusEntry("---File size: " + audioFileSize);
@@ -742,7 +746,7 @@ namespace SoundBoard
                 var capabilities = WaveOut.GetCapabilities(deviceId);
                 var device = new DevicesViewModel(capabilities.ProductName, deviceId);
                 Devices.Add(device);
-                //If this is the selected device read from settings, set as selected.
+                //If this is the selected device read from app settings, set it as selected.
                 if (deviceId == this.DeviceId)
                 {
                     device.isChecked = true;
@@ -896,15 +900,14 @@ namespace SoundBoard
 
             //new instance of waveplayer
             wavePlayer = new WaveOut();
-
-            //Get the model from the given param
-            var sound = Sounds.First(s => s.Name == param as string);
-            //set file with the audio location
-            file = new AudioFileReader(sound.AudioLocation);
             
             //Start playing
             try
             {
+                //Get the model from the given param
+                var sound = Sounds.First(s => s.Name == param as string);
+                //set file with the audio location
+                file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
                 file.Volume = volume;
                 wavePlayer.Init(file);
@@ -913,6 +916,10 @@ namespace SoundBoard
             catch (ArgumentNullException anE)
             {
                 WriteStatusEntry(anE + "Null exception");
+            }
+            catch (FileNotFoundException e)
+            {
+                MessageBox.Show("File could not be found." + Environment.NewLine + "Try refreshing the application to resolve.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         #endregion
@@ -1345,15 +1352,11 @@ namespace SoundBoard
             if (FolderWatch == false)
             {
                 FolderWatch = true;
-                fs.EnableRaisingEvents = true;
-                fs.IncludeSubdirectories = false;
                 WriteStatusEntry("Started watching folder for changes.");
             }
             else
             {
                 FolderWatch = false;
-                fs.EnableRaisingEvents = false;
-                fs.IncludeSubdirectories = false;
                 WriteStatusEntry("Stopped watching folder for changes.");
             }
         }
@@ -1380,7 +1383,6 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void ExitCommand_Executed(object sender)
         {
-            SoundBoard.Properties.Settings.Default.Save();
             Application.Current.Shutdown();
         }
         #endregion
@@ -1439,13 +1441,13 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -New file found
+        #region -New file found -- somehow broken
         /// <summary>
         /// When a file gets added to the folder
         /// </summary>
         /// <param name="fscreated"></param>
         /// <param name="Eventocc"></param>
-        protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
+        protected void Newfile(object fscreated, FileSystemEventArgs Eventocc)
         {
             if(FolderWatch == false)
             {
@@ -1458,16 +1460,22 @@ namespace SoundBoard
                 foreach(var file in item)
                 {
                     var ext = Path.GetExtension(file);
-                    if(!extensions.Contains(ext))
+                    if(audioExtensions.Contains(ext))
+                    {
+                        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                        {
+                            AddAudioFiles(item);
+                        }));
+                    }
+                    else if(imageExtensions.Contains(ext))
+                    {
+                        FindImage(Path.GetFileNameWithoutExtension(file));
+                        WriteStatusEntry("Image " + file + " was added to the folder");
+                    }
+                    else
                     {
                         WriteStatusEntry("Unsupported file added to directory");
-                        break;
                     }
-
-                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
-                    {
-                        AddAudioFiles(item);
-                    }));
                 }
             }
             catch (Exception ex)
@@ -1477,26 +1485,38 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -File got deleted
+        #region -File got deleted -- somehow broken
         /// <summary>
         /// When a file gets deleted
         /// </summary>
         /// <param name="fschanged"></param>
         /// <param name="changeEvent"></param>
-        protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+        protected void Fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
         {
+            var file = changeEvent.Name;
+            var ext = Path.GetExtension(file);
             //Do logic here when a file gets deleted from the defaultDirectory
             try
             {
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                if (audioExtensions.Contains(ext))
                 {
-                    RemoveSound_Executed(changeEvent.Name);
-                }));
-                WriteStatusEntry("Song " + changeEvent.Name + " got removed from the folder, updated list.");
+
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        RemoveSound_Executed(file);
+                    }));
+                }
+                else if (imageExtensions.Contains(ext))
+                {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        RemoveImage_Executed(Path.GetFileNameWithoutExtension(file));
+                    }));
+                }
             }
             catch (Exception ex)
             {
-                WriteStatusEntry("Something changed in the folder.");
+                WriteStatusEntry("Something changed in the folder. Refresh application recommended.");
             }
         }
         #endregion
