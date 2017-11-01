@@ -28,7 +28,7 @@
 
         <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" >
             <Button Content="Add" IsDefault="True" Command="{Binding AddUrl}" Margin="51, 3, 15, 3" Width="65"/>
-            <CheckBox x:Name="convert" Margin="0, 8" Content="Get video seperate?" IsChecked="{Binding ConvertChecked}" />
+            <CheckBox x:Name="convert" Margin="0, 8" Content="Get video seperate?" IsChecked="{Binding DownloadVideo}" />
         </StackPanel>
         
     </Grid>

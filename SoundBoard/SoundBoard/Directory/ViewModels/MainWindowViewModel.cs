@@ -98,7 +98,7 @@ namespace SoundBoard
         private bool downloadProgress = false;
 
         //Convertion enabled
-        private bool convertChecked = false;
+        private bool downloadVideo = false;
 
         //Download succes
         private bool succes = false;
@@ -357,19 +357,19 @@ namespace SoundBoard
         }
 
         //Conversion checkbox
-        public bool ConvertChecked
+        public bool DownloadVideo
         {
             get
             {
-                return convertChecked;
+                return downloadVideo;
             }
             set
             {
-                if (this.convertChecked == value)
+                if (this.downloadVideo == value)
                 {
                     return;
                 }
-                this.convertChecked = value;
+                this.downloadVideo = value;
             }
         }
 
@@ -460,6 +460,10 @@ namespace SoundBoard
         #endregion
 
         #region -Add Audio files
+        /// <summary>
+        /// Add one or more files to the collection
+        /// </summary>
+        /// <param name="files">array of filenames</param>
         public void AddAudioFiles(string[] files)
         {
             string[] sounds = files;
@@ -555,7 +559,7 @@ namespace SoundBoard
             Volume = SoundBoard.Properties.Settings.Default.Volume;
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
             DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
-            ConvertChecked = SoundBoard.Properties.Settings.Default.ConvertChecked;
+            DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
         }
         #endregion
 
@@ -574,7 +578,7 @@ namespace SoundBoard
             //Save the selected output device
             SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
             //Save the converter option
-            SoundBoard.Properties.Settings.Default.ConvertChecked = ConvertChecked;
+            SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
         }
@@ -594,7 +598,10 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Initialize watcher
+        #region -Initialize folder watcher
+        /// <summary>
+        /// Initialize the folderwatcher
+        /// </summary>
         private void InitializeWatcher()
         {
             //Folder watcher event handler
@@ -604,11 +611,16 @@ namespace SoundBoard
             this.fs.Created += new FileSystemEventHandler(this.Newfile);
             //this event will check for any deletion of file in the watching folder
             this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            //Enable the watcher
             this.fs.EnableRaisingEvents = true;
         }
         #endregion
         
         #region -Save link to folder
+        /// <summary>
+        /// Save an audio file from a supplied url
+        /// </summary>
+        /// <param name="param">The link url</param>
         private async void SaveVideoToDisk(string param)
         {
             try
@@ -698,7 +710,7 @@ namespace SoundBoard
                         succes = true;
                     }
 
-                    if(convertChecked == true) //Download the video aswell
+                    if(DownloadVideo == true) //Download the video aswell
                     {
                         WriteStatusEntry("-----Downloading Video-----");
                         WriteStatusEntry("---File size: " + videoFileSize + "---");
@@ -738,6 +750,9 @@ namespace SoundBoard
         #endregion
 
         #region -Output Devices
+        /// <summary>
+        /// Get all the audio output devices from the machine
+        /// </summary>
         private void GetDevices()
         {
             this.Devices = new ObservableCollection<DevicesViewModel>();
@@ -756,6 +771,11 @@ namespace SoundBoard
         #endregion
 
         #region Convert filesize to string
+        /// <summary>
+        /// Convert the filesize from bits to whatever is most suited
+        /// </summary>
+        /// <param name="value">the size in bits</param>
+        /// <returns>a string with the new filesize</returns>
         public string ConvertFileSizeToString(long value)
         {
             if (value == 0)
@@ -775,6 +795,11 @@ namespace SoundBoard
         #endregion
 
         #region -Test
+        /// <summary>
+        /// Location for a test method
+        /// </summary>
+        /// <param name="droppedItem"></param>
+        /// <param name="target"></param>
         public void ArrangeItems(SoundViewModel droppedItem, SoundViewModel target)
         {
             int draggedIdx = Sounds.IndexOf(droppedItem);
@@ -955,7 +980,9 @@ namespace SoundBoard
         #endregion
 
         #region --CleanUp
-
+        /// <summary>
+        /// Clean up the waveplayer to get rid of the last loaded file.
+        /// </summary>
         private void CleanUp()
         {
             if (this.file != null)
@@ -1035,6 +1062,11 @@ namespace SoundBoard
         #endregion
 
         #region --Add stream
+        /// <summary>
+        /// Open the AddUrl view
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void OpenUrl_Executed(object sender, EventArgs e)
         {
             if(!DownloadProgress)
@@ -1045,7 +1077,7 @@ namespace SoundBoard
             }
             else
             {
-                WriteStatusEntry("Can't add when a download is already in progress.");
+                WriteStatusEntry("Can't add stream when a download is already in progress.");
             }
         }
 
@@ -1142,7 +1174,7 @@ namespace SoundBoard
         /// <summary>
         /// Opens the change name view
         /// </summary>
-        /// <param name="param"></param>
+        /// <param name="param">The name of the file with extension</param>
         private void OpenChangeName_Executed(object param)
         {
             //Store the current name
@@ -1255,11 +1287,11 @@ namespace SoundBoard
                 try
                 {
                     Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
-                    WriteStatusEntry("File '" + sound + "' removed from the list.");
+                    WriteStatusEntry("File '" + sound + "' removed successfully.");
                 }
                 catch
                 {
-                    WriteStatusEntry("Unknown exception, please try again.");
+                    WriteStatusEntry("Unknown error, please try again.");
                 }
             }
         }
@@ -1290,7 +1322,6 @@ namespace SoundBoard
                 if (FileSystem.FileExists(file))
                 {
                     FileSystem.DeleteFile(file);
-                    WriteStatusEntry("File '" + item + "' deleted from directory");
                 }
             }
             else
@@ -1350,6 +1381,10 @@ namespace SoundBoard
         #endregion
 
         #region --Change Output Device
+        /// <summary>
+        /// Change the audio output selection
+        /// </summary>
+        /// <param name="param">The ID from the selected device</param>
         private void SelectOutput_executed(object param)
         {
             //Unselect currently selected one
@@ -1364,6 +1399,10 @@ namespace SoundBoard
         #endregion
 
         #region --Folder watch
+        /// <summary>
+        /// Toggle the folderwatch functionality
+        /// </summary>
+        /// <param name="param"></param>
         private void ToggleFolderWatch_Executed(object param)
         {
             if (FolderWatch == false)
@@ -1458,7 +1497,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -New file found -- somehow broken
+        #region -New file found
         /// <summary>
         /// When a file gets added to the folder
         /// </summary>
@@ -1502,7 +1541,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -File got deleted -- somehow broken
+        #region -File got deleted
         /// <summary>
         /// When a file gets deleted
         /// </summary>
