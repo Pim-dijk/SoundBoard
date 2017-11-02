@@ -32,7 +32,7 @@
             <ColumnDefinition Width="2*" MinWidth="25" />
             <ColumnDefinition Width="2*" MinWidth="25" />
             <ColumnDefinition Width="5" />
-            <ColumnDefinition Width="2*" MinWidth="65"/>
+            <ColumnDefinition Width="2*" MinWidth="82"/>
             <ColumnDefinition Width="1" />
         </Grid.ColumnDefinitions>
 
@@ -133,7 +133,7 @@
         </StackPanel>
 
         <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" DragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True" >
+        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" PreviewDragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True" >
             <!--Items control to create a button for every item in the collection-->
             <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}" >
                 <!--Defines the template to use a wrappanel-->

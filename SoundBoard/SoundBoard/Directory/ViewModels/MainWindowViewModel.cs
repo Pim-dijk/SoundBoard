@@ -466,6 +466,7 @@ namespace SoundBoard
         /// <param name="files">array of filenames</param>
         public void AddAudioFiles(string[] files)
         {
+            fs.EnableRaisingEvents = false;
             string[] sounds = files;
 
             foreach (String sound in sounds)
@@ -491,6 +492,7 @@ namespace SoundBoard
                     FindImage(s1.NormalizedName);
                 }
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -969,7 +971,7 @@ namespace SoundBoard
                 //Check if the file has a timespan before writing it to the label, otherwise throws exception
                 if (file != null)
                 {
-                    TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"mm\:ss"), file.TotalTime.ToString(@"mm\:ss"));
+                    TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"hh\:mm\:ss"), file.TotalTime.ToString(@"hh\:mm\:ss"));
                     if(file.CurrentTime == file.TotalTime)
                     {
                         StopSound_Executed(null);
@@ -1006,15 +1008,14 @@ namespace SoundBoard
         private void StopSound_Executed(object sender)
         {
             //If any sound is playing set the bool to false
-            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true);
-            if(soundToStop.Count() > 0)
+            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true).FirstOrDefault();
+            if(soundToStop != null)
             {
-                var stopSound = soundToStop.First<SoundViewModel>();
-                stopSound.IsPlaying = false;
+                soundToStop.IsPlaying = false;
+                //Stop playing
+                CleanUp();
+                TimeLabel = "No file selected...";
             }
-            //Stop playing
-            CleanUp();
-            TimeLabel = "No file selected...";
         }
         #endregion
 
@@ -1048,6 +1049,7 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void AddSound_Executed(object sender)
         {
+            fs.EnableRaisingEvents = false;
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
             ofd.Filter = "Mp3 files (*.mp3*)|*.mp3";
             ofd.Multiselect = true;
@@ -1058,6 +1060,7 @@ namespace SoundBoard
                 AddAudioFiles(files);
                 WriteStatusEntry("Import completed.");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -1098,6 +1101,7 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void AddFolder_Executed(object sender)
         {
+            fs.EnableRaisingEvents = false;
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
             
             if(fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -1127,6 +1131,7 @@ namespace SoundBoard
                 }
                 WriteStatusEntry("Import completed.");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -1137,6 +1142,7 @@ namespace SoundBoard
         /// <param name="param">Normalized name of the sound that send the request</param>
         private void AddImage_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             var soundName = param as string;
 
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
@@ -1147,26 +1153,35 @@ namespace SoundBoard
             {
                 //path to the selected file
                 FileInfo imageFile = new FileInfo(ofd.FileName);
+                
                 //the new imageLocation with original extention but new name
                 var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
                 
                 //Create bitmapimage from file
                 var bitmapImage = LoadImage(ofd.FileName);
 
-                //Check if the image with the same name as the sound exists and add it to the SoundViewModel
-                var item = Sounds.First(i => i.NormalizedName == soundName);
-                if (item != null)
+                try
                 {
-                    //Move the file and rename it at the same time
-                    imageFile.CopyTo(newImageLocation, true);
-                    //Set the imagelocation to the new image
-                    item.ImageBitMap = bitmapImage;
-                    item.ImagePath = newImageLocation;
-                    item.HasImage = true;
+                    //Check if the image with the same name as the sound exists and add it to the SoundViewModel
+                    var item = Sounds.First(i => i.NormalizedName == soundName);
+                    if (item != null)
+                    {
+                        //Move the file and rename it at the same time
+                        imageFile.CopyTo(newImageLocation, true);
+                        //Set the imagelocation to the new image
+                        item.ImageBitMap = bitmapImage;
+                        item.ImagePath = newImageLocation;
+                        item.HasImage = true;
 
-                    WriteStatusEntry("New image added");
+                        WriteStatusEntry("New image added");
+                    }
+                }
+                catch(IOException)
+                {
+                    WriteStatusEntry("File already assigned to this sound or in use by other program.");
                 }
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -1240,17 +1255,26 @@ namespace SoundBoard
         /// <param name="param">Name of the sound that requested it</param>
         private void RemoveImage_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             var soundName = param as string;
             var sound = Sounds.Where(s => s.HasImage == true && s.NormalizedName == soundName).FirstOrDefault();
 
-            //Delete the imagefile from the directory
-            var imageLocation = sound.ImagePath;
-            File.Delete(imageLocation);
-            //Unset the image and hasimage properties
-            sound.ImageBitMap = null;
-            sound.HasImage = false;
+            if(sound != null)
+            {
+                //Delete the imagefile from the directory
+                var imageLocation = sound.ImagePath;
+                File.Delete(imageLocation);
+                //Unset the image and hasimage properties
+                sound.ImageBitMap = null;
+                sound.HasImage = false;
 
-            WriteStatusEntry("Image removed");
+                WriteStatusEntry("Image removed");
+            }
+            else
+            {
+                WriteStatusEntry("The sound doesn't contain an image.");
+            }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion 
 
@@ -1282,18 +1306,32 @@ namespace SoundBoard
             var sound = param as string;
             var audioLocation = DefaultDirectory + sound;
             //Check if the file exists in the collection
-            if (Sounds.Any(x => x.AudioLocation == audioLocation))
+            var soundToRemove = Sounds.Where(s => s.AudioLocation == audioLocation).FirstOrDefault();
+            if(soundToRemove.IsPlaying == true)
             {
-                try
-                {
-                    Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
-                    WriteStatusEntry("File '" + sound + "' removed successfully.");
-                }
-                catch
-                {
-                    WriteStatusEntry("Unknown error, please try again.");
-                }
+                CleanUp();
             }
+            try
+            {
+                Sounds.Remove(soundToRemove);
+                WriteStatusEntry("File '" + sound + "' removed successfully.");
+            }
+            catch
+            {
+                WriteStatusEntry("Unknown error, please try again.");
+            }
+            //if (Sounds.Any(x => x.AudioLocation == audioLocation))
+            //{
+            //    try
+            //    {
+            //        Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
+            //        WriteStatusEntry("File '" + sound + "' removed successfully.");
+            //    }
+            //    catch
+            //    {
+            //        WriteStatusEntry("Unknown error, please try again.");
+            //    }
+            //}
         }
         #endregion
 
@@ -1304,6 +1342,7 @@ namespace SoundBoard
         /// <param name="param">Name of the sound that requested it</param>
         private void DeleteSound_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
             {
                 //Remove image associated with the sound
@@ -1315,6 +1354,9 @@ namespace SoundBoard
 
                 //Remove the sound from the list
                 RemoveSound_Executed(param);
+
+                //Stop playing the sound first
+                CleanUp();
 
                 //Remove the sound file from the directory
                 var item = param as string;
@@ -1328,6 +1370,7 @@ namespace SoundBoard
             {
                 WriteStatusEntry("Deletion cancelled");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
         
@@ -1475,7 +1518,7 @@ namespace SoundBoard
 
         #region Events
 
-        #region -Conversion progress -- Not used
+        #region -Conversion progress -- Not used when converting to audio
         private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
         {
             //WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
@@ -1487,7 +1530,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Conversion Completed -- Not used
+        #region -Conversion Completed -- Not used when converting to audio
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
             //DownloadProgress = false;
@@ -1549,6 +1592,11 @@ namespace SoundBoard
         /// <param name="changeEvent"></param>
         protected void Fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
         {
+            if(FolderWatch == false)
+            {
+                return;
+            }
+
             var file = changeEvent.Name;
             var ext = Path.GetExtension(file);
             //Do logic here when a file gets deleted from the defaultDirectory
