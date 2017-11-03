@@ -22,6 +22,7 @@ using NAudio.Wave;
 using YoutubeExplode;
 using YoutubeExplode.Models.MediaStreams;
 using System.Net;
+using MediaToolkit.Options;
 
 
 #endregion
@@ -76,6 +77,9 @@ namespace SoundBoard
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
+        //Set the default folder for images
+        private string imageDirectory;
+
         //Create statuslistview collection
         private ObservableCollection<string> statusListView;
 
@@ -91,6 +95,9 @@ namespace SoundBoard
         //Array of audio/video file extensions 
         private static readonly string[] audioExtensions = new string[] { ".mp3", ".wav", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps" };
 
+        //Array of video file extension
+        private static readonly string[] videoExtensions = new string[] { ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps", ".webm", ".ogg" };
+
         //Array of image file extensions
         private static readonly string[] imageExtensions = new string[] { ".jpg", ".bmp", ".gif", ".png" };
 
@@ -99,9 +106,6 @@ namespace SoundBoard
 
         //Convertion enabled
         private bool downloadVideo = false;
-
-        //Download succes
-        private bool succes = false;
 
         //Selected device ID
         private int deviceId;
@@ -236,6 +240,27 @@ namespace SoundBoard
                 else
                 {
                     this.defaultDirectory = value;
+                    this.DefaultImageDirectory = value + "Images\\";
+                }
+            }
+        }
+
+        //Default Directory for the images
+        public string DefaultImageDirectory
+        {
+            get
+            {
+                return this.imageDirectory;
+            }
+            set
+            {
+                if (this.imageDirectory == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.imageDirectory = value;
                 }
             }
         }
@@ -440,7 +465,7 @@ namespace SoundBoard
                 (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
 
             //Get a list of all the found images
-            List<string> images = FolderContents.GetImages(DefaultDirectory);
+            List<string> images = FolderContents.GetImages(DefaultImageDirectory);
 
             //Add the found images to the correct sound
             foreach(var image in images)
@@ -506,7 +531,7 @@ namespace SoundBoard
             //The name of the added image
             var soundName = justName;
             //A list of all images in the folder
-            var images = FolderContents.GetImages(DefaultDirectory);
+            var images = FolderContents.GetImages(DefaultImageDirectory);
             foreach(var image in images)
             {
                 //Normalize the name of the image, no path, no extension
@@ -665,8 +690,6 @@ namespace SoundBoard
                     //Re-enable the folderwatch feature
                     FolderWatch = RestoreFolderWatch;
                     DownloadProgress = false;
-                    //Reset the url variables
-                    succes = false;
                 });
             }
             catch
@@ -725,7 +748,7 @@ namespace SoundBoard
                     //Convert file to.mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
                     outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
-                    var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
+                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
 
                     WriteStatusEntry("-----Started Converting-----");
                     using (var engine = new Engine()) //Convert the file to .mp3 if needed
@@ -739,8 +762,6 @@ namespace SoundBoard
                     {
                         imageClient.DownloadFile(thumbnailUrl, outputImage);
                     }
-
-                    succes = true;
                 }
                 else
                 {
@@ -753,13 +774,11 @@ namespace SoundBoard
                     WriteStatusEntry("-----Grabbing the thumbnail-----");
 
                     var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
-                    var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
+                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
                     using (var imageClient = new WebClient()) //Download the thumbnail of the video
                     {
                         imageClient.DownloadFile(thumbnailUrl, outputImage);
                     }
-
-                    succes = true;
                 }
 
                 if (DownloadVideo == true) //Download the video aswell
@@ -794,6 +813,7 @@ namespace SoundBoard
             var output = DefaultDirectory + UrlName + ext;
             var outputD = DefaultDirectory + "Downloads\\" + UrlName + ext;
 
+            var inputImage = new MediaFile { Filename = output };
             var inputFile = new MediaFile { Filename = outputD};
             var outputFile = new MediaFile { Filename = $"{DefaultDirectory + UrlName }.mp3" };
             try
@@ -806,7 +826,17 @@ namespace SoundBoard
                         {
                             webClient.DownloadFile(link, output);
                         }
-                        return output;
+
+                        if (videoExtensions.Contains(ext))
+                        {
+                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                            using (var engine = new Engine())
+                            {
+                                engine.GetMetadata(inputImage);
+                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                engine.GetThumbnail(inputImage, outputImage, options);
+                            }
+                        }
                     }
                     else
                     {
@@ -819,7 +849,17 @@ namespace SoundBoard
                             engine.GetMetadata(inputFile);
                             engine.Convert(inputFile, outputFile);
                         }
-                        return outputFile.Filename;
+
+                        if (videoExtensions.Contains(ext))
+                        {
+                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                            using (var engine = new Engine())
+                            {
+                                engine.GetMetadata(inputFile);
+                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                engine.GetThumbnail(inputFile, outputImage, options);
+                            }
+                        }
                     }
                 });
             }
@@ -1242,7 +1282,7 @@ namespace SoundBoard
                 FileInfo imageFile = new FileInfo(ofd.FileName);
                 
                 //the new imageLocation with original extention but new name
-                var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
+                var newImageLocation = DefaultImageDirectory + soundName + imageFile.Extension;
                 
                 //Create bitmapimage from file
                 var bitmapImage = LoadImage(ofd.FileName);
@@ -1321,7 +1361,7 @@ namespace SoundBoard
             {
                 var oldImageName = Path.GetFileName(sound.ImagePath);
                 var imageExt = Path.GetExtension(oldImageName);
-                var newPath = DefaultDirectory + NameToChange + imageExt;
+                var newPath = DefaultImageDirectory + NameToChange + imageExt;
                 var oldPath = sound.ImagePath;
                 sound.ImagePath = newPath;
                 File.Move(oldPath, newPath);
@@ -1393,18 +1433,26 @@ namespace SoundBoard
             var audioLocation = DefaultDirectory + sound;
             //Check if the file exists in the collection
             var soundToRemove = Sounds.Where(s => s.AudioLocation == audioLocation).FirstOrDefault();
-            if(soundToRemove.IsPlaying == true)
+            if(soundToRemove != null)
             {
-                CleanUp();
+                if (soundToRemove.IsPlaying == true)
+                {
+                    CleanUp();
+                }
+                try
+                {
+                    Sounds.Remove(soundToRemove);
+                    WriteStatusEntry("File '" + sound + "' removed successfully.");
+                }
+                catch
+                {
+                    WriteStatusEntry("Unknown error, please try again.");
+                }
             }
-            try
+            else
             {
-                Sounds.Remove(soundToRemove);
-                WriteStatusEntry("File '" + sound + "' removed successfully.");
-            }
-            catch
-            {
-                WriteStatusEntry("Unknown error, please try again.");
+                WriteStatusEntry("Something went wrong removing the sound, try again.");
+                return;
             }
         }
         #endregion
