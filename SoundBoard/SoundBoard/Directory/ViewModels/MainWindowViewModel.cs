@@ -625,6 +625,7 @@ namespace SoundBoard
         /// <param name="param">The link url</param>
         private async void SaveVideoToDisk(string param)
         {
+            string output = "";
             try
             {
                 //Temporarely disable the folderwatch feature
@@ -635,106 +636,30 @@ namespace SoundBoard
                 //Do heavy tasks here, download file and convert file
                 await Task.Run(async() =>
                 {
-                    YoutubeClient client = new YoutubeClient(); //starting point for YouTube actions
-                    var link = param;
-                    
-                    if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
-                        linkId = link;
-                    
-                    YoutubeExplode.Models.Video video = await client.GetVideoAsync(linkId); //gets a video object with information about the video
-                    
-                    var audioStreamInfo = video.AudioStreamInfos.FirstOrDefault(); //Get the highest quality audio stream
-                    var videoStreamInfo = video.MuxedStreamInfos.FirstOrDefault(); //Get the highest quality video stream
-                    
-                    var audioFileExt = audioStreamInfo.Container.GetFileExtension(); //Get audio extension
-                    if (!audioFileExt.StartsWith(".")) //If extension doesn't contain a dot, add it.
-                        audioFileExt = "." + audioFileExt;
-
-                    var videoFileExt = videoStreamInfo.Container.GetFileExtension(); //Get video extension
-                    if (!videoFileExt.StartsWith(".")) //If extension doens't contain a dot, add it.
-                        videoFileExt = "." + videoFileExt;
-
-                    var output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
-                    var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
-                    var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
-
-                    var audioFileSize = ConvertFileSizeToString(video.AudioStreamInfos.FirstOrDefault().Size); //Get the audio filesize
-                    var videoFileSize = ConvertFileSizeToString(video.MuxedStreamInfos.FirstOrDefault().Size); //Get the video filesize
-                    var audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
-
-                    //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
-                    if (!audioExtensions.Contains(audioFileExtLower))
+                    if (new[] { "youtube", "youtu.be" }.Any(c => param.Contains(c)))
                     {
-                        WriteStatusEntry("-----Downloading audio-----");
-                        WriteStatusEntry("---File size: " + audioFileSize);
-                        await client.DownloadMediaStreamAsync(audioStreamInfo, outputA); //Download file to disk
-                        WriteStatusEntry("------Download complete------");
-
-                        var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-                        
-                        //Convert file to.mp3 and place it in the folder
-                        var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
-                        var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
-                        var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
-
-                        WriteStatusEntry("-----Started Converting-----");
-                        using (var engine = new Engine()) //Convert the file to .mp3 if needed
-                        {
-                            engine.GetMetadata(inputFile);
-                            engine.Convert(inputFile, outputFile);
-                        }
-                        WriteStatusEntry("------Conversion done------");
-                        WriteStatusEntry("-----Grabbing the thumbnail-----");
-                        using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                        {
-                            imageClient.DownloadFile(thumbnailUrl, outputImage);
-                        }
-
-                        succes = true;
+                        output = await YoutubeAudio(param);
                     }
                     else
                     {
-                        WriteStatusEntry("-----Downloading audio-----");
-                        WriteStatusEntry("---File size: " + audioFileSize + "---");
-                        await client.DownloadMediaStreamAsync(audioStreamInfo, output); //Download file to disk
-                        WriteStatusEntry("------Download complete------");
-
-                        var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-                        WriteStatusEntry("-----Grabbing the thumbnail-----");
-
-                        var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
-                        var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
-                        using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                        {
-                            imageClient.DownloadFile(thumbnailUrl, outputImage);
-                        }
-
-                        succes = true;
-                    }
-
-                    if(DownloadVideo == true) //Download the video aswell
-                    {
-                        WriteStatusEntry("-----Downloading Video-----");
-                        WriteStatusEntry("---File size: " + videoFileSize + "---");
-                        await client.DownloadMediaStreamAsync(videoStreamInfo, outputV);
-                        WriteStatusEntry("------Download complete------");
+                        output = await GenericAudio(param);
                     }
                 }).ContinueWith((t2) =>
                 {
-                    if(succes == true) //Only add if either of the above succeeded
+                    if (output == "" || output == null)
                     {
-                        //Create a new SoundViewItem for the added file
-                        String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
-                        //Dispatcher to add item on the same thread as the creation of the collection
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-                        {
-                            AddAudioFiles(filePath);
-                        }));
+                        WriteStatusEntry("Failed to download the requested media.");
+                        return;
                     }
-                    else
+
+                    //Create a new SoundViewItem for the added file
+                    String[] filePath = new String[] { output };
+                    //Dispatcher to add item on the same thread as the creation of the collection
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                     {
-                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
-                    }
+                        AddAudioFiles(filePath);
+                    }));
+
                 }).ContinueWith((t3) =>
                 {
                     //Re-enable the folderwatch feature
@@ -747,6 +672,168 @@ namespace SoundBoard
             catch
             {
                 WriteStatusEntry("Unexpected error, you could try again. Maibe you'll get lucky this time.");
+            }
+        }
+        #endregion
+
+        #region Save youtube audio
+        private async Task<string> YoutubeAudio(string param)
+        {
+            string output = "";
+            MediaFile outputFile = null;
+            string audioFileExtLower = "";
+
+            try
+            {
+                YoutubeClient client = new YoutubeClient(); //starting point for YouTube actions
+                var link = param;
+
+                if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
+                    linkId = link;
+
+                YoutubeExplode.Models.Video video = await client.GetVideoAsync(linkId); //gets a video object with information about the video
+
+                var audioStreamInfo = video.AudioStreamInfos.FirstOrDefault(); //Get the highest quality audio stream
+                var videoStreamInfo = video.MuxedStreamInfos.FirstOrDefault(); //Get the highest quality video stream
+
+                var audioFileExt = audioStreamInfo.Container.GetFileExtension(); //Get audio extension
+                if (!audioFileExt.StartsWith(".")) //If extension doesn't contain a dot, add it.
+                    audioFileExt = "." + audioFileExt;
+
+                var videoFileExt = videoStreamInfo.Container.GetFileExtension(); //Get video extension
+                if (!videoFileExt.StartsWith(".")) //If extension doens't contain a dot, add it.
+                    videoFileExt = "." + videoFileExt;
+
+                output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
+                var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
+                var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
+
+                var audioFileSize = ConvertFileSizeToString(video.AudioStreamInfos.FirstOrDefault().Size); //Get the audio filesize
+                var videoFileSize = ConvertFileSizeToString(video.MuxedStreamInfos.FirstOrDefault().Size); //Get the video filesize
+                audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
+
+                //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
+                if (!audioExtensions.Contains(audioFileExtLower))
+                {
+                    WriteStatusEntry("-----Downloading audio-----");
+                    WriteStatusEntry("---File size: " + audioFileSize);
+                    await client.DownloadMediaStreamAsync(audioStreamInfo, outputA); //Download file to disk
+                    WriteStatusEntry("------Download complete------");
+
+                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+
+                    //Convert file to.mp3 and place it in the folder
+                    var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
+                    outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
+                    var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
+
+                    WriteStatusEntry("-----Started Converting-----");
+                    using (var engine = new Engine()) //Convert the file to .mp3 if needed
+                    {
+                        engine.GetMetadata(inputFile);
+                        engine.Convert(inputFile, outputFile);
+                    }
+                    WriteStatusEntry("------Conversion done------");
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
+
+                    succes = true;
+                }
+                else
+                {
+                    WriteStatusEntry("-----Downloading audio-----");
+                    WriteStatusEntry("---File size: " + audioFileSize + "---");
+                    await client.DownloadMediaStreamAsync(audioStreamInfo, output); //Download file to disk
+                    WriteStatusEntry("------Download complete------");
+
+                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+
+                    var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
+                    var outputImage = $"{ DefaultDirectory + UrlName }.jpg"; //Set the output image
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
+
+                    succes = true;
+                }
+
+                if (DownloadVideo == true) //Download the video aswell
+                {
+                    WriteStatusEntry("-----Downloading Video-----");
+                    WriteStatusEntry("---File size: " + videoFileSize + "---");
+                    await client.DownloadMediaStreamAsync(videoStreamInfo, outputV);
+                    WriteStatusEntry("------Download complete------");
+                }
+            }
+            catch
+            {
+                WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                return null;
+            }
+            if (!audioExtensions.Contains(audioFileExtLower))
+            {
+                return outputFile.Filename;
+            }
+            else
+            {
+                return output;
+            } 
+        }
+        #endregion
+        
+        #region Save other media link
+        private async Task<string> GenericAudio(string param)
+        {
+            var link = param as string;
+            var ext = "." + param.Split('.').Last();
+            var output = DefaultDirectory + UrlName + ext;
+            var outputD = DefaultDirectory + "Downloads\\" + UrlName + ext;
+
+            var inputFile = new MediaFile { Filename = outputD};
+            var outputFile = new MediaFile { Filename = $"{DefaultDirectory + UrlName }.mp3" };
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (audioExtensions.Contains(ext))
+                    {
+                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            webClient.DownloadFile(link, output);
+                        }
+                        return output;
+                    }
+                    else
+                    {
+                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            webClient.DownloadFile(link, outputD);
+                        }
+                        using (var engine = new Engine()) //Convert the file to .mp3 if needed
+                        {
+                            engine.GetMetadata(inputFile);
+                            engine.Convert(inputFile, outputFile);
+                        }
+                        return outputFile.Filename;
+                    }
+                });
+            }
+            catch
+            {
+                WriteStatusEntry("Failed to get the requested url");
+            }
+            if (audioExtensions.Contains(ext))
+            {
+                return output;
+            }
+            else
+            {
+                return outputFile.Filename;
             }
         }
         #endregion
@@ -1211,7 +1298,6 @@ namespace SoundBoard
             {
                 WriteStatusEntry("Cannot rename while playing (" + CurrentName + ")");
             }
-            
         }
         #endregion
 
@@ -1320,18 +1406,6 @@ namespace SoundBoard
             {
                 WriteStatusEntry("Unknown error, please try again.");
             }
-            //if (Sounds.Any(x => x.AudioLocation == audioLocation))
-            //{
-            //    try
-            //    {
-            //        Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
-            //        WriteStatusEntry("File '" + sound + "' removed successfully.");
-            //    }
-            //    catch
-            //    {
-            //        WriteStatusEntry("Unknown error, please try again.");
-            //    }
-            //}
         }
         #endregion
 
