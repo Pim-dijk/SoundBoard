@@ -14,7 +14,7 @@
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.ColumnSpan="4" Text="Enter a youtube video url:" HorizontalAlignment="Left" Margin="51, 0" VerticalAlignment="Center" />
+        <TextBlock Grid.ColumnSpan="4" Text="Enter a (youtube) video url:" HorizontalAlignment="Left" Margin="51, 0" VerticalAlignment="Center" />
 
         <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="4" >
             <Label x:Name="urlLabel" Content="Url: " />

@@ -1626,7 +1626,7 @@ namespace SoundBoard
                 PromptBuilder promptBuilder = new PromptBuilder();
 
                 promptBuilder.StartStyle(promptStyle);
-                promptBuilder.AppendText("Owh boy what a great program <3. ");
+                promptBuilder.AppendText("chu chu motherfucker, <3");
                 promptBuilder.AppendText("Kappa!");
                 promptBuilder.EndStyle();
 
