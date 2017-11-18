@@ -18,7 +18,7 @@ namespace SoundBoard
             this.DataContext = new MainWindowViewModel();
         }
 
-        //Drag and drop file allowed or not
+        //Drag and drop file allowed or not based on extension
         private void MySounds_DragEnter(object sender, DragEventArgs e)
         {
             bool dropEnabled = true;
@@ -46,36 +46,32 @@ namespace SoundBoard
         //Drag and drop file handling action
         public void MySounds_Drop(object sender, DragEventArgs e)
         {
+            if(sender is System.Windows.Controls.Button)
+            {
+                e.Handled = true;
+                return;
+            }
             string[] files = e.Data.GetData(DataFormats.FileDrop, true) as string[];
             
             //Specify which MainWindowViewModel you want to target, there is only one but you still need to specify it
             //the DataContext already is set to the MainWindowViewModel
             ((MainWindowViewModel)this.DataContext).AddAudioFiles(files);
         }
-        
+
 
         //Drag and drop buttons around, doesn't work in conjunction with the existing item drop
-        // will have to merge the 2 together since the parent controll now takes over and that does not allow 
+        // will have to merge the 2 together since the parent controll now takes over and that does not allow
         // me to drop a button because it is not a audio/video file.
         //private void ButtonPreviewMouseMove(object sender, MouseEventArgs e)
         //{
-        //    bool dropEnabled = true;
-        //    if(e.LeftButton == MouseButtonState.Pressed)
+        //    if (e.LeftButton == MouseButtonState.Pressed)
         //    {
         //        if (sender is System.Windows.Controls.Button)
         //        {
         //            System.Windows.Controls.Button draggedItem = sender as System.Windows.Controls.Button;
-        //            DragDrop.DoDragDrop(draggedItem, draggedItem.DataContext, DragDropEffects.Move);
-        //            dropEnabled = true;
+        //            DragDrop.DoDragDrop(draggedItem, sender, DragDropEffects.Move); // -----fix datacontext----- \\
+        //            e.Handled = true;
         //        }
-        //    }
-        //    else
-        //    {
-        //        dropEnabled = false;
-        //    }
-        //    if (!dropEnabled)
-        //    {
-        //        e.Handled = true;
         //    }
         //}
 

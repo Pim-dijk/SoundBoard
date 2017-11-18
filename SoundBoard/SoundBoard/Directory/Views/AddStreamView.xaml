@@ -5,36 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SoundBoard.Views"
         mc:Ignorable="d"
-        Title="Add url" Icon="/SoundBoard;component/Images/musicIcon.png"  Height="150" Width="300" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="11" >
+        Title="Add url" Icon="/SoundBoard;component/Images/musicIcon.png"  Height="150" Width="300" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" >
     <Grid Margin="3">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.ColumnSpan="4" Text="Enter a valid url:" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock Grid.ColumnSpan="4" Text="Enter a (youtube) video url:" HorizontalAlignment="Left" Margin="51, 0" VerticalAlignment="Center" />
 
         <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="4" >
             <Label x:Name="urlLabel" Content="Url: " />
-            <TextBox x:Name="urlField" Text="{Binding Path=UrlUri, Mode=OneWayToSource}" Margin="14, 0, 15, 3" FontSize="17" Width="225" />
+            <TextBox x:Name="urlField" Text="{Binding Path=UrlUri, Mode=OneWayToSource}" Margin="16, 0, 15, 3" FontSize="17" Width="225" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="4" >
             <Label x:Name="nameLabel" Content="Name: " />
-            <TextBox x:Name="nameField" Grid.Row="2" Grid.ColumnSpan="4" Text="{Binding Path=UrlName, Mode=OneWayToSource}" Margin="0, 3, 15, 0"  FontSize="17" Width="225" />
+            <TextBox x:Name="nameField" Grid.Row="2" Grid.ColumnSpan="4" Text="{Binding UrlName, Mode=OneWayToSource}" Margin="0, 3, 15, 0"  FontSize="17" Width="225" />
         </StackPanel>
 
 
         <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="4" >
-            <Button Content="Add" Command="{Binding AddUrl}" Margin="50, 3, 15, 3" Width="65"/>
-            <CheckBox x:Name="convert" Margin="0, 8" Content="Convert to .Mp3?" IsChecked="{Binding ConvertChecked}" />
+            <Button Content="Add" IsDefault="True" Command="{Binding AddUrl}" Margin="51, 3, 15, 3" Width="65"/>
+            <CheckBox x:Name="convert" Margin="0, 8" Content="Get video seperate?" IsChecked="{Binding DownloadVideo}" />
         </StackPanel>
         
     </Grid>

@@ -54,7 +54,7 @@
                 <DataTrigger Binding="{Binding HasImage}" Value="True">
                     <Setter Property="Background">
                         <Setter.Value>
-                            <ImageBrush ImageSource="{Binding Path=ImageBitMap}" Stretch="UniformToFill" Opacity="0.65" />
+                            <ImageBrush ImageSource="{Binding Path=ImageBitMap}" Stretch="UniformToFill" Opacity="0.85" />
                         </Setter.Value>
                     </Setter>
                 </DataTrigger>
@@ -141,9 +141,13 @@
         <Style x:Key="textBlockStyle" TargetType="TextBlock">
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="Black" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="FontSize" Value="21" />
+            <Setter Property="TextTrimming" Value="WordEllipsis" />
+            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect

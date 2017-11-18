@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.IO;
@@ -17,14 +15,15 @@ using Microsoft.VisualBasic.FileIO;
 using SoundBoard.Services;
 using SoundBoard.Views;
 //NuGet packages
-using VideoLibrary;
 using MediaToolkit.Model;
 using MediaToolkit;
 using System.Speech.Synthesis;
-using MediaToolkit.Options;
-using NAudio;
 using NAudio.Wave;
-using NAudio.CoreAudioApi;
+using YoutubeExplode;
+using YoutubeExplode.Models.MediaStreams;
+using System.Net;
+using MediaToolkit.Options;
+
 
 #endregion
 
@@ -58,8 +57,11 @@ namespace SoundBoard
         //new url name
         private string urlName { get; set; }
 
-        //amount of output devices
-        private int deviceCount { get; set; }
+        //size of the downloaded file
+        private string fileSize { get; set; }
+
+        //filesize string collection
+        private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
         #endregion
 
         #region -Application
@@ -75,29 +77,38 @@ namespace SoundBoard
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
+        //Set the default folder for images
+        private string imageDirectory;
+
         //Create statuslistview collection
         private ObservableCollection<string> statusListView;
+
+        //Folder watcher
+        private FileSystemWatcher fs;
 
         //Folder watch enabled/disabled
         private bool folderWatch;
 
-        //Array of file extensions (not currently used)
-        private String[] extensions = new String[] { ".mp3", ".wav", ".flac", ".aac", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4" };
-
-        //Filewatcher
-        private FileSystemWatcher fs;
-
         //Restore FolderWatch
         private bool restoreFolderWatch;
+
+        //Array of audio/video file extensions 
+        private static readonly string[] audioExtensions = new string[] { ".mp3", ".wav", ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps" };
+
+        //Array of video file extension
+        private static readonly string[] videoExtensions = new string[] { ".mp4", ".flv", ".wmv", ".mov", ".avi", ".mpeg4", ".mpegps", ".webm", ".ogg" };
+
+        //Array of image file extensions
+        private static readonly string[] imageExtensions = new string[] { ".jpg", ".bmp", ".gif", ".png" };
 
         //Download progress
         private bool downloadProgress = false;
 
         //Convertion enabled
-        private bool convertChecked = false;
+        private bool downloadVideo = false;
 
-        //Download succes
-        private bool succes = false;
+        //Selected device ID
+        private int deviceId;
         #endregion
 
         #region -Test
@@ -210,6 +221,9 @@ namespace SoundBoard
         //Omit Imagesource
         public ImageSource ImageSource { get; set; }
 
+        //Output Devices
+        public ObservableCollection<DevicesViewModel> Devices { get; set; }
+
         //Default Directory for the application to get the files from
         public string DefaultDirectory
         {
@@ -226,6 +240,27 @@ namespace SoundBoard
                 else
                 {
                     this.defaultDirectory = value;
+                    this.DefaultImageDirectory = value + "Images\\";
+                }
+            }
+        }
+
+        //Default Directory for the images
+        public string DefaultImageDirectory
+        {
+            get
+            {
+                return this.imageDirectory;
+            }
+            set
+            {
+                if (this.imageDirectory == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.imageDirectory = value;
                 }
             }
         }
@@ -260,22 +295,36 @@ namespace SoundBoard
         public string UrlUri { get; set; }
 
         //New url Name
-        public string UrlName { get; set; }
-
-        //Amount of output devices
-        public int DeviceCount
+        public string UrlName
         {
             get
             {
-                return deviceCount;
+                return urlName;
             }
             set
             {
-                if(this.deviceCount == value)
+                if(this.urlName == value)
                 {
                     return;
                 }
-                this.deviceCount = value;
+                this.urlName = value;
+            }
+        }
+
+        //Filesizee
+        public string FileSize
+        {
+            get
+            {
+                return fileSize;
+            }
+            set
+            {
+                if(this.fileSize == value)
+                {
+                    return;
+                }
+                this.fileSize = value;
             }
         }
         #endregion
@@ -333,19 +382,36 @@ namespace SoundBoard
         }
 
         //Conversion checkbox
-        public bool ConvertChecked
+        public bool DownloadVideo
         {
             get
             {
-                return convertChecked;
+                return downloadVideo;
             }
             set
             {
-                if (this.convertChecked == value)
+                if (this.downloadVideo == value)
                 {
                     return;
                 }
-                this.convertChecked = value;
+                this.downloadVideo = value;
+            }
+        }
+
+        //Selected device ID
+        public int DeviceId
+        {
+            get
+            {
+                return deviceId;
+            }
+            set
+            {
+                if(this.deviceId == value)
+                {
+                    return;
+                }
+                deviceId = value;
             }
         }
         #endregion
@@ -381,9 +447,8 @@ namespace SoundBoard
             timer.Interval = TimeSpan.FromMilliseconds(250);
             timer.Tick += Timer_Tick;
             timer.Start();
-
-            GetDeviceCount();
-
+            //Get the available output devices
+            GetDevices();
         }
         #endregion
 
@@ -400,7 +465,7 @@ namespace SoundBoard
                 (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
 
             //Get a list of all the found images
-            List<string> images = FolderContents.GetImages(DefaultDirectory);
+            List<string> images = FolderContents.GetImages(DefaultImageDirectory);
 
             //Add the found images to the correct sound
             foreach(var image in images)
@@ -420,8 +485,13 @@ namespace SoundBoard
         #endregion
 
         #region -Add Audio files
+        /// <summary>
+        /// Add one or more files to the collection
+        /// </summary>
+        /// <param name="files">array of filenames</param>
         public void AddAudioFiles(string[] files)
         {
+            fs.EnableRaisingEvents = false;
             string[] sounds = files;
 
             foreach (String sound in sounds)
@@ -439,6 +509,7 @@ namespace SoundBoard
                     }
                     //If file has been succesfully moved, add it to the list.
                     SoundViewModel s1 = new SoundViewModel(sound);
+                    s1.AudioLocation = fileDestination;
                     Sounds.Add(s1);
                     WriteStatusEntry("File: " + fileName + " succesfully added.");
 
@@ -446,6 +517,7 @@ namespace SoundBoard
                     FindImage(s1.NormalizedName);
                 }
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -459,7 +531,7 @@ namespace SoundBoard
             //The name of the added image
             var soundName = justName;
             //A list of all images in the folder
-            var images = FolderContents.GetImages(DefaultDirectory);
+            var images = FolderContents.GetImages(DefaultImageDirectory);
             foreach(var image in images)
             {
                 //Normalize the name of the image, no path, no extension
@@ -513,6 +585,8 @@ namespace SoundBoard
 
             Volume = SoundBoard.Properties.Settings.Default.Volume;
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
+            DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
+            DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
         }
         #endregion
 
@@ -528,6 +602,10 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.Volume = Volume;
             //Store the current value of FolderWatcher in the settings
             SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
+            //Save the selected output device
+            SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
+            //Save the converter option
+            SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
         }
@@ -547,23 +625,32 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Initialize watcher
+        #region -Initialize folder watcher
+        /// <summary>
+        /// Initialize the folderwatcher
+        /// </summary>
         private void InitializeWatcher()
         {
             //Folder watcher event handler
-            fs = new FileSystemWatcher(DefaultDirectory, "*.*");
-            fs.EnableRaisingEvents = FolderWatch;
-            fs.IncludeSubdirectories = false;
+            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
+            this.fs.IncludeSubdirectories = false;
             //This event will check for  new files added to the watching folder
-            fs.Created += new FileSystemEventHandler(newfile);
+            this.fs.Created += new FileSystemEventHandler(this.Newfile);
             //this event will check for any deletion of file in the watching folder
-            fs.Deleted += new FileSystemEventHandler(fs_Deleted);
+            this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            //Enable the watcher
+            this.fs.EnableRaisingEvents = true;
         }
-    #endregion
+        #endregion
         
         #region -Save link to folder
-        private async void SaveVideoToDisk(string link)
+        /// <summary>
+        /// Save an audio file from a supplied url
+        /// </summary>
+        /// <param name="param">The link url</param>
+        private async void SaveVideoToDisk(string param)
         {
+            string output = "";
             try
             {
                 //Temporarely disable the folderwatch feature
@@ -572,118 +659,282 @@ namespace SoundBoard
                 DownloadProgress = true;
 
                 //Do heavy tasks here, download file and convert file
-                await Task.Factory.StartNew(() =>
+                await Task.Run(async() =>
                 {
-                    var youTube = YouTube.Default; //starting point for YouTube actions
-                    var video = youTube.GetVideo(link); //gets a video object with information about the video
-                    string fileExt = video.Format.ToString(); //Sets the correct fileformat
-                    if (!fileExt.StartsWith(".")) //adds a dot before the extension
-                        fileExt = "." + fileExt;
-                    var output = DefaultDirectory + UrlName + fileExt;
-                    var outputD = DefaultDirectory + "Downloads\\" + UrlName + fileExt;
-                    if (!output.EndsWith(fileExt))
-                        output += fileExt;
-
-                    //If it is a unsupported file extension or if the conversion is checked, save it seperately and convert to mp3
-                    if(fileExt.ToString().ToLower() == ".webm" || ConvertChecked == true && fileExt != null)
+                    if (new[] { "youtube", "youtu.be" }.Any(c => param.Contains(c)))
                     {
-                        WriteStatusEntry("-----Downloading file to disk-----");
-                        //Write data to Downloads folder
-                        Directory.CreateDirectory(DefaultDirectory + "Downloads");
-                        File.WriteAllBytes(outputD, video.GetBytes());
-
-                        WriteStatusEntry("-----Converting-----");
-
-                        //Convert file to .mp3 and place it in the folder
-                        var inputFile = new MediaFile { Filename = outputD };
-                        var outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" };
-                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
-                        using (var engine = new Engine())
-                        {
-                            engine.GetMetadata(inputFile);
-                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                            engine.Convert(inputFile, outputFile);
-                            engine.GetThumbnail(inputFile, outputImage, options);
-                        }
-                        succes = true;
-                    }
-                    else if(fileExt != null)
-                    {
-                        WriteStatusEntry("-----Downloading file to disk.-----");
-                        
-                        //Write data to folder
-                        File.WriteAllBytes(output, video.GetBytes());
-
-                        WriteStatusEntry("-----Grabbing thumbnail-----");
-                        //Grab the thumbnail
-                        var inputFile = new MediaFile { Filename = output };
-                        var outputImage = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.jpg" };
-                        using (var engine = new Engine())
-                        {
-                            engine.GetMetadata(inputFile);
-                            var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                            engine.GetThumbnail(inputFile, outputImage, options);
-                        }
-                        succes = true;
+                        output = await YoutubeAudio(param);
                     }
                     else
                     {
-                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
-                        succes = false;
+                        output = await GenericAudio(param);
                     }
                 }).ContinueWith((t2) =>
                 {
-                    if(succes == true)
+                    if (output == "" || output == null)
                     {
-                        WriteStatusEntry("-----Conversion done-----");
-                        //Create a new SoundViewItem for the added file
-                        String[] filePath = new String[] { DefaultDirectory + UrlName + ".mp3" };
-                        //Dispatcher to add item on the same thread as the creation of the collection
-                        System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-                        {
-                            AddAudioFiles(filePath);
-                        }));
+                        WriteStatusEntry("Failed to download the requested media.");
+                        return;
                     }
-                    else
+
+                    //Create a new SoundViewItem for the added file
+                    String[] filePath = new String[] { output };
+                    //Dispatcher to add item on the same thread as the creation of the collection
+                    System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
                     {
-                        WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
-                    }
+                        AddAudioFiles(filePath);
+                    }));
+
                 }).ContinueWith((t3) =>
                 {
                     //Re-enable the folderwatch feature
                     FolderWatch = RestoreFolderWatch;
                     DownloadProgress = false;
-                    //Reset the url variables
-                    UrlUri = "";
-                    UrlName = "";
-                    succes = false;
                 });
             }
             catch
             {
-                WriteStatusEntry("Unexpected error, you could try again. Maine you'll get lucky this time.");
+                WriteStatusEntry("Unexpected error, you could try again. Maibe you'll get lucky this time.");
             }
         }
         #endregion
 
-        #region Device Count
-        private void GetDeviceCount()
+        #region Save youtube audio
+        private async Task<string> YoutubeAudio(string param)
         {
-            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
-            foreach (MMDevice device in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.All))
+            string output = "";
+            MediaFile outputFile = null;
+            string audioFileExtLower = "";
+
+            try
             {
-                Console.WriteLine("{0}, {1}", device.FriendlyName, device.State);
+                YoutubeClient client = new YoutubeClient(); //starting point for YouTube actions
+                var link = param;
+
+                if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
+                    linkId = link;
+
+                YoutubeExplode.Models.Video video = await client.GetVideoAsync(linkId); //gets a video object with information about the video
+
+                var audioStreamInfo = video.AudioStreamInfos.FirstOrDefault(); //Get the highest quality audio stream
+                var videoStreamInfo = video.MuxedStreamInfos.FirstOrDefault(); //Get the highest quality video stream
+
+                var audioFileExt = audioStreamInfo.Container.GetFileExtension(); //Get audio extension
+                if (!audioFileExt.StartsWith(".")) //If extension doesn't contain a dot, add it.
+                    audioFileExt = "." + audioFileExt;
+
+                var videoFileExt = videoStreamInfo.Container.GetFileExtension(); //Get video extension
+                if (!videoFileExt.StartsWith(".")) //If extension doens't contain a dot, add it.
+                    videoFileExt = "." + videoFileExt;
+
+                output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
+                var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
+                var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
+
+                var audioFileSize = ConvertFileSizeToString(video.AudioStreamInfos.FirstOrDefault().Size); //Get the audio filesize
+                var videoFileSize = ConvertFileSizeToString(video.MuxedStreamInfos.FirstOrDefault().Size); //Get the video filesize
+                audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
+
+                //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
+                if (!audioExtensions.Contains(audioFileExtLower))
+                {
+                    WriteStatusEntry("-----Downloading audio-----");
+                    WriteStatusEntry("---File size: " + audioFileSize);
+                    await client.DownloadMediaStreamAsync(audioStreamInfo, outputA); //Download file to disk
+                    WriteStatusEntry("------Download complete------");
+
+                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+
+                    //Convert file to.mp3 and place it in the folder
+                    var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
+                    outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
+                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
+
+                    WriteStatusEntry("-----Started Converting-----");
+                    using (var engine = new Engine()) //Convert the file to .mp3 if needed
+                    {
+                        engine.GetMetadata(inputFile);
+                        engine.Convert(inputFile, outputFile);
+                    }
+                    WriteStatusEntry("------Conversion done------");
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
+                }
+                else
+                {
+                    WriteStatusEntry("-----Downloading audio-----");
+                    WriteStatusEntry("---File size: " + audioFileSize + "---");
+                    await client.DownloadMediaStreamAsync(audioStreamInfo, output); //Download file to disk
+                    WriteStatusEntry("------Download complete------");
+
+                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+
+                    var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
+                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
+                }
+
+                if (DownloadVideo == true) //Download the video aswell
+                {
+                    WriteStatusEntry("-----Downloading Video-----");
+                    WriteStatusEntry("---File size: " + videoFileSize + "---");
+                    await client.DownloadMediaStreamAsync(videoStreamInfo, outputV);
+                    WriteStatusEntry("------Download complete------");
+                }
             }
+            catch
+            {
+                WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                return null;
+            }
+            if (!audioExtensions.Contains(audioFileExtLower))
+            {
+                return outputFile.Filename;
+            }
+            else
+            {
+                return output;
+            } 
+        }
+        #endregion
+        
+        #region Save other media link
+        private async Task<string> GenericAudio(string param)
+        {
+            var link = param as string;
+            var ext = "." + param.Split('.').Last();
+            var output = DefaultDirectory + UrlName + ext;
+            var outputD = DefaultDirectory + "Downloads\\" + UrlName + ext;
+
+            var inputImage = new MediaFile { Filename = output };
+            var inputFile = new MediaFile { Filename = outputD};
+            var outputFile = new MediaFile { Filename = $"{DefaultDirectory + UrlName }.mp3" };
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (audioExtensions.Contains(ext))
+                    {
+                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            webClient.DownloadFile(link, output);
+                        }
+
+                        if (videoExtensions.Contains(ext))
+                        {
+                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                            using (var engine = new Engine())
+                            {
+                                engine.GetMetadata(inputImage);
+                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                engine.GetThumbnail(inputImage, outputImage, options);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        {
+                            webClient.DownloadFile(link, outputD);
+                        }
+                        using (var engine = new Engine()) //Convert the file to .mp3 if needed
+                        {
+                            engine.GetMetadata(inputFile);
+                            engine.Convert(inputFile, outputFile);
+                        }
+
+                        if (videoExtensions.Contains(ext))
+                        {
+                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                            using (var engine = new Engine())
+                            {
+                                engine.GetMetadata(inputFile);
+                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                engine.GetThumbnail(inputFile, outputImage, options);
+                            }
+                        }
+                    }
+                });
+            }
+            catch
+            {
+                WriteStatusEntry("Failed to get the requested url");
+            }
+            if (audioExtensions.Contains(ext))
+            {
+                return output;
+            }
+            else
+            {
+                return outputFile.Filename;
+            }
+        }
+        #endregion
+
+        #region -Output Devices
+        /// <summary>
+        /// Get all the audio output devices from the machine
+        /// </summary>
+        private void GetDevices()
+        {
+            this.Devices = new ObservableCollection<DevicesViewModel>();
+            for (int deviceId = 0; deviceId < WaveOut.DeviceCount; deviceId++)
+            {
+                var capabilities = WaveOut.GetCapabilities(deviceId);
+                var device = new DevicesViewModel(capabilities.ProductName, deviceId);
+                Devices.Add(device);
+                //If this is the selected device read from app settings, set it as selected.
+                if (deviceId == this.DeviceId)
+                {
+                    device.isChecked = true;
+                }
+            }
+        }
+        #endregion
+
+        #region Convert filesize to string
+        /// <summary>
+        /// Convert the filesize from bits to whatever is most suited
+        /// </summary>
+        /// <param name="value">the size in bits</param>
+        /// <returns>a string with the new filesize</returns>
+        public string ConvertFileSizeToString(long value)
+        {
+            if (value == 0)
+                throw new ArgumentNullException(nameof(value));
+
+            double size = (long)value;
+            var unit = 0;
+
+            while (size >= 1024)
+            {
+                size /= 1024;
+                ++unit;
+            }
+
+            return $"{size:0.#} {Units[unit]}";
         }
         #endregion
 
         #region -Test
+        /// <summary>
+        /// Location for a test method
+        /// </summary>
+        /// <param name="droppedItem"></param>
+        /// <param name="target"></param>
         public void ArrangeItems(SoundViewModel droppedItem, SoundViewModel target)
         {
             int draggedIdx = Sounds.IndexOf(droppedItem);
             int targetIdx = Sounds.IndexOf(target);
 
-            if(draggedIdx < targetIdx)
+            if (draggedIdx < targetIdx)
             {
                 Sounds.Insert(targetIdx + 1, droppedItem);
                 Sounds.RemoveAt(draggedIdx);
@@ -707,7 +958,7 @@ namespace SoundBoard
         /// status view collection
         /// </summary>
         private void InitializeCollections()
-        {
+        { 
             StatusListView = new ObservableCollection<string>();
         }
         #endregion
@@ -733,6 +984,7 @@ namespace SoundBoard
             public RelayCommand ChangeSoundNameSaved { get; set; }
             public RelayCommand OpenChangeName { get; set; }
             public RelayCommand AddUrl { get; set; }
+            public CommandBase OpenUrl { get; set; }
             #endregion
 
             #region --Application
@@ -740,11 +992,11 @@ namespace SoundBoard
             public RelayCommand ExitCommand { get; set; }
             public CommandBase OpenAbout { get; set; }
             public RelayCommand ToggleFolderWatch { get; set; }
-            public CommandBase OpenUrl { get; set; }
+            public RelayCommand SelectOutput { get; set; }
             #endregion
 
-            #region --Test
-            public RelayCommand TestCommand { get; set; }
+        #region --Test
+        public RelayCommand TestCommand { get; set; }
             #endregion
 
         #endregion
@@ -752,26 +1004,30 @@ namespace SoundBoard
         #region -Initialize Commands
         private void InitializeCommands()
         {
-            //PlaySound = new CommandBase(PlaySound_Executed);
+            //Sound Control
             PlaySound = new RelayCommand(PlaySound_Executed);
             StopSound = new RelayCommand(StopSound_Executed);
-            ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
+            MuteSound = new RelayCommand(MuteSound_Executed);
+            //Collection
             AddSound = new RelayCommand(AddSound_Executed);
-            ExitCommand = new RelayCommand(ExitCommand_Executed);
             AddFolder = new RelayCommand(AddFolder_Executed);
             RefreshFiles = new RelayCommand(RefreshFiles_Executed);
             RemoveSound = new RelayCommand(RemoveSound_Executed);
-            MuteSound = new RelayCommand(MuteSound_Executed);
             DeleteSound = new RelayCommand(DeleteSound_Executed);
             AddImage = new RelayCommand(AddImage_Executed);
             RemoveImage = new RelayCommand(RemoveImage_Executed);
-            OpenAbout = new CommandBase(OpenAbout_Executed);
-            ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             OpenChangeName = new RelayCommand(OpenChangeName_Executed);
+            ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             AddUrl = new RelayCommand(AddUrl_Executed);
-            TestCommand = new RelayCommand(TestCommand_Executed);
-            ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
             OpenUrl = new CommandBase(OpenUrl_Executed);
+            //Application
+            ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
+            ExitCommand = new RelayCommand(ExitCommand_Executed);
+            OpenAbout = new CommandBase(OpenAbout_Executed);
+            ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
+            SelectOutput = new RelayCommand(SelectOutput_executed);
+            //Test
+            TestCommand = new RelayCommand(TestCommand_Executed);
         }
         #endregion
 
@@ -800,15 +1056,15 @@ namespace SoundBoard
 
             //new instance of waveplayer
             wavePlayer = new WaveOut();
-
-            //Get the model from the given param
-            var sound = Sounds.First(s => s.Name == param as string);
-            //set file with the audio location
-            file = new AudioFileReader(sound.AudioLocation);
+            wavePlayer.DeviceNumber = DeviceId;
             
             //Start playing
             try
             {
+                //Get the model from the given param
+                var sound = Sounds.First(s => s.Name == param as string);
+                //set file with the audio location
+                file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
                 file.Volume = volume;
                 wavePlayer.Init(file);
@@ -817,6 +1073,10 @@ namespace SoundBoard
             catch (ArgumentNullException anE)
             {
                 WriteStatusEntry(anE + "Null exception");
+            }
+            catch (FileNotFoundException e)
+            {
+                MessageBox.Show("File could not be found." + Environment.NewLine + "Try refreshing the application to resolve.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
         #endregion
@@ -838,7 +1098,7 @@ namespace SoundBoard
                 //Check if the file has a timespan before writing it to the label, otherwise throws exception
                 if (file != null)
                 {
-                    TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"mm\:ss"), file.TotalTime.ToString(@"mm\:ss"));
+                    TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"hh\:mm\:ss"), file.TotalTime.ToString(@"hh\:mm\:ss"));
                     if(file.CurrentTime == file.TotalTime)
                     {
                         StopSound_Executed(null);
@@ -849,7 +1109,9 @@ namespace SoundBoard
         #endregion
 
         #region --CleanUp
-
+        /// <summary>
+        /// Clean up the waveplayer to get rid of the last loaded file.
+        /// </summary>
         private void CleanUp()
         {
             if (this.file != null)
@@ -873,15 +1135,14 @@ namespace SoundBoard
         private void StopSound_Executed(object sender)
         {
             //If any sound is playing set the bool to false
-            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true);
-            if(soundToStop.Count() > 0)
+            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true).FirstOrDefault();
+            if(soundToStop != null)
             {
-                var stopSound = soundToStop.First<SoundViewModel>();
-                stopSound.IsPlaying = false;
+                soundToStop.IsPlaying = false;
+                //Stop playing
+                CleanUp();
+                TimeLabel = "No file selected...";
             }
-            //Stop playing
-            CleanUp();
-            TimeLabel = "No file selected...";
         }
         #endregion
 
@@ -915,6 +1176,7 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void AddSound_Executed(object sender)
         {
+            fs.EnableRaisingEvents = false;
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
             ofd.Filter = "Mp3 files (*.mp3*)|*.mp3";
             ofd.Multiselect = true;
@@ -925,15 +1187,28 @@ namespace SoundBoard
                 AddAudioFiles(files);
                 WriteStatusEntry("Import completed.");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
-        #region --Add stream // needs testing
+        #region --Add stream
+        /// <summary>
+        /// Open the AddUrl view
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void OpenUrl_Executed(object sender, EventArgs e)
         {
-            AddStreamView view = new AddStreamView(this);
-            view.Owner = Application.Current.MainWindow;
-            view.ShowDialog();
+            if(!DownloadProgress)
+            {
+                AddStreamView view = new AddStreamView(this);
+                view.Owner = Application.Current.MainWindow;
+                view.ShowDialog();
+            }
+            else
+            {
+                WriteStatusEntry("Can't add stream when a download is already in progress.");
+            }
         }
 
         private void AddUrl_Executed(object param)
@@ -953,6 +1228,7 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void AddFolder_Executed(object sender)
         {
+            fs.EnableRaisingEvents = false;
             System.Windows.Forms.FolderBrowserDialog fbd = new System.Windows.Forms.FolderBrowserDialog();
             
             if(fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -982,6 +1258,7 @@ namespace SoundBoard
                 }
                 WriteStatusEntry("Import completed.");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -992,6 +1269,7 @@ namespace SoundBoard
         /// <param name="param">Normalized name of the sound that send the request</param>
         private void AddImage_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             var soundName = param as string;
 
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
@@ -1002,26 +1280,35 @@ namespace SoundBoard
             {
                 //path to the selected file
                 FileInfo imageFile = new FileInfo(ofd.FileName);
+                
                 //the new imageLocation with original extention but new name
-                var newImageLocation = DefaultDirectory + soundName + imageFile.Extension;
+                var newImageLocation = DefaultImageDirectory + soundName + imageFile.Extension;
                 
                 //Create bitmapimage from file
                 var bitmapImage = LoadImage(ofd.FileName);
 
-                //Check if the image with the same name as the sound exists and add it to the SoundViewModel
-                var item = Sounds.First(i => i.NormalizedName == soundName);
-                if (item != null)
+                try
                 {
-                    //Move the file and rename it at the same time
-                    imageFile.CopyTo(newImageLocation, true);
-                    //Set the imagelocation to the new image
-                    item.ImageBitMap = bitmapImage;
-                    item.ImagePath = newImageLocation;
-                    item.HasImage = true;
+                    //Check if the image with the same name as the sound exists and add it to the SoundViewModel
+                    var item = Sounds.First(i => i.NormalizedName == soundName);
+                    if (item != null)
+                    {
+                        //Move the file and rename it at the same time
+                        imageFile.CopyTo(newImageLocation, true);
+                        //Set the imagelocation to the new image
+                        item.ImageBitMap = bitmapImage;
+                        item.ImagePath = newImageLocation;
+                        item.HasImage = true;
 
-                    WriteStatusEntry("New image added");
+                        WriteStatusEntry("New image added");
+                    }
+                }
+                catch(IOException)
+                {
+                    WriteStatusEntry("File already assigned to this sound or in use by other program.");
                 }
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
 
@@ -1029,7 +1316,7 @@ namespace SoundBoard
         /// <summary>
         /// Opens the change name view
         /// </summary>
-        /// <param name="param"></param>
+        /// <param name="param">The name of the file with extension</param>
         private void OpenChangeName_Executed(object param)
         {
             //Store the current name
@@ -1051,7 +1338,6 @@ namespace SoundBoard
             {
                 WriteStatusEntry("Cannot rename while playing (" + CurrentName + ")");
             }
-            
         }
         #endregion
 
@@ -1075,7 +1361,7 @@ namespace SoundBoard
             {
                 var oldImageName = Path.GetFileName(sound.ImagePath);
                 var imageExt = Path.GetExtension(oldImageName);
-                var newPath = DefaultDirectory + NameToChange + imageExt;
+                var newPath = DefaultImageDirectory + NameToChange + imageExt;
                 var oldPath = sound.ImagePath;
                 sound.ImagePath = newPath;
                 File.Move(oldPath, newPath);
@@ -1088,26 +1374,33 @@ namespace SoundBoard
         }
         #endregion
 
-        #region --Remove Image //needs work
+        #region --Remove Image
+        /// <summary>
+        /// Delete the image from a sound
+        /// </summary>
+        /// <param name="param">Name of the sound that requested it</param>
         private void RemoveImage_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             var soundName = param as string;
-            var sound = Sounds.Where(s => s.HasImage == true && s.NormalizedName == soundName);
-            if(sound.Count() > 0)
-            {
-                //unset the image and hasimage properties
-                var removeImage = sound.First<SoundViewModel>();
-                removeImage.ImageBitMap = null;
-                removeImage.HasImage = false;
-                WriteStatusEntry("Image removed");
+            var sound = Sounds.Where(s => s.HasImage == true && s.NormalizedName == soundName).FirstOrDefault();
 
-                //As of now the image does not get deleted from the folder
-                //so on refresh or reloading the application the image comes back.
+            if(sound != null)
+            {
+                //Delete the imagefile from the directory
+                var imageLocation = sound.ImagePath;
+                File.Delete(imageLocation);
+                //Unset the image and hasimage properties
+                sound.ImageBitMap = null;
+                sound.HasImage = false;
+
+                WriteStatusEntry("Image removed");
             }
             else
             {
-                WriteStatusEntry("No image found");
+                WriteStatusEntry("The sound doesn't contain an image.");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion 
 
@@ -1139,28 +1432,39 @@ namespace SoundBoard
             var sound = param as string;
             var audioLocation = DefaultDirectory + sound;
             //Check if the file exists in the collection
-            if (Sounds.Any(x => x.AudioLocation == audioLocation))
+            var soundToRemove = Sounds.Where(s => s.AudioLocation == audioLocation).FirstOrDefault();
+            if(soundToRemove != null)
             {
+                if (soundToRemove.IsPlaying == true)
+                {
+                    CleanUp();
+                }
                 try
                 {
-                    Sounds.Remove(Sounds.Where(i => i.AudioLocation == audioLocation).Single());
-                    WriteStatusEntry("File '" + sound + "' removed from the list.");
+                    Sounds.Remove(soundToRemove);
+                    WriteStatusEntry("File '" + sound + "' removed successfully.");
                 }
                 catch
                 {
-                    WriteStatusEntry("Unknown exception, please try again.");
+                    WriteStatusEntry("Unknown error, please try again.");
                 }
+            }
+            else
+            {
+                WriteStatusEntry("Something went wrong removing the sound, try again.");
+                return;
             }
         }
         #endregion
 
-        #region --Delete Sound // needs work
+        #region --Delete Sound
         /// <summary>
         /// Delete the sound that requested it from the directory aswell as the collection
         /// </summary>
         /// <param name="param">Name of the sound that requested it</param>
         private void DeleteSound_Executed(object param)
         {
+            fs.EnableRaisingEvents = false;
             if (DialogService.ShowConfirmationMessagebox("Are you sure you want to delete " + param + " from the list and the directory?") == MessageBoxResult.Yes)
             {
                 //Remove image associated with the sound
@@ -1173,19 +1477,22 @@ namespace SoundBoard
                 //Remove the sound from the list
                 RemoveSound_Executed(param);
 
+                //Stop playing the sound first
+                CleanUp();
+
                 //Remove the sound file from the directory
                 var item = param as string;
                 var file = DefaultDirectory + item;
                 if (FileSystem.FileExists(file))
                 {
                     FileSystem.DeleteFile(file);
-                    WriteStatusEntry("File '" + item + "' deleted from directory");
                 }
             }
             else
             {
                 WriteStatusEntry("Deletion cancelled");
             }
+            fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
         
@@ -1238,21 +1545,39 @@ namespace SoundBoard
         }
         #endregion
 
+        #region --Change Output Device
+        /// <summary>
+        /// Change the audio output selection
+        /// </summary>
+        /// <param name="param">The ID from the selected device</param>
+        private void SelectOutput_executed(object param)
+        {
+            //Unselect currently selected one
+            var unselect = Devices.FirstOrDefault(d => d.isChecked == true);
+            unselect.isChecked = false;
+            //Select new one
+            int deviceId = (int) param;
+            var device = Devices.Where(d => d.deviceId == deviceId).FirstOrDefault();
+            device.isChecked = true;
+            DeviceId = deviceId;
+        }
+        #endregion
+
         #region --Folder watch
+        /// <summary>
+        /// Toggle the folderwatch functionality
+        /// </summary>
+        /// <param name="param"></param>
         private void ToggleFolderWatch_Executed(object param)
         {
             if (FolderWatch == false)
             {
                 FolderWatch = true;
-                fs.EnableRaisingEvents = true;
-                fs.IncludeSubdirectories = false;
                 WriteStatusEntry("Started watching folder for changes.");
             }
             else
             {
                 FolderWatch = false;
-                fs.EnableRaisingEvents = false;
-                fs.IncludeSubdirectories = false;
                 WriteStatusEntry("Stopped watching folder for changes.");
             }
         }
@@ -1279,7 +1604,6 @@ namespace SoundBoard
         /// <param name="sender"></param>
         private void ExitCommand_Executed(object sender)
         {
-            SoundBoard.Properties.Settings.Default.Save();
             Application.Current.Shutdown();
         }
         #endregion
@@ -1302,10 +1626,10 @@ namespace SoundBoard
                 PromptBuilder promptBuilder = new PromptBuilder();
 
                 promptBuilder.StartStyle(promptStyle);
-                promptBuilder.AppendText("Owh boy what a great program <3. ");
+                promptBuilder.AppendText("chu chu motherfucker, <3");
                 promptBuilder.AppendText("Kappa!");
                 promptBuilder.EndStyle();
-                
+
                 SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
                 ttsSynt.Speak(promptBuilder);
             });
@@ -1316,7 +1640,7 @@ namespace SoundBoard
 
         #region Events
 
-        #region -Conversion progress
+        #region -Conversion progress -- Not used when converting to audio
         private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
         {
             //WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
@@ -1328,7 +1652,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Conversion Completed
+        #region -Conversion Completed -- Not used when converting to audio
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
             //DownloadProgress = false;
@@ -1344,8 +1668,12 @@ namespace SoundBoard
         /// </summary>
         /// <param name="fscreated"></param>
         /// <param name="Eventocc"></param>
-        protected void newfile(object fscreated, FileSystemEventArgs Eventocc)
+        protected void Newfile(object fscreated, FileSystemEventArgs Eventocc)
         {
+            if(FolderWatch == false)
+            {
+                return;
+            }
             //Do logic here when a file gets added to the defaultDirectory
             try
             {
@@ -1353,16 +1681,22 @@ namespace SoundBoard
                 foreach(var file in item)
                 {
                     var ext = Path.GetExtension(file);
-                    if(!extensions.Contains(ext))
+                    if(audioExtensions.Contains(ext))
+                    {
+                        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                        {
+                            AddAudioFiles(item);
+                        }));
+                    }
+                    else if(imageExtensions.Contains(ext))
+                    {
+                        FindImage(Path.GetFileNameWithoutExtension(file));
+                        WriteStatusEntry("Image " + file + " was added to the folder");
+                    }
+                    else
                     {
                         WriteStatusEntry("Unsupported file added to directory");
-                        break;
                     }
-
-                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
-                    {
-                        AddAudioFiles(item);
-                    }));
                 }
             }
             catch (Exception ex)
@@ -1378,20 +1712,37 @@ namespace SoundBoard
         /// </summary>
         /// <param name="fschanged"></param>
         /// <param name="changeEvent"></param>
-        protected void fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
+        protected void Fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
         {
+            if(FolderWatch == false)
+            {
+                return;
+            }
+
+            var file = changeEvent.Name;
+            var ext = Path.GetExtension(file);
             //Do logic here when a file gets deleted from the defaultDirectory
             try
-            { 
-                Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+            {
+                if (audioExtensions.Contains(ext))
                 {
-                    RemoveSound_Executed(changeEvent.Name);
-                }));
-                WriteStatusEntry("Song " + changeEvent.Name + " got removed from the folder, updated list.");
+
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        RemoveSound_Executed(file);
+                    }));
+                }
+                else if (imageExtensions.Contains(ext))
+                {
+                    Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+                    {
+                        RemoveImage_Executed(Path.GetFileNameWithoutExtension(file));
+                    }));
+                }
             }
             catch (Exception ex)
             {
-                WriteStatusEntry("Something changed in the folder.");
+                WriteStatusEntry("Something changed in the folder. Refresh application recommended.");
             }
         }
         #endregion
