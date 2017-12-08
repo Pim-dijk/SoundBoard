@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
+  <asmv1:assemblyIdentity name="SoundBoard.exe" version="1.1.0.0" publicKeyToken="b1a7f72753dae8d4" language="neutral" processorArchitecture="msil" type="win32" />
+  <description asmv2:iconFile="musicIcon.ico" xmlns="urn:schemas-microsoft-com:asm.v1" />
+  <application />
+  <entryPoint>
+    <assemblyIdentity name="SoundBoard" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+    <commandLine file="SoundBoard.exe" parameters="" />
+  </entryPoint>
+  <trustInfo>
+    <security>
+      <applicationRequestMinimum>
+        <PermissionSet Unrestricted="true" ID="Custom" SameSite="site" />
+        <defaultAssemblyRequest permissionSetReference="Custom" />
+      </applicationRequestMinimum>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          UAC Manifest Options
+          If you want to change the Windows User Account Control level replace the 
+          requestedExecutionLevel node with one of the following.
+
+        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+
+         If you want to utilize File and Registry Virtualization for backward 
+         compatibility then delete the requestedExecutionLevel node.
+    -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentOS>
+      <osVersionInfo>
+        <os majorVersion="5" minorVersion="1" buildNumber="2600" servicePackMajor="0" />
+      </osVersionInfo>
+    </dependentOS>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="Microsoft.Windows.CommonLanguageRuntime" version="4.0.30319.0" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="MediaToolkit.dll" size="19826688">
+      <assemblyIdentity name="MediaToolkit" version="1.1.0.1" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>uWZN5kx34dKVl4akM03WEeLa1yTbmn0shh9iLzyOkMU=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="NAudio.dll" size="475648">
+      <assemblyIdentity name="NAudio" version="1.8.3.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>qRORAxp+q8AuA8MjsZ6ti1OYnER6qFUZrioPCDISSQE=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="PropertyChanged.dll" size="6144">
+      <assemblyIdentity name="PropertyChanged" version="2.1.4.0" publicKeyToken="EE3EE20BCF148DDD" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>19YAEuqb/EhniOd0x09FEc351h+E7K+Tn2aFpiWZBts=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="SoundBoard.exe" size="150504">
+      <assemblyIdentity name="SoundBoard" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>7B6KYeEM9he6aiCF3bTAVeqykwZOTVsPZn1vrQEU1as=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="YoutubeExplode.dll" size="68608">
+      <assemblyIdentity name="YoutubeExplode" version="3.3.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>Sjyi+3GqPd6UAFSyzuI4uLitBswSQXKNkemalCCCtE4=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <file name="musicIcon.ico" size="16958">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>dZKm4IcpX7VnCD7G02wg3svuLU+0Db9C8Bpw58EvK/U=</dsig:DigestValue>
+    </hash>
+  </file>
+  <file name="SoundBoard.exe.config" size="2136">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>2A5OKoCCto1D3hL5HgfZ1W8MdSUN987Ow2INGOJnvVw=</dsig:DigestValue>
+    </hash>
+  </file>
+<publisherIdentity name="CN=SVPDD950301\Admin" issuerKeyHash="98a5188d0184bb113502d5592af49fa47f6f2f95" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>dvT1iq3bdTr5QHNxUX1nDy/YolpFkZ1AXd+KOca6aV8=</DigestValue></Reference></SignedInfo><SignatureValue>hsrIwmQPOtKg5b+r1ARq2VgTN8qgXjDK6f4HHKdqPxWgWPdwf6kezMSpLHbYpyQ6lt7NFBOIm4up1rRCU39UXeAmRiuPAIzSDb18cFyc0qEBHPOePnN64wQlYBLQtBzOaww3bd0tQigS2uUkL9lD+Dn9UAWD9J6dhrIZfuXj6jQ=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>paVdwlor7wpXBvoGjPur0T77JUzHPG2PJuqcVvogcm5C+sBsaBqIb27d8PLoSRQVpjNdVuRkyVXpxuRdIIEpGoyL2OiZtV2GDaYai+87vwEASWvrtpL49gbMF9sxX2LMozb99Sb7AuOdVvqIKCdbzsl0EEtfIspfKZCHC7z4Q1E=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="5f69bac6398adf5d409d91455aa2d82f0f677d51717340f93a75dbad8af5f476" Description="" Url=""><as:assemblyIdentity name="SoundBoard.exe" version="1.1.0.0" publicKeyToken="b1a7f72753dae8d4" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=SVPDD950301\Admin</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>UHq21m5dS9HAltdvxkHO/kotKqS7DagWT7Or2GobxJ0=</DigestValue></Reference></SignedInfo><SignatureValue>XFn1o6BuxDIFsyJ2q6P8hi7eSAJ1Ckc/NeC0AgQwGb+1yoHAIqPyf3ArriKK6+93WAp0t3JJvo1rdeLMAI/LrqZ2x7v3097jQVSWILxYHueBsYUap5lk+nNFAuGBxhXYOMuGpxygRKewoVZ609UDab6tHsoY+zIV/Gw+SS3qFuE=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>paVdwlor7wpXBvoGjPur0T77JUzHPG2PJuqcVvogcm5C+sBsaBqIb27d8PLoSRQVpjNdVuRkyVXpxuRdIIEpGoyL2OiZtV2GDaYai+87vwEASWvrtpL49gbMF9sxX2LMozb99Sb7AuOdVvqIKCdbzsl0EEtfIspfKZCHC7z4Q1E=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIIB3TCCAUagAwIBAgIQRZFnT8g8l55NHoxJIq3P8jANBgkqhkiG9w0BAQsFADAtMSswKQYDVQQDHiIAUwBWAFAARABEADkANQAwADMAMAAxAFwAQQBkAG0AaQBuMB4XDTE3MTIwODA5MDU0NVoXDTE4MTIwODE1MDU0NVowLTErMCkGA1UEAx4iAFMAVgBQAEQARAA5ADUAMAAzADAAMQBcAEEAZABtAGkAbjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEApaVdwlor7wpXBvoGjPur0T77JUzHPG2PJuqcVvogcm5C+sBsaBqIb27d8PLoSRQVpjNdVuRkyVXpxuRdIIEpGoyL2OiZtV2GDaYai+87vwEASWvrtpL49gbMF9sxX2LMozb99Sb7AuOdVvqIKCdbzsl0EEtfIspfKZCHC7z4Q1ECAwEAATANBgkqhkiG9w0BAQsFAAOBgQCMGRTtadp8gYlgdFNYgxJroYQECgwoqEHr5ItkQMYDzswfQ1B/SNZQCGz7NCKT1e/kLzAMi4Wm+enVtxxSm6Pq3e8ruyYYDg4A0ILJHkLVOiWZNIrdcSP7+9EshR6g3FAHIIvF6Ly8+4waoeyv4eJnZUmrjJDUr1pWqwL+Oh9RqQ==</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>
