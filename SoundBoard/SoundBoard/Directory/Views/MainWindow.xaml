@@ -14,6 +14,10 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="Q" Modifiers="Alt" Command="{Binding PlaySound}" CommandParameter="While she sleeps.mp3" />
+    </Window.InputBindings>
     
     <Grid>
         <!--Grid column and row definitions-->

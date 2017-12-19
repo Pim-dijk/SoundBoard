@@ -808,6 +808,9 @@ namespace SoundBoard
         #region Save other media link
         private async Task<string> GenericAudio(string param)
         {
+            //link is the url that was passed into the dialog
+            //ext will be the last portion of the passed in url
+            //UrnName is the name that was passed into the dialog
             var link = param as string;
             var ext = "." + param.Split('.').Last();
             var output = DefaultDirectory + UrlName + ext;
@@ -822,25 +825,32 @@ namespace SoundBoard
                 {
                     if (audioExtensions.Contains(ext))
                     {
-                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        using (var webClient = new WebClient()) //Download the video to get the thumbnail
                         {
                             webClient.DownloadFile(link, output);
                         }
 
                         if (videoExtensions.Contains(ext))
                         {
-                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
-                            using (var engine = new Engine())
+                            try
                             {
-                                engine.GetMetadata(inputImage);
-                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                                engine.GetThumbnail(inputImage, outputImage, options);
+                                var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                                using (var engine = new Engine())
+                                {
+                                    engine.GetMetadata(inputImage);
+                                    var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                    engine.GetThumbnail(inputImage, outputImage, options);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                WriteStatusEntry(e.Message + " Could not find a thumbnail.");
                             }
                         }
                     }
                     else
                     {
-                        using (var webClient = new WebClient()) //Download the thumbnail of the video
+                        using (var webClient = new WebClient()) //Download the video to get the thumbnail
                         {
                             webClient.DownloadFile(link, outputD);
                         }
@@ -852,12 +862,19 @@ namespace SoundBoard
 
                         if (videoExtensions.Contains(ext))
                         {
-                            var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
-                            using (var engine = new Engine())
+                            try
                             {
-                                engine.GetMetadata(inputFile);
-                                var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
-                                engine.GetThumbnail(inputFile, outputImage, options);
+                                var outputImage = new MediaFile { Filename = $"{DefaultImageDirectory + UrlName }.jpg" };
+                                using (var engine = new Engine())
+                                {
+                                    engine.GetMetadata(inputFile);
+                                    var options = new ConversionOptions { Seek = TimeSpan.FromSeconds(5) };
+                                    engine.GetThumbnail(inputFile, outputImage, options);
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                WriteStatusEntry(e.Message + " Could not find a thumbnail.");
                             }
                         }
                     }
