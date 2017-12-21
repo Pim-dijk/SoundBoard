@@ -1,0 +1,30 @@
+﻿<Window x:Class="SoundBoard.Views.ShowKeybindingsView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:utilities="clr-namespace:SoundBoard.Utilities"
+        mc:Ignorable="d"
+        Title="List of all Keybindings" Height="250" Width="350" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
+        ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" >
+    
+    <Window.Resources>
+        <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
+    </Window.Resources>
+
+    <Grid>
+        <ListView ItemsSource="{Binding Keybindings}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Path=Modifier}" />
+                        <TextBlock Text="+" />
+                        <TextBlock Text="{Binding Path=Keybind}" />
+                        <TextBlock Text=" - " />
+                        <TextBlock Text="{Binding Path=SoundName}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Window>

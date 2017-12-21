@@ -1,8 +1,9 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
 using System.Windows.Media;
 
 namespace SoundBoard
 {
+    [Serializable]
     public class SoundViewModel : BaseViewModel
     {
         #region Public Properties
@@ -21,6 +22,10 @@ namespace SoundBoard
         public bool HasImage { get; set; }
         //Is playing
         public bool IsPlaying { get; set; }
+        //Assigned keybinding
+        public string Keybind { get; set; }
+        //Set the modifiers
+        public string Modifiers { get; set; }
         #endregion
 
         #region Constructor

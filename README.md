@@ -1,9 +1,11 @@
 # SoundBoard
-Practice with WPF and MVVM where I create a soundboard application.
+My practice application with WPF and MVVM where I create a soundboard.
 
 Features:
 - Add files/folder via Windows Dialog
 - Drag and drop files to add to the SoundBoard
   - In either the directory or on the application itself
-- Add audio from a url, whether audio only or video
-- Set custom image for each sound
+- Add audio from a url, either audio only or video (downloads video to seperate folder)
+- Set custom image for each sound (get's video thumbnail)
+- Add keybinds for each sound
+- Select audio output device

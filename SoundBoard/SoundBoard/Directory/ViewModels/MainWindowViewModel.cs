@@ -23,6 +23,8 @@ using YoutubeExplode;
 using YoutubeExplode.Models.MediaStreams;
 using System.Net;
 using MediaToolkit.Options;
+using System.Xml;
+using System.Windows.Input;
 
 
 #endregion
@@ -217,12 +219,21 @@ namespace SoundBoard
         #region -Collection
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
+        
+        //A list for storing all keybinding/sound combinations
+        public List<KeybindingsViewModel> Keybindings { get; set; }
 
         //Omit Imagesource
         public ImageSource ImageSource { get; set; }
 
         //Output Devices
         public ObservableCollection<DevicesViewModel> Devices { get; set; }
+
+        //Keybinding
+        public String Keybind { get; set; }
+
+        //Modifier
+        public String Modifier { get; set; }
 
         //Default Directory for the application to get the files from
         public string DefaultDirectory
@@ -462,13 +473,13 @@ namespace SoundBoard
         {
             //Get all sounds and create SoundViewModels for each
             this.Sounds = new ObservableCollection<SoundViewModel>
-                (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
+            (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
 
             //Get a list of all the found images
             List<string> images = FolderContents.GetImages(DefaultImageDirectory);
 
             //Add the found images to the correct sound
-            foreach(var image in images)
+            foreach (var image in images)
             {
                 //Get just the name of the image, no path, no extension
                 var normImage = Path.GetFileNameWithoutExtension(Path.GetFileName(image));
@@ -479,6 +490,24 @@ namespace SoundBoard
                     item.ImagePath = image;
                     item.ImageBitMap = LoadImage(image);
                     item.HasImage = true;
+                }
+            }
+
+            //Add keybindings to the sound
+            foreach(var keybind in Keybindings)
+            {
+                var sound = Sounds.FirstOrDefault(s => s.Name == keybind.SoundName);
+                if(sound != null)
+                {
+                    sound.Keybind = keybind.Keybind.ToLower();
+                    if(keybind.Modifier == "Control")
+                    {
+                        sound.Modifiers = "Ctrl";
+                    }
+                    else
+                    {
+                        sound.Modifiers = keybind.Modifier;
+                    }
                 }
             }
         }
@@ -577,16 +606,35 @@ namespace SoundBoard
         /// </summary>
         private void ReadCustomSettings()
         {
-            //If the default directory is not empty or null, read it's value
-            if(string.IsNullOrEmpty(ConfigurationManager.AppSettings["DefaultDirectory"]) == false)
-            {
-                DefaultDirectory = ConfigurationManager.AppSettings["DefaultDirectory"];
-            }
-
+            DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
             Volume = SoundBoard.Properties.Settings.Default.Volume;
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
             DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
             DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
+
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Keybindings.xml";
+            if (File.Exists(xmlPath))
+            {
+                XmlReader xmlReader = XmlReader.Create(xmlPath);
+                while (xmlReader.Read())
+                {
+                    if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "keybind"))
+                    {
+                        if (xmlReader.HasAttributes)
+                        {
+                            //Console.WriteLine(xmlReader.GetAttribute("Sound") + ": " + xmlReader.GetAttribute("Keybind"));
+                            string key = xmlReader.GetAttribute("Keybind");
+                            string modifier = xmlReader.GetAttribute("Modifier");
+                            string sound = xmlReader.GetAttribute("Sound");
+                            Keybindings.Add(new KeybindingsViewModel(key, modifier, sound));
+                            var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
+                            kb.CommandParameter = sound;
+                            //Add the keybinding to the View
+                            App.Current.MainWindow.InputBindings.Add(kb);
+                        }
+                    }
+                }
+            }
         }
         #endregion
 
@@ -608,6 +656,26 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
+
+            //Write keybinding combinations to xml
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Keybindings.xml";
+            XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
+            
+            xmlWriter.WriteStartDocument();
+            xmlWriter.WriteStartElement("keybinds");
+
+            foreach(var keybind in Keybindings)
+            {
+                xmlWriter.WriteStartElement("keybind");
+                xmlWriter.WriteAttributeString("Sound", keybind.SoundName);
+                xmlWriter.WriteAttributeString("Keybind", keybind.Keybind);
+                xmlWriter.WriteAttributeString("Modifier", keybind.Modifier);
+                xmlWriter.WriteEndElement();
+            }
+
+            xmlWriter.WriteEndDocument();
+            xmlWriter.Close();
+
         }
         #endregion
 
@@ -699,7 +767,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Save youtube audio
+        #region -Save youtube audio
         private async Task<string> YoutubeAudio(string param)
         {
             string output = "";
@@ -805,7 +873,7 @@ namespace SoundBoard
         }
         #endregion
         
-        #region Save other media link
+        #region -Save other media link
         private async Task<string> GenericAudio(string param)
         {
             //link is the url that was passed into the dialog
@@ -916,7 +984,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region Convert filesize to string
+        #region -Convert filesize to string
         /// <summary>
         /// Convert the filesize from bits to whatever is most suited
         /// </summary>
@@ -939,32 +1007,16 @@ namespace SoundBoard
             return $"{size:0.#} {Units[unit]}";
         }
         #endregion
-
+        
         #region -Test
         /// <summary>
         /// Location for a test method
         /// </summary>
         /// <param name="droppedItem"></param>
         /// <param name="target"></param>
-        public void ArrangeItems(SoundViewModel droppedItem, SoundViewModel target)
+        public void Test(object param)
         {
-            int draggedIdx = Sounds.IndexOf(droppedItem);
-            int targetIdx = Sounds.IndexOf(target);
-
-            if (draggedIdx < targetIdx)
-            {
-                Sounds.Insert(targetIdx + 1, droppedItem);
-                Sounds.RemoveAt(draggedIdx);
-            }
-            else
-            {
-                int remIdx = draggedIdx + 1;
-                if (Sounds.Count + 1 > remIdx)
-                {
-                    Sounds.Insert(targetIdx, droppedItem);
-                    Sounds.RemoveAt(remIdx);
-                }
-            }
+            
         }
         #endregion
 
@@ -977,6 +1029,7 @@ namespace SoundBoard
         private void InitializeCollections()
         { 
             StatusListView = new ObservableCollection<string>();
+            Keybindings = new List<KeybindingsViewModel>();
         }
         #endregion
 
@@ -1002,6 +1055,8 @@ namespace SoundBoard
             public RelayCommand OpenChangeName { get; set; }
             public RelayCommand AddUrl { get; set; }
             public CommandBase OpenUrl { get; set; }
+            public RelayCommand AddKeybind { get; set; }
+            public RelayCommand OpenAddKeybind { get; set; }
             #endregion
 
             #region --Application
@@ -1010,6 +1065,7 @@ namespace SoundBoard
             public CommandBase OpenAbout { get; set; }
             public RelayCommand ToggleFolderWatch { get; set; }
             public RelayCommand SelectOutput { get; set; }
+            public CommandBase ShowKeybindings { get; set; }
             #endregion
 
         #region --Test
@@ -1037,12 +1093,15 @@ namespace SoundBoard
             ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             AddUrl = new RelayCommand(AddUrl_Executed);
             OpenUrl = new CommandBase(OpenUrl_Executed);
+            AddKeybind = new RelayCommand(AddKeybind_Executed);
+            OpenAddKeybind = new RelayCommand(OpenAddKeybind_Executed);
             //Application
             ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
             ExitCommand = new RelayCommand(ExitCommand_Executed);
             OpenAbout = new CommandBase(OpenAbout_Executed);
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
-            SelectOutput = new RelayCommand(SelectOutput_executed);
+            SelectOutput = new RelayCommand(SelectOutput_Executed);
+            ShowKeybindings = new CommandBase(ShowKeybindings_Executed);
             //Test
             TestCommand = new RelayCommand(TestCommand_Executed);
         }
@@ -1385,6 +1444,13 @@ namespace SoundBoard
             }
             sound.AudioLocation = fullNewPath;
             File.Move(fullCurrentPath, fullNewPath);
+
+            //If there is a keybind associated, change it to point to the new name
+            var keybind = Keybindings.FirstOrDefault(k => k.SoundName == CurrentName);
+            if(keybind != null)
+            {
+                keybind.SoundName = newName;
+            }
             
             //Close the window on save
             App.Current.Windows.OfType<ChangeNameView>().First().Close();
@@ -1460,6 +1526,11 @@ namespace SoundBoard
                 {
                     Sounds.Remove(soundToRemove);
                     WriteStatusEntry("File '" + sound + "' removed successfully.");
+                    var keybind = Keybindings.FirstOrDefault(k => k.SoundName == sound);
+                    if(keybind != null)
+                    {
+                        Keybindings.Remove(keybind);
+                    }
                 }
                 catch
                 {
@@ -1494,9 +1565,6 @@ namespace SoundBoard
                 //Remove the sound from the list
                 RemoveSound_Executed(param);
 
-                //Stop playing the sound first
-                CleanUp();
-
                 //Remove the sound file from the directory
                 var item = param as string;
                 var file = DefaultDirectory + item;
@@ -1512,7 +1580,60 @@ namespace SoundBoard
             fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
-        
+
+        #region --Open AddKeybind
+        private void OpenAddKeybind_Executed(object param)
+        {
+            CurrentName = param as string;
+
+            AddKeyBindingView view = new AddKeyBindingView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.ShowDialog();
+        }
+        #endregion
+
+        #region --AddKeybind
+        private void AddKeybind_Executed(object param)
+        {
+            //Keybind can be something like "Ctrl + Alt + 1"
+            string keyBind = this.Keybind;
+            string modifier = this.Modifier;
+            string soundName = CurrentName;
+            
+            if(modifier == "")
+            {
+                modifier = "Ctrl+Alt";
+            }
+
+            //Check if the keybinding already exists, then remove it.
+            var key = Keybindings.FirstOrDefault(k => k.Keybind == keyBind && k.Modifier == modifier);
+            if(key != null)
+            {
+                Keybindings.Remove(key);
+            }
+            //Check if the song already has a keybinding, then remove it
+            var sound = Keybindings.FirstOrDefault(k => k.SoundName == soundName);
+            if(sound != null)
+            {
+                Keybindings.Remove(sound);
+            }
+
+            string fullBind = modifier + "+" + keyBind;
+
+            //Create a keybinding that goes into the view
+            var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(fullBind) as KeyGesture);
+            kb.CommandParameter = soundName;
+            //Add the keybinding to the View
+            App.Current.MainWindow.InputBindings.Add(kb);
+
+            //Add the keybinding to the Keybindings list, and so also the xml file.
+            var modifiers = kb.Modifiers.ToString();
+            Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
+            
+            //Close the view
+            App.Current.Windows.OfType<AddKeyBindingView>().First().Close();
+        }
+        #endregion
         #endregion
 
         #region -Application
@@ -1547,10 +1668,7 @@ namespace SoundBoard
                     DefaultDirectory = pathSave.SelectedPath.ToString() + "\\";
 
                     //Save the default directory to the config file
-                    Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                    config.AppSettings.Settings["DefaultDirectory"].Value = DefaultDirectory;
-                    config.Save(ConfigurationSaveMode.Modified);
-                    ConfigurationManager.RefreshSection("appSettings");
+                    Properties.Settings.Default.DefaultDirectroy = DefaultDirectory;
                     WriteStatusEntry("Retreving files from new directory...");
                     GetFiles();
 
@@ -1567,7 +1685,7 @@ namespace SoundBoard
         /// Change the audio output selection
         /// </summary>
         /// <param name="param">The ID from the selected device</param>
-        private void SelectOutput_executed(object param)
+        private void SelectOutput_Executed(object param)
         {
             //Unselect currently selected one
             var unselect = Devices.FirstOrDefault(d => d.isChecked == true);
@@ -1614,6 +1732,15 @@ namespace SoundBoard
         }
         #endregion
 
+        #region --Show Keybindings
+        private void ShowKeybindings_Executed(object sender, EventArgs e)
+        {
+            ShowKeybindingsView view = new ShowKeybindingsView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.Show();
+        }
+        #endregion
+
         #region --Exit
         /// <summary>
         /// Closes the application, saves volume state beforehand
@@ -1624,32 +1751,33 @@ namespace SoundBoard
             Application.Current.Shutdown();
         }
         #endregion
-
         #endregion
-        
+
         #region Test
         /// <summary>
         /// Test command, do anything here
         /// </summary>
         /// <param name="param"></param>
-        private async void TestCommand_Executed(object param)
+        private void TestCommand_Executed(object param)
         {
-            await Task.Run(() =>
-            {
-                //TTS Style
-                PromptStyle promptStyle = new PromptStyle();
-                promptStyle.Rate = PromptRate.Slow;
-                //TTS string builder
-                PromptBuilder promptBuilder = new PromptBuilder();
+            //PlaySound_Executed("alec steel - katana.mp3");
 
-                promptBuilder.StartStyle(promptStyle);
-                promptBuilder.AppendText("chu chu motherfucker, <3");
-                promptBuilder.AppendText("Kappa!");
-                promptBuilder.EndStyle();
+            //await Task.Run(() =>
+            //{
+            //    //TTS Style
+            //    PromptStyle promptStyle = new PromptStyle();
+            //    promptStyle.Rate = PromptRate.Slow;
+            //    //TTS string builder
+            //    PromptBuilder promptBuilder = new PromptBuilder();
 
-                SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
-                ttsSynt.Speak(promptBuilder);
-            });
+            //    promptBuilder.StartStyle(promptStyle);
+            //    promptBuilder.AppendText("chu chu motherfucker, <3");
+            //    promptBuilder.AppendText("Kappa!");
+            //    promptBuilder.EndStyle();
+
+            //    SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
+            //    ttsSynt.Speak(promptBuilder);
+            //});
         }
         #endregion
 
@@ -1763,6 +1891,8 @@ namespace SoundBoard
             }
         }
         #endregion
+        
         #endregion
+        
     }
 }

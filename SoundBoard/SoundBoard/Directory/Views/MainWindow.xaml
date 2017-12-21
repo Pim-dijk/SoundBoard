@@ -9,16 +9,12 @@
         mc:Ignorable="d"
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="427" Width="689" Height="450"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResizeWithGrip" 
-        FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png">
+        FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png" >
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
-
-    <Window.InputBindings>
-        <KeyBinding Key="Q" Modifiers="Alt" Command="{Binding PlaySound}" CommandParameter="While she sleeps.mp3" />
-    </Window.InputBindings>
-    
+   
     <Grid>
         <!--Grid column and row definitions-->
         <Grid.RowDefinitions>
@@ -106,6 +102,12 @@
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
                 <Separator/>
+                <MenuItem Header="Keybindings" Command="{Binding ShowKeybindings}" ToolTip="Display a list of all keybindings">
+                    <MenuItem.Icon>
+                        <Image Height="20" Source="/SoundBoard;component/Images/keyboard.png"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
                 <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />
@@ -137,15 +139,22 @@
         </StackPanel>
 
         <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" PreviewDragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True" >
+        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" PreviewDragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True">
             <!--Items control to create a button for every item in the collection-->
-            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}" >
+            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
                 <!--Defines the template to use a wrappanel-->
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+                <!--Inputbindings for the sounds-->
+                <!--<ItemsControl.InputBindings>
+                    <KeyBinding Key="A" 
+                                    Modifiers="Ctrl" 
+                                    Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.PlaySound}" 
+                                    CommandParameter="{Binding Path=Name, RelativeSource={RelativeSource FindAncestor, AncestorType=ItemsControl}}" />
+                </ItemsControl.InputBindings>-->
                 <!--Sets the item template for every button-->
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -155,13 +164,20 @@
                                 CommandParameter="{Binding Path=Name}"
                                 Tag="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ItemsControl}}}" >
                                 <TextBlock Text="{Binding Path=NormalizedName}" Style="{StaticResource textBlockStyle}" />
-                                    <Button.ContextMenu>
+                                <Button.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Add/Change image" 
                                                 Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.AddImage}" 
                                                 CommandParameter="{Binding Path=NormalizedName}">
                                             <MenuItem.Icon>
                                                 <Image Source="/SoundBoard;component/Images/addImageIcon.png" Width="20" VerticalAlignment="Center"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Add/Change keybinding" 
+                                                Command="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.Tag.DataContext.OpenAddKeybind}" 
+                                                CommandParameter="{Binding Path=Name}">
+                                            <MenuItem.Icon>
+                                                <Image Source="/SoundBoard;component/Images/keyboard.png" Width="20" VerticalAlignment="Center"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Header="Change name" 

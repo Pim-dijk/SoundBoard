@@ -17,7 +17,7 @@ namespace SoundBoard
             InitializeComponent();
             this.DataContext = new MainWindowViewModel();
         }
-
+        
         //Drag and drop file allowed or not based on extension
         private void MySounds_DragEnter(object sender, DragEventArgs e)
         {
