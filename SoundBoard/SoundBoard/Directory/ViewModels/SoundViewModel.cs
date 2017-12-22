@@ -24,8 +24,6 @@ namespace SoundBoard
         public bool IsPlaying { get; set; }
         //Assigned keybinding
         public string Keybind { get; set; }
-        //Set the modifiers
-        public string Modifiers { get; set; }
         #endregion
 
         #region Constructor

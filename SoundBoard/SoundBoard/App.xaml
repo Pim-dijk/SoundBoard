@@ -144,9 +144,9 @@
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Foreground" Value="Black" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="FontSize" Value="21" />
+            <Setter Property="FontSize" Value="19" />
             <Setter Property="TextTrimming" Value="WordEllipsis" />
-            <Setter Property="LineHeight" Value="20" />
+            <Setter Property="LineHeight" Value="18" />
             <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
             <Setter Property="Effect">
                 <Setter.Value>

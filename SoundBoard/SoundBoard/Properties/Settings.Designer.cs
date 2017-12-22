@@ -82,5 +82,17 @@ namespace SoundBoard.Properties {
                 this["DefaultDirectroy"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool GlobalHook {
+            get {
+                return ((bool)(this["GlobalHook"]));
+            }
+            set {
+                this["GlobalHook"] = value;
+            }
+        }
     }
 }

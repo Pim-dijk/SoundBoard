@@ -1,9 +1,7 @@
 ﻿using System.Windows;
 using System.IO;
 using System.Linq;
-using System;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace SoundBoard
 {
@@ -56,6 +54,16 @@ namespace SoundBoard
             //Specify which MainWindowViewModel you want to target, there is only one but you still need to specify it
             //the DataContext already is set to the MainWindowViewModel
             ((MainWindowViewModel)this.DataContext).AddAudioFiles(files);
+        }
+
+        //Supress Alt functionality to enable keybindings with Alt in it
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
+            {
+                e.Handled = true;
+                return;
+            }
         }
 
 

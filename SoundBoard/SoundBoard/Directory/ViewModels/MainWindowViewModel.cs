@@ -6,8 +6,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using System.IO;
 using System.Configuration;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.ComponentModel;
@@ -17,7 +17,6 @@ using SoundBoard.Views;
 //NuGet packages
 using MediaToolkit.Model;
 using MediaToolkit;
-using System.Speech.Synthesis;
 using NAudio.Wave;
 using YoutubeExplode;
 using YoutubeExplode.Models.MediaStreams;
@@ -25,6 +24,7 @@ using System.Net;
 using MediaToolkit.Options;
 using System.Xml;
 using System.Windows.Input;
+using Gma.System.MouseKeyHook;
 
 
 #endregion
@@ -33,8 +33,12 @@ namespace SoundBoard
 {
     public partial class MainWindowViewModel : BaseViewModel
     {
+        #region Global keyhook event
+        private IKeyboardMouseEvents m_GlobalHook;
+        #endregion
+
         #region Fields
-        
+
         #region -Controls
         //Volume control
         private float volume;
@@ -89,7 +93,7 @@ namespace SoundBoard
         private FileSystemWatcher fs;
 
         //Folder watch enabled/disabled
-        private bool folderWatch;
+        private bool folderWatch = true;
 
         //Restore FolderWatch
         private bool restoreFolderWatch;
@@ -111,6 +115,9 @@ namespace SoundBoard
 
         //Selected device ID
         private int deviceId;
+
+        //Global keyboard hook
+        private bool globalHook = true;
         #endregion
 
         #region -Test
@@ -425,6 +432,23 @@ namespace SoundBoard
                 deviceId = value;
             }
         }
+
+        //Global keyboard hook
+        public bool GlobalHook
+        {
+            get
+            {
+                return globalHook;
+            }
+            set
+            {
+                if(this.globalHook == value)
+                {
+                    return;
+                }
+                globalHook = value;
+            }
+        }
         #endregion
 
         #endregion
@@ -499,15 +523,8 @@ namespace SoundBoard
                 var sound = Sounds.FirstOrDefault(s => s.Name == keybind.SoundName);
                 if(sound != null)
                 {
-                    sound.Keybind = keybind.Keybind.ToLower();
-                    if(keybind.Modifier == "Control")
-                    {
-                        sound.Modifiers = "Ctrl";
-                    }
-                    else
-                    {
-                        sound.Modifiers = keybind.Modifier;
-                    }
+                    var keybinding = keybind.Modifier + "+" + keybind.Keybind;
+                    sound.Keybind = keybinding;
                 }
             }
         }
@@ -611,6 +628,11 @@ namespace SoundBoard
             FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
             DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
             DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
+            GlobalHook = SoundBoard.Properties.Settings.Default.GlobalHook;
+            if(GlobalHook == true)
+            {
+                Subscribe();
+            }
 
             var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Keybindings.xml";
             if (File.Exists(xmlPath))
@@ -654,6 +676,8 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
             //Save the converter option
             SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
+            //Save the global hook setting
+            SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
 
@@ -676,6 +700,10 @@ namespace SoundBoard
             xmlWriter.WriteEndDocument();
             xmlWriter.Close();
 
+            if(GlobalHook == true)
+            {
+                Unsubscribe();
+            }
         }
         #endregion
 
@@ -760,9 +788,10 @@ namespace SoundBoard
                     DownloadProgress = false;
                 });
             }
-            catch
+            catch (Exception e)
             {
                 WriteStatusEntry("Unexpected error, you could try again. Maibe you'll get lucky this time.");
+                WriteStatusEntry(e.Message);
             }
         }
         #endregion
@@ -857,9 +886,10 @@ namespace SoundBoard
                     WriteStatusEntry("------Download complete------");
                 }
             }
-            catch
+            catch (Exception e)
             {
                 WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
+                WriteStatusEntry(e.Message);
                 return null;
             }
             if (!audioExtensions.Contains(audioFileExtLower))
@@ -948,9 +978,10 @@ namespace SoundBoard
                     }
                 });
             }
-            catch
+            catch (Exception e)
             {
                 WriteStatusEntry("Failed to get the requested url");
+                WriteStatusEntry(e.Message);
             }
             if (audioExtensions.Contains(ext))
             {
@@ -1007,6 +1038,24 @@ namespace SoundBoard
             return $"{size:0.#} {Units[unit]}";
         }
         #endregion
+
+        #region -Subscribe to keyboard hook
+        public void Subscribe()
+        {
+            m_GlobalHook = Hook.GlobalEvents();
+            m_GlobalHook.KeyDown += GlobalHookKeyPress;
+        }
+        #endregion
+
+        #region -Unsubscribe from keyboard hook
+        public void Unsubscribe()
+        {
+            m_GlobalHook.KeyDown -= GlobalHookKeyPress;
+
+            //It is recommened to dispose it
+            m_GlobalHook.Dispose();
+        }
+        #endregion
         
         #region -Test
         /// <summary>
@@ -1019,7 +1068,7 @@ namespace SoundBoard
             
         }
         #endregion
-
+        
         #endregion
 
         #region Initialize Collections
@@ -1066,10 +1115,11 @@ namespace SoundBoard
             public RelayCommand ToggleFolderWatch { get; set; }
             public RelayCommand SelectOutput { get; set; }
             public CommandBase ShowKeybindings { get; set; }
+            public RelayCommand SetGlobalHook { get; set; }
             #endregion
 
-        #region --Test
-        public RelayCommand TestCommand { get; set; }
+            #region --Test
+            public RelayCommand TestCommand { get; set; }
             #endregion
 
         #endregion
@@ -1102,6 +1152,7 @@ namespace SoundBoard
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
             SelectOutput = new RelayCommand(SelectOutput_Executed);
             ShowKeybindings = new CommandBase(ShowKeybindings_Executed);
+            SetGlobalHook = new RelayCommand(SetGlobalHook_Executed);
             //Test
             TestCommand = new RelayCommand(TestCommand_Executed);
         }
@@ -1153,6 +1204,10 @@ namespace SoundBoard
             catch (FileNotFoundException e)
             {
                 MessageBox.Show("File could not be found." + Environment.NewLine + "Try refreshing the application to resolve.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception e)
+            {
+                WriteStatusEntry(e.Message);
             }
         }
         #endregion
@@ -1383,6 +1438,10 @@ namespace SoundBoard
                 {
                     WriteStatusEntry("File already assigned to this sound or in use by other program.");
                 }
+                catch(Exception e)
+                {
+                    WriteStatusEntry(e.Message);
+                }
             }
             fs.EnableRaisingEvents = FolderWatch;
         }
@@ -1522,6 +1581,7 @@ namespace SoundBoard
                 {
                     CleanUp();
                 }
+
                 try
                 {
                     Sounds.Remove(soundToRemove);
@@ -1532,9 +1592,10 @@ namespace SoundBoard
                         Keybindings.Remove(keybind);
                     }
                 }
-                catch
+                catch (Exception e)
                 {
                     WriteStatusEntry("Unknown error, please try again.");
+                    WriteStatusEntry(e.Message);
                 }
             }
             else
@@ -1617,23 +1678,50 @@ namespace SoundBoard
             {
                 Keybindings.Remove(sound);
             }
-
-            string fullBind = modifier + "+" + keyBind;
-
-            //Create a keybinding that goes into the view
-            var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(fullBind) as KeyGesture);
-            kb.CommandParameter = soundName;
-            //Add the keybinding to the View
-            App.Current.MainWindow.InputBindings.Add(kb);
-
-            //Add the keybinding to the Keybindings list, and so also the xml file.
-            var modifiers = kb.Modifiers.ToString();
-            Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
             
+            //Convert the inputs to Key and ModifierKeys
+            var keyConverter = new KeyConverter();
+            var myKey = (Key)keyConverter.ConvertFromString(keyBind);
+
+            var modConverter = new ModifierKeysConverter();
+            var myMod = (ModifierKeys)modConverter.ConvertFromString(modifier);
+
+            try
+            {
+                //Create a keybinding that goes into the view
+                var kb = new KeyBinding(PlaySound, myKey, myMod);
+                kb.CommandParameter = soundName;
+                //Add the keybinding to the View
+                App.Current.MainWindow.InputBindings.Add(kb);
+
+                //Add the keybinding to the Keybindings list, and so also the xml file.
+                var modifiers = kb.Modifiers.ToString();
+                Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
+                
+                //If the ShowKeybindings window is open, close and reopen it
+                if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
+                {
+                    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+                    ShowKeybindingsView view = new ShowKeybindingsView(this);
+                    view.Owner = Application.Current.MainWindow;
+                    view.Show();
+                }
+            }
+            catch(NullReferenceException nre)
+            { 
+                 
+            }
+            catch (Exception e)
+            {
+                WriteStatusEntry("-->" + e.Message);
+            }
+
+
             //Close the view
             App.Current.Windows.OfType<AddKeyBindingView>().First().Close();
-        }
+            }
         #endregion
+        
         #endregion
 
         #region -Application
@@ -1735,9 +1823,28 @@ namespace SoundBoard
         #region --Show Keybindings
         private void ShowKeybindings_Executed(object sender, EventArgs e)
         {
+            //Sort the keybinds by soundname
+            Keybindings.Sort((a, b) => a.SoundName.CompareTo(b.SoundName));
+
             ShowKeybindingsView view = new ShowKeybindingsView(this);
             view.Owner = Application.Current.MainWindow;
             view.Show();
+        }
+        #endregion
+
+        #region --Set Global Keyhook
+        private void SetGlobalHook_Executed(object param)
+        {
+            if (this.GlobalHook)
+            {
+                GlobalHook = false;
+                Unsubscribe();
+            }
+            else
+            {
+                GlobalHook = true;
+                Subscribe();
+            }
         }
         #endregion
 
@@ -1751,6 +1858,7 @@ namespace SoundBoard
             Application.Current.Shutdown();
         }
         #endregion
+        
         #endregion
 
         #region Test
@@ -1760,8 +1868,7 @@ namespace SoundBoard
         /// <param name="param"></param>
         private void TestCommand_Executed(object param)
         {
-            //PlaySound_Executed("alec steel - katana.mp3");
-
+            WriteStatusEntry("Testing numpad binding");
             //await Task.Run(() =>
             //{
             //    //TTS Style
@@ -1891,8 +1998,90 @@ namespace SoundBoard
             }
         }
         #endregion
-        
+
+        #region -Global Keypress
+        private void GlobalHookKeyPress(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            //If the app has focus, don't use global keyhooks
+            //you know, to save some resources for the rest of us
+            if (App.Current.MainWindow.IsActive)
+            {
+                //WriteStatusEntry("Supress the keyhook when the app has focus.");
+                return;
+            }
+
+            //Check for the 3 modifier keycombos and add they value key with it.
+            string keyCombo = "";
+            string mod = "";
+            if (e.Control)
+            {
+                mod = "Ctrl";
+                keyCombo = "Ctrl" + "+" +  e.KeyCode;
+            }
+            if (e.Alt)
+            {
+                mod = "Alt";
+                keyCombo = "Alt" + "+" + e.KeyCode;
+            }
+            if(e.Shift)
+            {
+                mod = "Shift";
+                keyCombo = "Shift" + "+" + e.KeyCode;
+            }
+
+            if (e.Control && e.Alt)
+            {
+                mod = "Ctrl+Alt";
+                keyCombo = "Ctrl+Alt" + "+" + e.KeyCode;
+            }
+            if (e.Control && e.Shift)
+            {
+                mod = "Ctrl+Shift";
+                keyCombo = "Ctrl+Shift" + "+" + e.KeyCode;
+            }
+            if (e.Shift && e.Alt)
+            {
+                mod = "Shift+Alt";
+                keyCombo = "Shift+Alt" + "+" + e.KeyCode;
+            }
+            if (e.Control && e.Alt && e.Shift)
+            {
+                mod = "Ctrl+Shift+Alt";
+                keyCombo = "Ctrl+Shift+Alt" + "+" + e.KeyCode;
+            }
+
+            WriteStatusEntry(String.Format("KeyPress: \t{0}", keyCombo));
+
+            //Default keybinding to stop the sound.
+            if(keyCombo == "Ctrl+P" || keyCombo == "Ctrl+Space")
+            {
+                StopSound_Executed(null);
+                return;
+            }
+            //Needs testing on a keyboard with actual media buttons
+            if(e.KeyCode.ToString() == Key.MediaStop.ToString())
+            {
+                StopSound_Executed(null);
+                return;
+            }
+
+            var sound = Sounds.FirstOrDefault(s => s.Keybind == keyCombo);
+            if(sound != null)
+            {
+                PlaySound_Executed(sound.Name);
+            }
+
+            //var key = Keybindings.FirstOrDefault(k => k.Keybind == e.KeyCode.ToString() && k.Modifier == mod);
+            //if(key != null)
+            //{
+            //    PlaySound_Executed(key.SoundName);
+            //}
+            
+            keyCombo = "";
+        }
         #endregion
-        
+
+        #endregion
+
     }
 }

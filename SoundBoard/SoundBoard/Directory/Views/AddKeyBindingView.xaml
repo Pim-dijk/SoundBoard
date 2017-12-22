@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="AddKeyBinding" Height="150" Width="300" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
         ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13"
-        FocusManager.FocusedElement="{Binding ElementName=keyField}">
+        FocusManager.FocusedElement="{Binding ElementName=keyField}" KeyDown="Window_KeyDown">
     
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
@@ -24,12 +24,12 @@
         <TextBlock Grid.ColumnSpan="3" Text="Enter a keybind for this sound" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2"/>
         <TextBlock Grid.ColumnSpan="3" Grid.Row="1" Text="Default modifier keys are 'Ctrl+Alt'" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-        <Label Grid.Column="0" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Center" Content="Key:"/>
-        <TextBox x:Name="keyField" Grid.Row="2" Text="{Binding Path=Keybind, Mode=OneWayToSource}" HorizontalAlignment="Left" Margin="33,0,0,0" Height="30" FontSize="17" Width="35"  MaxLength="1" />
-        <Label Grid.Row="2"  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,152,0" Content="Modifiers:"/>
-        <TextBox x:Name="modifierField" Grid.Row="2" Text="{Binding Path=Modifier, Mode=OneWayToSource}" HorizontalAlignment="Right" Margin="0,0,5,0" Height="30" FontSize="17" Width="150" KeyDown="modifier_PreviewKeyDown" />
+        <Label Grid.Column="0" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Center" Content="Key"/>
+        <TextBox x:Name="keyField" Grid.Row="2" Text="{Binding Path=Keybind, Mode=OneWayToSource}" HorizontalAlignment="Left" Margin="30,0,0,0" Height="30" FontSize="17" Width="75" PreviewKeyDown="key_KeyPressDown"/>
+        <Label Grid.Row="2"  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,152,0" Content="Mod:"/>
+        <TextBox x:Name="modifierField" Grid.Row="2" Text="{Binding Path=Modifier, Mode=OneWayToSource}" HorizontalAlignment="Right" Margin="0,0,5,0" Height="30" FontSize="17" Width="150" PreviewKeyDown="modifier_PreviewKeyDown" />
 
-        <Button Grid.ColumnSpan="3" Grid.Row="3" HorizontalAlignment="Center" IsDefault="True" Content="Add"  Width="75" Margin="0, 0, 0, 7" Padding="5, 2" Command="{Binding AddKeybind}" >
+        <Button Grid.ColumnSpan="3" Grid.Row="3" HorizontalAlignment="Center" IsDefault="True" Content="Add"  Width="75" Margin="0, 0, 0, 7" Padding="5, 2" Command="{Binding AddKeybind}" PreviewMouseDown="Button_PreviewMouseDown">
             <Button.IsEnabled>
                 <MultiBinding Converter="{StaticResource NESConverter}">
                     <Binding ElementName="keyField" Path="Text"  />

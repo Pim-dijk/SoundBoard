@@ -5,26 +5,34 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:utilities="clr-namespace:SoundBoard.Utilities"
         mc:Ignorable="d"
-        Title="List of all Keybindings" Height="250" Width="350" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
-        ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" >
+        Title="List of all Keybindings" Height="250" Width="400" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
+        WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" ResizeMode="CanResize" >
     
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
     </Window.Resources>
 
     <Grid>
-        <ListView ItemsSource="{Binding Keybindings}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Path=Modifier}" />
-                        <TextBlock Text="+" />
-                        <TextBlock Text="{Binding Path=Keybind}" />
-                        <TextBlock Text=" - " />
-                        <TextBlock Text="{Binding Path=SoundName}" />
-                    </StackPanel>
-                </DataTemplate>
-            </ListView.ItemTemplate>
+        <ListView ItemsSource="{Binding Keybindings, Mode=TwoWay}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="70" DisplayMemberBinding="{Binding Keybind}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Keybind">Key</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="100" DisplayMemberBinding="{Binding Modifier}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="Keybind">Modifier</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                    <GridViewColumn Width="204" DisplayMemberBinding="{Binding SoundName}">
+                        <GridViewColumn.Header>
+                            <GridViewColumnHeader Tag="SoundName">SoundName</GridViewColumnHeader>
+                        </GridViewColumn.Header>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
         </ListView>
     </Grid>
 </Window>
