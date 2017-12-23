@@ -22,7 +22,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.ColumnSpan="3" Text="Enter a keybind for this sound" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2"/>
-        <TextBlock Grid.ColumnSpan="3" Grid.Row="1" Text="Default modifier keys are 'Ctrl+Alt'" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock Grid.ColumnSpan="3" Grid.Row="1" Text="Modifier keys are 'Ctrl|Shift|Alt'" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         <Label Grid.Column="0" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Center" Content="Key"/>
         <TextBox x:Name="keyField" Grid.Row="2" Text="{Binding Path=Keybind, Mode=OneWayToSource}" HorizontalAlignment="Left" Margin="30,0,0,0" Height="30" FontSize="17" Width="75" PreviewKeyDown="key_KeyPressDown"/>

@@ -739,7 +739,7 @@ namespace SoundBoard
         }
         #endregion
         
-        #region -Save link to folder
+        #region -Save video to folder
         /// <summary>
         /// Save an audio file from a supplied url
         /// </summary>
@@ -790,7 +790,6 @@ namespace SoundBoard
             }
             catch (Exception e)
             {
-                WriteStatusEntry("Unexpected error, you could try again. Maibe you'll get lucky this time.");
                 WriteStatusEntry(e.Message);
             }
         }
@@ -810,26 +809,20 @@ namespace SoundBoard
 
                 if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
                     linkId = link;
+                
+                var streamInfoSet = await client.GetVideoMediaStreamInfosAsync(linkId); //gets a video object with information about the video
 
-                YoutubeExplode.Models.Video video = await client.GetVideoAsync(linkId); //gets a video object with information about the video
-
-                var audioStreamInfo = video.AudioStreamInfos.FirstOrDefault(); //Get the highest quality audio stream
-                var videoStreamInfo = video.MuxedStreamInfos.FirstOrDefault(); //Get the highest quality video stream
-
-                var audioFileExt = audioStreamInfo.Container.GetFileExtension(); //Get audio extension
-                if (!audioFileExt.StartsWith(".")) //If extension doesn't contain a dot, add it.
-                    audioFileExt = "." + audioFileExt;
-
-                var videoFileExt = videoStreamInfo.Container.GetFileExtension(); //Get video extension
-                if (!videoFileExt.StartsWith(".")) //If extension doens't contain a dot, add it.
-                    videoFileExt = "." + videoFileExt;
-
+                var videoInfo = streamInfoSet.Muxed.WithHighestVideoQuality();
+                var audioInfo = streamInfoSet.Audio.WithHighestBitrate();
+                var audioFileExt = audioInfo.Container.GetFileExtension();
+                var videoFileExt = videoInfo.Container.GetFileExtension();
+                
                 output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
                 var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
                 var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
 
-                var audioFileSize = ConvertFileSizeToString(video.AudioStreamInfos.FirstOrDefault().Size); //Get the audio filesize
-                var videoFileSize = ConvertFileSizeToString(video.MuxedStreamInfos.FirstOrDefault().Size); //Get the video filesize
+                var audioFileSize = ConvertFileSizeToString(audioInfo.Size); //Get the audio filesize
+                var videoFileSize = ConvertFileSizeToString(videoInfo.Size); //Get the video filesize
                 audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
 
                 //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
@@ -837,11 +830,11 @@ namespace SoundBoard
                 {
                     WriteStatusEntry("-----Downloading audio-----");
                     WriteStatusEntry("---File size: " + audioFileSize);
-                    await client.DownloadMediaStreamAsync(audioStreamInfo, outputA); //Download file to disk
+                    await client.DownloadMediaStreamAsync(audioInfo, outputA); //Download file to disk
                     WriteStatusEntry("------Download complete------");
 
-                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-
+                    //var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+                    
                     //Convert file to.mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
                     outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
@@ -854,41 +847,40 @@ namespace SoundBoard
                         engine.Convert(inputFile, outputFile);
                     }
                     WriteStatusEntry("------Conversion done------");
-                    WriteStatusEntry("-----Grabbing the thumbnail-----");
-                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                    {
-                        imageClient.DownloadFile(thumbnailUrl, outputImage);
-                    }
+                    //WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    //using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    //{
+                    //    imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    //}
                 }
                 else
                 {
                     WriteStatusEntry("-----Downloading audio-----");
                     WriteStatusEntry("---File size: " + audioFileSize + "---");
-                    await client.DownloadMediaStreamAsync(audioStreamInfo, output); //Download file to disk
+                    await client.DownloadMediaStreamAsync(audioInfo, output); //Download file to disk
                     WriteStatusEntry("------Download complete------");
 
-                    var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    //var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
+                    //WriteStatusEntry("-----Grabbing the thumbnail-----");
 
-                    var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
-                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
-                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                    {
-                        imageClient.DownloadFile(thumbnailUrl, outputImage);
-                    }
+                    //var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
+                    //var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
+                    //using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    //{
+                    //    imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    //}
                 }
 
                 if (DownloadVideo == true) //Download the video aswell
                 {
                     WriteStatusEntry("-----Downloading Video-----");
                     WriteStatusEntry("---File size: " + videoFileSize + "---");
-                    await client.DownloadMediaStreamAsync(videoStreamInfo, outputV);
+                    await client.DownloadMediaStreamAsync(videoInfo, outputV);
                     WriteStatusEntry("------Download complete------");
                 }
             }
             catch (Exception e)
             {
-                WriteStatusEntry("Error getting file from url, file is possibly download protected \r\n , too large or unsupported.");
                 WriteStatusEntry(e.Message);
                 return null;
             }
@@ -1661,10 +1653,10 @@ namespace SoundBoard
             string modifier = this.Modifier;
             string soundName = CurrentName;
             
-            if(modifier == "")
-            {
-                modifier = "Ctrl+Alt";
-            }
+            //if(modifier == "")
+            //{
+            //    modifier = "Ctrl+Alt";
+            //}
 
             //Check if the keybinding already exists, then remove it.
             var key = Keybindings.FirstOrDefault(k => k.Keybind == keyBind && k.Modifier == modifier);
@@ -1697,7 +1689,7 @@ namespace SoundBoard
                 //Add the keybinding to the Keybindings list, and so also the xml file.
                 var modifiers = kb.Modifiers.ToString();
                 Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
-                
+
                 //If the ShowKeybindings window is open, close and reopen it
                 if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
                 {
@@ -1824,7 +1816,7 @@ namespace SoundBoard
         private void ShowKeybindings_Executed(object sender, EventArgs e)
         {
             //Sort the keybinds by soundname
-            Keybindings.Sort((a, b) => a.SoundName.CompareTo(b.SoundName));
+            Keybindings.Sort((a, b) => a.Keybind.CompareTo(b.Keybind));
 
             ShowKeybindingsView view = new ShowKeybindingsView(this);
             view.Owner = Application.Current.MainWindow;
@@ -2059,24 +2051,24 @@ namespace SoundBoard
                 return;
             }
             //Needs testing on a keyboard with actual media buttons
-            if(e.KeyCode.ToString() == Key.MediaStop.ToString())
+            if(e.KeyCode.ToString() == Key.MediaStop.ToString() || e.KeyCode.ToString() == Key.MediaPlayPause.ToString())
             {
                 StopSound_Executed(null);
                 return;
             }
 
-            var sound = Sounds.FirstOrDefault(s => s.Keybind == keyCombo);
-            if(sound != null)
+            //var sound = Sounds.FirstOrDefault(s => s.Keybind == keyCombo);
+            //if(sound != null)
+            //{
+            //    PlaySound_Executed(sound.Name);
+            //}
+
+            var key = Keybindings.FirstOrDefault(k => k.Keybind == e.KeyCode.ToString() && k.Modifier == mod);
+            if (key != null)
             {
-                PlaySound_Executed(sound.Name);
+                PlaySound_Executed(key.SoundName);
             }
 
-            //var key = Keybindings.FirstOrDefault(k => k.Keybind == e.KeyCode.ToString() && k.Modifier == mod);
-            //if(key != null)
-            //{
-            //    PlaySound_Executed(key.SoundName);
-            //}
-            
             keyCombo = "";
         }
         #endregion

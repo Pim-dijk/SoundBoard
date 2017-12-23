@@ -18,6 +18,7 @@
 
     <Window.InputBindings>
         <KeyBinding Key="P" Modifiers="Ctrl" Command="{Binding StopSound}"/>
+        <KeyBinding Key="MediaStop" Command="{Binding StopSound}" />
     </Window.InputBindings>
     
     <Grid>

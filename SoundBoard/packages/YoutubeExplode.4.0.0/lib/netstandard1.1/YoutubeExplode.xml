@@ -6,99 +6,80 @@
     <members>
         <member name="T:YoutubeExplode.Exceptions.ParseException">
             <summary>
-            Thrown when there was an error parsing a response
+            Thrown when there was an error parsing some data.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Exceptions.ParseException.#ctor(System.String)">
             <summary />
         </member>
-        <member name="T:YoutubeExplode.Exceptions.VideoNotAvailableException">
-            <summary>
-            Thrown when video is not available
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Exceptions.VideoNotAvailableException.VideoId">
-            <summary>
-            ID of the video
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Exceptions.VideoNotAvailableException.Code">
-            <summary>
-            Error code
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Exceptions.VideoNotAvailableException.Reason">
-            <summary>
-            Error reason
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.Exceptions.VideoNotAvailableException.#ctor(System.String,System.Int32,System.String)">
-            <summary />
-        </member>
         <member name="T:YoutubeExplode.Exceptions.VideoRequiresPurchaseException">
             <summary>
-            Thrown when the video requires purchase
+            Thrown when the video requires purchase and cannot be processed.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Exceptions.VideoRequiresPurchaseException.VideoId">
             <summary>
-            ID of the video
+            ID of the video.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Exceptions.VideoRequiresPurchaseException.PreviewVideoId">
             <summary>
-            ID of the free preview video
+            ID of a preview video that can be watched for free.
             </summary>
+        </member>
+        <member name="P:YoutubeExplode.Exceptions.VideoRequiresPurchaseException.Message">
+            <inheritdoc />
         </member>
         <member name="M:YoutubeExplode.Exceptions.VideoRequiresPurchaseException.#ctor(System.String,System.String)">
             <summary />
         </member>
-        <member name="M:YoutubeExplode.Internal.CipherOperations.ICipherOperation.Decipher(System.String)">
+        <member name="T:YoutubeExplode.Exceptions.VideoUnavailableException">
             <summary>
-            Deciphers the given string
+            Thrown when video is not available and cannot be processed.
             </summary>
+        </member>
+        <member name="P:YoutubeExplode.Exceptions.VideoUnavailableException.VideoId">
+            <summary>
+            ID of the video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Exceptions.VideoUnavailableException.Code">
+            <summary>
+            Error code reported by YouTube.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Exceptions.VideoUnavailableException.Reason">
+            <summary>
+            Error reason reported by YouTube.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Exceptions.VideoUnavailableException.Message">
+            <inheritdoc />
+        </member>
+        <member name="M:YoutubeExplode.Exceptions.VideoUnavailableException.#ctor(System.String,System.Int32,System.String)">
+            <summary />
         </member>
         <member name="T:YoutubeExplode.Models.Channel">
             <summary>
-            Channel
+            Information about a YouTube channel.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Channel.Id">
             <summary>
-            ID
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Channel.Url">
-            <summary>
-            URL
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Channel.Name">
-            <summary>
-            Name
+            ID of this channel.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Channel.Title">
             <summary>
-            Title
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Channel.IsPaid">
-            <summary>
-            Whether this channel is paid
+            Title of this channel.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Channel.LogoUrl">
             <summary>
-            Logo image URL
+            Logo image URL of this channel.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.Channel.BannerUrl">
-            <summary>
-            Banner image URL
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.Models.Channel.#ctor(System.String,System.String,System.String,System.Boolean,System.String,System.String)">
+        <member name="M:YoutubeExplode.Models.Channel.#ctor(System.String,System.String,System.String)">
             <summary />
         </member>
         <member name="M:YoutubeExplode.Models.Channel.ToString">
@@ -106,22 +87,22 @@
         </member>
         <member name="T:YoutubeExplode.Models.ClosedCaptions.ClosedCaption">
             <summary>
-            Closed caption
+            Text that gets displayed at specific time during video playback, as part of a <see cref="T:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack"/>.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaption.Text">
             <summary>
-            Text displayed by this caption
+            Text displayed by this caption.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaption.Offset">
             <summary>
-            When this caption is displayed, relative to video's timeline
+            Time at which this caption starts being displayed.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaption.Duration">
             <summary>
-            How long this caption is displayed
+            Duration this caption is displayed.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.ClosedCaptions.ClosedCaption.#ctor(System.String,System.TimeSpan,System.TimeSpan)">
@@ -132,63 +113,72 @@
         </member>
         <member name="T:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack">
             <summary>
-            Closed caption track
+            Set of captions that get displayed during video playback.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack.Info">
             <summary>
-            Metadata associated with this caption track
+            Metadata associated with this track.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack.Captions">
             <summary>
-            Closed captions contained inside this track
+            Collection of closed captions that belong to this track.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack.#ctor(YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo,System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.ClosedCaptions.ClosedCaption})">
             <summary />
         </member>
-        <member name="M:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack.GetByTime(System.TimeSpan)">
-            <summary>
-            Gets the caption displayed at the given point in time, relative to video's timeline, or null if not found
-            </summary>
-        </member>
         <member name="T:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo">
             <summary>
-            Closed caption track info
+            Metadata associated with a certain <see cref="T:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack"/>.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo.Url">
             <summary>
-            Manifest URL
+            Manifest URL of the associated track.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo.Language">
             <summary>
-            Text language
+            Language of the associated track.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo.IsAutoGenerated">
             <summary>
-            Whether this caption track was generated automatically
+            Whether the associated track was automatically generated.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo.#ctor(System.String,YoutubeExplode.Models.ClosedCaptions.Language,System.Boolean)">
             <summary />
         </member>
+        <member name="M:YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo.ToString">
+            <inheritdoc />
+        </member>
+        <member name="T:YoutubeExplode.Models.ClosedCaptions.Extensions">
+            <summary>
+            Extensions for <see cref="N:YoutubeExplode.Models.ClosedCaptions"/>.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.ClosedCaptions.Extensions.GetByTime(YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrack,System.TimeSpan)">
+            <summary>
+            Gets caption displayed at the given point in time.
+            Returns null if not found.
+            </summary>
+        </member>
         <member name="T:YoutubeExplode.Models.ClosedCaptions.Language">
             <summary>
-            Language information
+            Language information.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.Language.Code">
             <summary>
-            The ISO 639-1 Code of this language
+            ISO 639-1 code of this language.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.ClosedCaptions.Language.Name">
             <summary>
-            The full English name of this language
+            Full English name of this language.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.ClosedCaptions.Language.#ctor(System.String,System.String)">
@@ -199,52 +189,87 @@
         </member>
         <member name="T:YoutubeExplode.Models.Extensions">
             <summary>
-            Model extensions
+            Extensions for <see cref="N:YoutubeExplode.Models"/>.
             </summary>
         </member>
-        <member name="M:YoutubeExplode.Models.Extensions.GetAllMediaStreamInfos(YoutubeExplode.Models.Video)">
+        <member name="M:YoutubeExplode.Models.Extensions.GetRegularUrl(YoutubeExplode.Models.Video)">
             <summary>
-            Gets sequence of all available <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStreamInfo" />s in a <see cref="T:YoutubeExplode.Models.Video" />
+            Gets the regular URL of a video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetShortUrl(YoutubeExplode.Models.Video)">
+            <summary>
+            Gets the short URL of a video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetEmbedUrl(YoutubeExplode.Models.Video)">
+            <summary>
+            Gets the embed URL of a video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetRegularUrl(YoutubeExplode.Models.Playlist)">
+            <summary>
+            Gets the regular URL of a playlist.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetWatchUrl(YoutubeExplode.Models.Playlist)">
+            <summary>
+            Gets the watch URL of a playlist set to play the first video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetShortUrl(YoutubeExplode.Models.Playlist)">
+            <summary>
+            Gets the short URL of a playlist set to play the first video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetEmbedUrl(YoutubeExplode.Models.Playlist)">
+            <summary>
+            Gets the embed URL of a playlist set to play the first video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Extensions.GetUrl(YoutubeExplode.Models.Channel)">
+            <summary>
+            Gets the URL of a channel.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.AudioEncoding">
             <summary>
-            Audio encoding
+            Audio encoding.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.AudioEncoding.Mp3">
             <summary>
-            MPEG-2 Audio Layer III
+            MPEG-2 Audio Layer III.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.AudioEncoding.Aac">
             <summary>
-            Advanced Audio Coding
+            Advanced Audio Coding.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.AudioEncoding.Vorbis">
             <summary>
-            Vorbis
+            Vorbis.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.AudioEncoding.Opus">
             <summary>
-            Opus
+            Opus.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.AudioStreamInfo">
             <summary>
-            Audio stream info
+            Metadata associated with a certain <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStream"/> that contains only audio.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.AudioStreamInfo.Bitrate">
             <summary>
-            Bitrate (bit/s)
+            Bitrate (bit/s) of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.AudioStreamInfo.AudioEncoding">
             <summary>
-            Audio encoding
+            Audio encoding of the associated stream.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.AudioStreamInfo.#ctor(System.Int32,System.String,System.Int64,System.Int64)">
@@ -252,57 +277,91 @@
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.Container">
             <summary>
-            Media stream container type
+            Media stream container type.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.Container.Mp4">
             <summary>
-            MPEG-4 Part 14 (.mp4)
+            MPEG-4 Part 14 (.mp4).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.Container.M4A">
             <summary>
-            MPEG-4 Part 14 audio-only (.m4a)
+            MPEG-4 Part 14 audio-only (.m4a).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.Container.WebM">
             <summary>
-            Web Media (.webm)
+            Web Media (.webm).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.Container.Tgpp">
             <summary>
-            3rd Generation Partnership Project (.3gpp)
+            3rd Generation Partnership Project (.3gpp).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.Container.Flv">
             <summary>
-            Flash Video (.flv)
+            Flash Video (.flv).
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.Extensions">
             <summary>
-            Model extensions
+            Extensions for <see cref="N:YoutubeExplode.Models.MediaStreams"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.GetFileExtension(YoutubeExplode.Models.MediaStreams.Container)">
             <summary>
-            Gets file extension based on container type
+            Gets file extension based on container type.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.GetVideoQualityLabel(YoutubeExplode.Models.MediaStreams.VideoQuality,System.Int32)">
             <summary>
-            Gets label for given video quality and framerate
+            Gets label for given video quality and framerate, as displayed on YouTube.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.GetAll(YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet)">
+            <summary>
+            Gets all available media stream infos in a <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet"/>.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.GetAllVideoQualities(YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet)">
+            <summary>
+            Gets all video qualities available in a <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet"/>.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.WithHighestVideoQuality(System.Collections.Generic.IEnumerable{YoutubeExplode.Models.MediaStreams.MuxedStreamInfo})">
+            <summary>
+            Gets the muxed stream with highest video quality.
+            Returns null if sequence is empty.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.WithHighestVideoQuality(System.Collections.Generic.IEnumerable{YoutubeExplode.Models.MediaStreams.VideoStreamInfo})">
+            <summary>
+            Gets the video stream with highest video quality.
+            Returns null if sequence is empty.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.WithHighestBitrate(System.Collections.Generic.IEnumerable{YoutubeExplode.Models.MediaStreams.AudioStreamInfo})">
+            <summary>
+            Gets the audio stream with highest bitrate.
+            Returns null if sequence is empty.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.Extensions.WithHighestBitrate(System.Collections.Generic.IEnumerable{YoutubeExplode.Models.MediaStreams.VideoStreamInfo})">
+            <summary>
+            Gets the video stream with highest bitrate.
+            Returns null if sequence is empty.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.MediaStream">
             <summary>
-            Media stream
+            Stream that contains raw media data.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStream.Info">
             <summary>
-            Metadata associated with this media stream
+            Metadata associated with this stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStream.CanRead">
@@ -342,84 +401,112 @@
             <inheritdoc />
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStream.Dispose(System.Boolean)">
-            <inheritdoc />
+            <summary>
+            Disposes resources.
+            </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.MediaStreamInfo">
             <summary>
-            Base media stream info
+            Metadata associated with a certain <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStream"/>.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.Itag">
             <summary>
-            Unique tag that identifies the properties of this stream
+            Unique tag that identifies the properties of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.Url">
             <summary>
-            Media stream URL
+            URL of the endpoint that serves the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.Container">
             <summary>
-            Container type
+            Container type of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.Size">
             <summary>
-            Stream content length (bytes)
+            Content length (bytes) of the associated stream.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.#ctor(System.Int32,System.String,System.Int64)">
             <summary />
         </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.ToString">
+            <inheritdoc />
+        </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.GetContainer(System.Int32)">
             <summary>
-            Get container type for the given itag
+            Gets container type for the given itag.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.GetAudioEncoding(System.Int32)">
             <summary>
-            Get encoding for the given itag
+            Gets audio encoding for the given itag.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.GetVideoEncoding(System.Int32)">
             <summary>
-            Get encoding for the given itag
+            Gets video encoding for the given itag.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.GetVideoQuality(System.Int32)">
             <summary>
-            Get video quality for the given itag
+            Gets video quality for the given itag.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfo.IsKnown(System.Int32)">
             <summary>
-            Check if the given itag is known
+            Checks if the given itag is known.
             </summary>
+        </member>
+        <member name="T:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet">
+            <summary>
+            Set of all available media stream infos.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet.Muxed">
+            <summary>
+            Muxed streams.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet.Audio">
+            <summary>
+            Audio-only streams.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet.Video">
+            <summary>
+            Video-only streams.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.MediaStreams.MediaStreamInfoSet.#ctor(System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.MuxedStreamInfo},System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.AudioStreamInfo},System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.VideoStreamInfo})">
+            <summary />
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo">
             <summary>
-            Multiplexed (video and audio) stream info
+            Metadata associated with a certain <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStream"/> that contains both audio and video.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo.AudioEncoding">
             <summary>
-            Audio encoding
+            Audio encoding of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo.VideoEncoding">
             <summary>
-            Video encoding
+            Video encoding of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo.VideoQuality">
             <summary>
-            Video quality
+            Video quality of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo.VideoQualityLabel">
             <summary>
-            Video quality label as seen on Youtube
+            Video quality label of the associated stream.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.MuxedStreamInfo.#ctor(System.Int32,System.String,System.Int64)">
@@ -427,102 +514,102 @@
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.VideoEncoding">
             <summary>
-            Video stream encoding
+            Video encoding.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoEncoding.Mp4V">
             <summary>
-            MPEG-4 Visual
+            MPEG-4 Visual.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoEncoding.H263">
             <summary>
-            MPEG-4 Part 10, Advanced Video Coding
+            MPEG-4 Part 10, Advanced Video Coding.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoEncoding.H264">
             <summary>
-            MPEG-4 Part 10, Advanced Video Coding
+            MPEG-4 Part 10, Advanced Video Coding.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoEncoding.Vp8">
             <summary>
-            VP8
+            VP8.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoEncoding.Vp9">
             <summary>
-            VP9
+            VP9.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.VideoQuality">
             <summary>
-            Video quality
+            Video quality.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.Low144">
             <summary>
-            Low quality (144p)
+            Low quality (144p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.Low240">
             <summary>
-            Low quality (240p)
+            Low quality (240p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.Medium360">
             <summary>
-            Medium quality (360p)
+            Medium quality (360p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.Medium480">
             <summary>
-            Medium quality (480p)
+            Medium quality (480p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High720">
             <summary>
-            High quality (720p)
+            High quality (720p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High1080">
             <summary>
-            High quality (1080p)
+            High quality (1080p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High1440">
             <summary>
-            High quality (1440p)
+            High quality (1440p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High2160">
             <summary>
-            High quality (2160p)
+            High quality (2160p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High3072">
             <summary>
-            High quality (3072p)
+            High quality (3072p).
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.MediaStreams.VideoQuality.High4320">
             <summary>
-            High quality (4320p)
+            High quality (4320p).
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.VideoResolution">
             <summary>
-            Width and height of a video
+            Width and height of a video.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoResolution.Width">
             <summary>
-            Width
+            Viewport width.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoResolution.Height">
             <summary>
-            Height
+            Viewport height.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.VideoResolution.#ctor(System.Int32,System.Int32)">
@@ -541,44 +628,44 @@
             <inheritdoc />
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.VideoResolution.op_Equality(YoutubeExplode.Models.MediaStreams.VideoResolution,YoutubeExplode.Models.MediaStreams.VideoResolution)">
-            <inheritdoc />
+            <summary />
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.VideoResolution.op_Inequality(YoutubeExplode.Models.MediaStreams.VideoResolution,YoutubeExplode.Models.MediaStreams.VideoResolution)">
-            <inheritdoc />
+            <summary />
         </member>
         <member name="T:YoutubeExplode.Models.MediaStreams.VideoStreamInfo">
             <summary>
-            Video stream info
+            Metadata associated with a certain <see cref="T:YoutubeExplode.Models.MediaStreams.MediaStream"/> that contains only video.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.Bitrate">
             <summary>
-            Video bitrate (bits/s)
+            Video bitrate (bits/s) of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.VideoEncoding">
             <summary>
-            Video encoding
+            Video encoding of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.VideoQuality">
             <summary>
-            Video quality
+            Video quality of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.Resolution">
             <summary>
-            Video resoution
+            Video resolution of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.Framerate">
             <summary>
-            Video framerate (fps)
+            Video framerate (FPS) of the associated stream.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.VideoQualityLabel">
             <summary>
-            Video quality label as seen on Youtube
+            Video quality label of the associated stream.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.MediaStreams.VideoStreamInfo.#ctor(System.Int32,System.String,System.Int64,System.Int64,YoutubeExplode.Models.MediaStreams.VideoResolution,System.Int32)">
@@ -586,45 +673,45 @@
         </member>
         <member name="T:YoutubeExplode.Models.Playlist">
             <summary>
-            Playlist
+            Information about a YouTube playlist.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Playlist.Id">
             <summary>
-            ID
+            ID of this playlist.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Playlist.Type">
             <summary>
-            Type
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Playlist.Title">
-            <summary>
-            Title
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Playlist.Description">
-            <summary>
-            Description
+            Type of this playlist.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Playlist.Author">
             <summary>
-            Author's display name
+            Author of this playlist.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Playlist.Title">
+            <summary>
+            Title of this playlist.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Playlist.Description">
+            <summary>
+            Description of this playlist.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Playlist.Statistics">
             <summary>
-            Statistics
+            Statistics of this playlist.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Playlist.Videos">
             <summary>
-            Videos in the playlist
+            Collection of videos contained in this playlist.
             </summary>
         </member>
-        <member name="M:YoutubeExplode.Models.Playlist.#ctor(System.String,System.String,System.String,System.String,YoutubeExplode.Models.Statistics,System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.PlaylistVideo})">
+        <member name="M:YoutubeExplode.Models.Playlist.#ctor(System.String,System.String,System.String,System.String,YoutubeExplode.Models.Statistics,System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.Video})">
             <summary />
         </member>
         <member name="M:YoutubeExplode.Models.Playlist.ToString">
@@ -632,429 +719,344 @@
         </member>
         <member name="M:YoutubeExplode.Models.Playlist.GetPlaylistType(System.String)">
             <summary>
-            Get playlist type from playlist id
+            Get playlist type by ID.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Models.PlaylistType">
             <summary>
-            Playlist type
+            Playlist type.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.Normal">
             <summary>
-            Regular playlist created by a user
+            Regular playlist created by a user.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.VideoMix">
             <summary>
-            Mix playlist generated to group similar videos
+            Mix playlist generated to group similar videos.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.ChannelVideoMix">
             <summary>
-            Mix playlist generated to group similar videos uploaded by the same channel
+            Mix playlist generated to group similar videos uploaded by the same channel.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.ChannelVideos">
             <summary>
-            Playlist generated from channel uploads
+            Playlist generated from channel uploads.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.PopularChannelVideos">
             <summary>
-            Playlist generated from popular channel uploads
+            Playlist generated from popular channel uploads.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.LikedVideos">
             <summary>
-            System playlist for videos liked by a user
+            System playlist for videos liked by a user.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.Favorites">
             <summary>
-            System playlist for videos favorited by a user
+            System playlist for videos favorited by a user.
             </summary>
         </member>
         <member name="F:YoutubeExplode.Models.PlaylistType.WatchLater">
             <summary>
-            System playlist for videos user added to watch later
+            System playlist for videos user added to watch later.
             </summary>
-        </member>
-        <member name="T:YoutubeExplode.Models.PlaylistVideo">
-            <summary>
-            Playlist video
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Id">
-            <summary>
-            ID
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Title">
-            <summary>
-            Title
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Description">
-            <summary>
-            Description
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Thumbnails">
-            <summary>
-            Thumbnails
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Duration">
-            <summary>
-            Duration
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Keywords">
-            <summary>
-            Search keywords
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.PlaylistVideo.Statistics">
-            <summary>
-            Statistics
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.Models.PlaylistVideo.#ctor(System.String,System.String,System.String,YoutubeExplode.Models.VideoThumbnails,System.TimeSpan,System.Collections.Generic.IReadOnlyList{System.String},YoutubeExplode.Models.Statistics)">
-            <summary />
-        </member>
-        <member name="M:YoutubeExplode.Models.PlaylistVideo.ToString">
-            <inheritdoc />
         </member>
         <member name="T:YoutubeExplode.Models.Statistics">
             <summary>
-            User activity statistics
+            User activity statistics.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Statistics.ViewCount">
             <summary>
-            View count
+            View count.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Statistics.LikeCount">
             <summary>
-            Like count
+            Like count.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Statistics.DislikeCount">
             <summary>
-            Dislike count
+            Dislike count.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Models.Statistics.AverageRating">
             <summary>
-            Average user rating in stars (1 star to 5 stars)
+            Average user rating in stars (1 star to 5 stars).
             </summary>
         </member>
         <member name="M:YoutubeExplode.Models.Statistics.#ctor(System.Int64,System.Int64,System.Int64)">
             <summary />
         </member>
-        <member name="T:YoutubeExplode.Models.Video">
+        <member name="T:YoutubeExplode.Models.ThumbnailSet">
             <summary>
-            Video
+            Set of thumbnails for a video.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.Video.Id">
+        <member name="P:YoutubeExplode.Models.ThumbnailSet.LowResUrl">
             <summary>
-            ID
+            Low resolution thumbnail URL.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.Video.Author">
+        <member name="P:YoutubeExplode.Models.ThumbnailSet.MediumResUrl">
             <summary>
-            Author channel
+            Medium resolution thumbnail URL.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.Video.Title">
+        <member name="P:YoutubeExplode.Models.ThumbnailSet.HighResUrl">
             <summary>
-            Title
+            High resolution thumbnail URL.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.Video.Description">
-            <summary>
-            Description
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.Thumbnails">
-            <summary>
-            Thumbnails
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.Duration">
-            <summary>
-            Duration
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.Keywords">
-            <summary>
-            Search keywords
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.Status">
-            <summary>
-            Status
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.Statistics">
-            <summary>
-            Statistics
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.MuxedStreamInfos">
-            <summary>
-            Muxed streams available for this video
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.AudioStreamInfos">
-            <summary>
-            Audio-only streams available for this video
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.VideoStreamInfos">
-            <summary>
-            Video-only streams available for this video
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.Video.ClosedCaptionTrackInfos">
-            <summary>
-            Closed caption tracks available for this video
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.Models.Video.#ctor(System.String,YoutubeExplode.Models.Channel,System.String,System.String,YoutubeExplode.Models.VideoThumbnails,System.TimeSpan,System.Collections.Generic.IReadOnlyList{System.String},YoutubeExplode.Models.VideoStatus,YoutubeExplode.Models.Statistics,System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.MuxedStreamInfo},System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.AudioStreamInfo},System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.MediaStreams.VideoStreamInfo},System.Collections.Generic.IReadOnlyList{YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo})">
-            <summary />
-        </member>
-        <member name="M:YoutubeExplode.Models.Video.ToString">
-            <inheritdoc />
-        </member>
-        <member name="T:YoutubeExplode.Models.VideoStatus">
-            <summary>
-            Video status
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoStatus.IsListed">
-            <summary>
-            Whether this video is publicly listed
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoStatus.IsRatingAllowed">
-            <summary>
-            Whether liking/disliking this video is allowed
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoStatus.IsMuted">
-            <summary>
-            Whether the audio track has been muted
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoStatus.IsEmbeddingAllowed">
-            <summary>
-            Whether embedding this video on other websites is allowed
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.Models.VideoStatus.#ctor(System.Boolean,System.Boolean,System.Boolean,System.Boolean)">
-            <summary />
-        </member>
-        <member name="T:YoutubeExplode.Models.VideoThumbnails">
-            <summary>
-            Set of video thumbnails
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoThumbnails.LowResUrl">
-            <summary>
-            Low resolution thumbnail URL
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoThumbnails.MediumResUrl">
-            <summary>
-            Medium resolution thumbnail URL
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoThumbnails.HighResUrl">
-            <summary>
-            High resolution thumbnail URL
-            </summary>
-        </member>
-        <member name="P:YoutubeExplode.Models.VideoThumbnails.StandardResUrl">
+        <member name="P:YoutubeExplode.Models.ThumbnailSet.StandardResUrl">
             <summary>
             Standard resolution thumbnail URL.
             Not always available.
             </summary>
         </member>
-        <member name="P:YoutubeExplode.Models.VideoThumbnails.MaxResUrl">
+        <member name="P:YoutubeExplode.Models.ThumbnailSet.MaxResUrl">
             <summary>
             Max resolution thumbnail URL.
             Not always available.
             </summary>
         </member>
-        <member name="M:YoutubeExplode.Models.VideoThumbnails.#ctor(System.String)">
+        <member name="M:YoutubeExplode.Models.ThumbnailSet.#ctor(System.String)">
             <summary />
+        </member>
+        <member name="T:YoutubeExplode.Models.Video">
+            <summary>
+            Information about a YouTube video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Id">
+            <summary>
+            ID of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Author">
+            <summary>
+            Author of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Title">
+            <summary>
+            Title of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Description">
+            <summary>
+            Description of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Thumbnails">
+            <summary>
+            Thumbnails of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Duration">
+            <summary>
+            Duration of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Keywords">
+            <summary>
+            Search keywords of this video.
+            </summary>
+        </member>
+        <member name="P:YoutubeExplode.Models.Video.Statistics">
+            <summary>
+            Statistics of this video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.Models.Video.#ctor(System.String,System.String,System.String,System.String,YoutubeExplode.Models.ThumbnailSet,System.TimeSpan,System.Collections.Generic.IReadOnlyList{System.String},YoutubeExplode.Models.Statistics)">
+            <summary />
+        </member>
+        <member name="M:YoutubeExplode.Models.Video.ToString">
+            <inheritdoc />
         </member>
         <member name="T:YoutubeExplode.Services.Extensions">
             <summary>
-            Service extensions
+            Extensions for <see cref="N:YoutubeExplode.Services"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.Extensions.GetStringAsync(YoutubeExplode.Services.IHttpService,System.String)">
             <summary>
-            Sends a GET request and returns content as a string
+            Sends a GET request and returns content as a string.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.Extensions.GetStreamAsync(YoutubeExplode.Services.IHttpService,System.String)">
             <summary>
-            Send a GET request and return content as a stream
+            Send a GET request and return content as a stream.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Services.HttpService">
             <summary>
-            Simple HTTP service that uses <see cref="T:System.Net.Http.HttpClient"/> for handling requests
+            Simple HTTP service that uses <see cref="T:System.Net.Http.HttpClient"/> for handling requests.
             </summary>
         </member>
         <member name="P:YoutubeExplode.Services.HttpService.Client">
             <summary>
-            Internal instance of <see cref="T:System.Net.Http.HttpClient"/>
+            Internal instance of <see cref="T:System.Net.Http.HttpClient"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.HttpService.#ctor(System.Net.Http.HttpClient)">
             <summary>
-            Creates an instance of <see cref="T:YoutubeExplode.Services.HttpService"/> with a custom <see cref="T:System.Net.Http.HttpClient"/>
+            Creates an instance of <see cref="T:YoutubeExplode.Services.HttpService"/> with a custom <see cref="T:System.Net.Http.HttpClient"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.HttpService.#ctor">
             <summary>
-            Creates an instance of <see cref="T:YoutubeExplode.Services.HttpService"/>
+            Creates an instance of <see cref="T:YoutubeExplode.Services.HttpService"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.HttpService.PerformRequestAsync(System.Net.Http.HttpRequestMessage)">
             <inheritdoc />
         </member>
         <member name="M:YoutubeExplode.Services.HttpService.Dispose(System.Boolean)">
-            <inheritdoc />
+            <summary>
+            Disposes resources.
+            </summary>
         </member>
         <member name="M:YoutubeExplode.Services.HttpService.Dispose">
             <inheritdoc />
         </member>
         <member name="P:YoutubeExplode.Services.HttpService.Instance">
             <summary>
-            Singleton instance of <see cref="T:YoutubeExplode.Services.HttpService"/>
+            Singleton instance of <see cref="T:YoutubeExplode.Services.HttpService"/>.
             </summary>
         </member>
         <member name="T:YoutubeExplode.Services.IHttpService">
             <summary>
-            Performs HTTP requests
+            Provider for executing HTTP requests.
             </summary>
         </member>
         <member name="M:YoutubeExplode.Services.IHttpService.PerformRequestAsync(System.Net.Http.HttpRequestMessage)">
             <summary>
-            Performs a generic HTTP request
+            Executes a generic HTTP request.
             </summary>
         </member>
         <member name="T:YoutubeExplode.YoutubeClient">
             <summary>
-            YoutubeClient
+            The entry point for <see cref="N:YoutubeExplode"/>.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetChannelAsync(System.String)">
             <summary>
-            Gets channel by ID
+            Gets channel information by ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetChannelUploadsAsync(System.String,System.Int32)">
             <summary>
-            Gets videos uploaded to a channel with given ID, truncating resulting video list at given number of pages (1 page ≤ 200 videos)
+            Gets videos uploaded by channel with given ID.
+            The video list is truncated at given number of pages (1 page ≤ 200 videos).
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetChannelUploadsAsync(System.String)">
             <summary>
-            Gets videos uploaded to a channel with given ID
+            Gets videos uploaded by channel with given ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetClosedCaptionTrackAsync(YoutubeExplode.Models.ClosedCaptions.ClosedCaptionTrackInfo)">
             <summary>
-            Gets the actual closed caption track represented by given metadata
+            Gets the actual closed caption track associated with given metadata.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.#ctor(YoutubeExplode.Services.IHttpService)">
             <summary>
-            Creates an instance of <see cref="T:YoutubeExplode.YoutubeClient"/> with custom services
+            Creates an instance of <see cref="T:YoutubeExplode.YoutubeClient"/> with custom services.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.#ctor">
             <summary>
-            Creates an instance of <see cref="T:YoutubeExplode.YoutubeClient" /> with default services
+            Creates an instance of <see cref="T:YoutubeExplode.YoutubeClient"/> with default services.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetMediaStreamAsync(YoutubeExplode.Models.MediaStreams.MediaStreamInfo)">
             <summary>
-            Gets the actual media stream represented by given metadata
+            Gets the actual media stream associated with given metadata.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetPlaylistAsync(System.String,System.Int32)">
             <summary>
-            Gets playlist by ID, truncating resulting video list at given number of pages (1 page ≤ 200 videos)
+            Gets playlist information by ID.
+            The video list is truncated at given number of pages (1 page ≤ 200 videos).
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetPlaylistAsync(System.String)">
             <summary>
-            Gets playlist by ID
+            Gets playlist information by ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ValidateVideoId(System.String)">
             <summary>
-            Verifies that the given string is syntactically a valid Youtube video ID
+            Verifies that the given string is syntactically a valid YouTube video ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.TryParseVideoId(System.String,System.String@)">
             <summary>
-            Tries to parse video ID from a Youtube video URL
+            Tries to parse video ID from a YouTube video URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ParseVideoId(System.String)">
             <summary>
-            Parses video ID from a Youtube video URL
+            Parses video ID from a YouTube video URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ValidatePlaylistId(System.String)">
             <summary>
-            Verifies that the given string is syntactically a valid Youtube playlist ID
+            Verifies that the given string is syntactically a valid YouTube playlist ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.TryParsePlaylistId(System.String,System.String@)">
             <summary>
-            Tries to parse playlist ID from a Youtube playlist URL
+            Tries to parse playlist ID from a YouTube playlist URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ParsePlaylistId(System.String)">
             <summary>
-            Parses playlist ID from a Youtube playlist URL
+            Parses playlist ID from a YouTube playlist URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ValidateChannelId(System.String)">
             <summary>
-            Verifies that the given string is syntactically a valid Youtube channel ID
+            Verifies that the given string is syntactically a valid YouTube channel ID.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.TryParseChannelId(System.String,System.String@)">
             <summary>
-            Tries to parse channel ID from a Youtube channel URL
+            Tries to parse channel ID from a YouTube channel URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.ParseChannelId(System.String)">
             <summary>
-            Parses channel ID from a Youtube channel URL
-            </summary>
-        </member>
-        <member name="M:YoutubeExplode.YoutubeClient.CheckVideoExistsAsync(System.String)">
-            <summary>
-            Checks whether a video with the given ID exists
+            Parses channel ID from a YouTube channel URL.
             </summary>
         </member>
         <member name="M:YoutubeExplode.YoutubeClient.GetVideoAsync(System.String)">
             <summary>
-            Gets video by ID
+            Gets video information by ID.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.YoutubeClient.GetVideoAuthorChannelAsync(System.String)">
+            <summary>
+            Gets author channel information for given video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.YoutubeClient.GetVideoMediaStreamInfosAsync(System.String)">
+            <summary>
+            Gets a set of all available media stream infos for given video.
+            </summary>
+        </member>
+        <member name="M:YoutubeExplode.YoutubeClient.GetVideoClosedCaptionTrackInfosAsync(System.String)">
+            <summary>
+            Gets all available closed caption track infos for given video.
             </summary>
         </member>
     </members>
