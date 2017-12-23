@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PublishUrlHistory>publish\</PublishUrlHistory>
     <InstallUrlHistory />
-    <SupportUrlHistory>https://github.com/Pim-dijk/SoundBoard/tree/master</SupportUrlHistory>
+    <SupportUrlHistory>https://github.com/Pim-dijk/SoundBoard|https://github.com/Pim-dijk/SoundBoard/tree/master</SupportUrlHistory>
     <UpdateUrlHistory />
     <BootstrapperUrlHistory />
     <ErrorReportUrlHistory />

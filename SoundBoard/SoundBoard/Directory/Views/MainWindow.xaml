@@ -126,10 +126,10 @@
                 </MenuItem>
             </MenuItem>
             <!--Test-->
-            <MenuItem Header="Test">
+            <!--<MenuItem Header="Test">
                 <MenuItem Header="TTS" Command="{Binding TestCommand}" >
                 </MenuItem>
-            </MenuItem>
+            </MenuItem>-->
         </Menu>
 
         <!--ProgressBar-->
