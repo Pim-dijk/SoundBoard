@@ -746,6 +746,16 @@ namespace SoundBoard
         /// <param name="param">The link url</param>
         private async void SaveVideoToDisk(string param)
         {
+            if (!Directory.Exists(DefaultDirectory + "Downloads"))
+            {
+                Directory.CreateDirectory(DefaultDirectory + "Downloads");
+            }
+
+            if(!Directory.Exists(DefaultDirectory + "Images"))
+            {
+                Directory.CreateDirectory(DefaultDirectory + "Images");
+            }
+
             string output = "";
             try
             {
@@ -815,8 +825,16 @@ namespace SoundBoard
                 var videoInfo = streamInfoSet.Muxed.WithHighestVideoQuality();
                 var audioInfo = streamInfoSet.Audio.WithHighestBitrate();
                 var audioFileExt = audioInfo.Container.GetFileExtension();
+                if(!audioFileExt.StartsWith("."))
+                {
+                    audioFileExt = "." + audioFileExt;
+                }
                 var videoFileExt = videoInfo.Container.GetFileExtension();
-                
+                if (!videoFileExt.StartsWith("."))
+                {
+                    videoFileExt = "." + videoFileExt;
+                }
+
                 output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
                 var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
                 var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
