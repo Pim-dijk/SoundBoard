@@ -17,5 +17,9 @@
         public bool IsPlaying { get; set; }
 
         public string Keybind { get; set; }
+
+        public string Modifier { get; set; }
+
+        public float Volume { get; set; }
     }
 }

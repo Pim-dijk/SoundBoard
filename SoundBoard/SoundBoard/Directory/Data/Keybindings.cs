@@ -1,13 +1,9 @@
-﻿using System;
-
-namespace SoundBoard
+﻿namespace SoundBoard
 {
-    class Keybindings
+    public class KeyBindings
     {
-        public string Keybind { get; set; }
-
-        public string SoundName { get; set; }
-
-        public string Modifier { get; set; }
+        public string keybind { get; set; }
+        public string modifier { get; set; }
+        public string soundName { get; set; }
     }
 }

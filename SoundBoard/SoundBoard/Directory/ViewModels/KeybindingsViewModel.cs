@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Windows.Input;
-
-namespace SoundBoard
+﻿namespace SoundBoard
 {
     public class KeybindingsViewModel : BaseViewModel
     {

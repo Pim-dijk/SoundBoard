@@ -68,6 +68,9 @@ namespace SoundBoard
 
         //filesize string collection
         private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+
+        //Adjusted volume
+        private float soundVolume { get; set; }
         #endregion
 
         #region -Application
@@ -87,7 +90,7 @@ namespace SoundBoard
         private string imageDirectory;
 
         //Create statuslistview collection
-        private ObservableCollection<string> statusListView;
+        private ObservableCollection<ListEntriesViewModel> statusListView;
 
         //Folder watcher
         private FileSystemWatcher fs;
@@ -226,8 +229,8 @@ namespace SoundBoard
         #region -Collection
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
-        
-        //A list for storing all keybinding/sound combinations
+
+        //Keybindingslist
         public List<KeybindingsViewModel> Keybindings { get; set; }
 
         //Omit Imagesource
@@ -241,6 +244,9 @@ namespace SoundBoard
 
         //Modifier
         public String Modifier { get; set; }
+
+        //Adjusted volume
+        public float SoundVolume { get; set; }
 
         //Default Directory for the application to get the files from
         public string DefaultDirectory
@@ -284,7 +290,7 @@ namespace SoundBoard
         }
 
         //Status list view
-        public ObservableCollection<string> StatusListView
+        public ObservableCollection<ListEntriesViewModel> StatusListView
         {
             get
             {
@@ -466,7 +472,7 @@ namespace SoundBoard
             //Sets the directory to the appSettings value
             ReadCustomSettings();
             //Gets the files from the directory
-            GetFiles();
+                //GetFiles();
             //Clear the statusListView
             StatusListView.Clear();
             //Write application loaded
@@ -517,16 +523,17 @@ namespace SoundBoard
                 }
             }
 
-            //Add keybindings to the sound
-            foreach(var keybind in Keybindings)
+            //Add keybindings to the sounds if they already had one before refreshing
+            foreach(var key in Keybindings)
             {
-                var sound = Sounds.FirstOrDefault(s => s.Name == keybind.SoundName);
+                var sound = Sounds.FirstOrDefault(s => s.Name == key.SoundName);
                 if(sound != null)
                 {
-                    var keybinding = keybind.Modifier + "+" + keybind.Keybind;
-                    sound.Keybind = keybinding;
+                    sound.Keybind = key.Keybind;
+                    sound.Modifier = key.Modifier;
                 }
             }
+            
         }
         #endregion
 
@@ -634,28 +641,69 @@ namespace SoundBoard
                 Subscribe();
             }
 
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Keybindings.xml";
+            this.Sounds = new ObservableCollection<SoundViewModel>();
+
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
             if (File.Exists(xmlPath))
             {
                 XmlReader xmlReader = XmlReader.Create(xmlPath);
-                while (xmlReader.Read())
+                try
                 {
-                    if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "keybind"))
+                    while (xmlReader.Read())
                     {
-                        if (xmlReader.HasAttributes)
+                        if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "Sound"))
                         {
-                            //Console.WriteLine(xmlReader.GetAttribute("Sound") + ": " + xmlReader.GetAttribute("Keybind"));
-                            string key = xmlReader.GetAttribute("Keybind");
-                            string modifier = xmlReader.GetAttribute("Modifier");
-                            string sound = xmlReader.GetAttribute("Sound");
-                            Keybindings.Add(new KeybindingsViewModel(key, modifier, sound));
-                            var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
-                            kb.CommandParameter = sound;
-                            //Add the keybinding to the View
-                            App.Current.MainWindow.InputBindings.Add(kb);
+                            if (xmlReader.HasAttributes)
+                            {
+                                SoundViewModel sound = new SoundViewModel(xmlReader.GetAttribute("Path"));
+
+                                if (xmlReader.GetAttribute("Image") != "")
+                                {
+                                    sound.ImagePath = xmlReader.GetAttribute("Image");
+                                    sound.ImageBitMap = LoadImage(sound.ImagePath);
+                                    sound.HasImage = true;
+                                }
+                                sound.Volume = float.Parse(xmlReader.GetAttribute("AdjustedVolume"));
+                                if (xmlReader.GetAttribute("Keybind") != "")
+                                {
+                                    sound.Keybind = xmlReader.GetAttribute("Keybind");
+                                }
+                                if (xmlReader.GetAttribute("Modifier") != "")
+                                {
+                                    sound.Modifier = xmlReader.GetAttribute("Modifier");
+                                }
+
+                                var key = sound.Keybind;
+                                var modifier = sound.Modifier;
+                                if(key != null)
+                                {
+                                    //Set the keybinding to add to the view
+                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
+                                    kb.CommandParameter = sound.Name;
+
+                                    //Add the keybinding to the View
+                                    App.Current.MainWindow.InputBindings.Add(kb);
+
+                                    KeybindingsViewModel keybind = new KeybindingsViewModel(key, modifier, sound.Name);
+
+                                    Keybindings.Add(keybind);
+                                }
+
+                                //Add the sound to the collection
+                                Sounds.Add(sound);
+                            }
                         }
                     }
+                    xmlReader.Close();
                 }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                }
+            }
+            else
+            {
+                GetFiles();
             }
         }
         #endregion
@@ -682,21 +730,25 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.Save();
 
             //Write keybinding combinations to xml
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Keybindings.xml";
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
             XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
             
             xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("keybinds");
-
-            foreach(var keybind in Keybindings)
+            xmlWriter.WriteStartElement("Sounds");
+            
+            foreach (var sound in Sounds)
             {
-                xmlWriter.WriteStartElement("keybind");
-                xmlWriter.WriteAttributeString("Sound", keybind.SoundName);
-                xmlWriter.WriteAttributeString("Keybind", keybind.Keybind);
-                xmlWriter.WriteAttributeString("Modifier", keybind.Modifier);
+                xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
+                xmlWriter.WriteAttributeString("Path", sound.AudioLocation);
+                xmlWriter.WriteAttributeString("Image", sound.ImagePath);
+                xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
+                xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
+                xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
+                xmlWriter.WriteAttributeString("Name", sound.Name);
                 xmlWriter.WriteEndElement();
             }
 
+            xmlWriter.WriteEndElement();
             xmlWriter.WriteEndDocument();
             xmlWriter.Close();
 
@@ -704,6 +756,12 @@ namespace SoundBoard
             {
                 Unsubscribe();
             }
+
+            //Close the keybindingsview if it's open
+            //if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
+            //{
+            //    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+            //}
         }
         #endregion
 
@@ -716,7 +774,8 @@ namespace SoundBoard
         {
             System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
             {
-                StatusListView.Insert(0, DateTime.Now + ": " + statusText);
+                var entry = new ListEntriesViewModel(DateTime.Now + ": " + statusText, statusText);
+                StatusListView.Insert(0, entry);
             }));
         }
         #endregion
@@ -730,10 +789,13 @@ namespace SoundBoard
             //Folder watcher event handler
             this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
             this.fs.IncludeSubdirectories = false;
-            //This event will check for  new files added to the watching folder
-            this.fs.Created += new FileSystemEventHandler(this.Newfile);
-            //this event will check for any deletion of file in the watching folder
-            this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            if(FolderWatch == true)
+            {
+                //This event will check for  new files added to the watching folder
+                this.fs.Created += new FileSystemEventHandler(this.Newfile);
+                //this event will check for any deletion of file in the watching folder
+                this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            }
             //Enable the watcher
             this.fs.EnableRaisingEvents = true;
         }
@@ -1087,7 +1149,7 @@ namespace SoundBoard
         /// </summary>
         private void InitializeCollections()
         { 
-            StatusListView = new ObservableCollection<string>();
+            StatusListView = new ObservableCollection<ListEntriesViewModel>();
             Keybindings = new List<KeybindingsViewModel>();
         }
         #endregion
@@ -1116,6 +1178,7 @@ namespace SoundBoard
             public CommandBase OpenUrl { get; set; }
             public RelayCommand AddKeybind { get; set; }
             public RelayCommand OpenAddKeybind { get; set; }
+            public RelayCommand OpenAdjustVolume { get; set; }
             #endregion
 
             #region --Application
@@ -1155,6 +1218,7 @@ namespace SoundBoard
             OpenUrl = new CommandBase(OpenUrl_Executed);
             AddKeybind = new RelayCommand(AddKeybind_Executed);
             OpenAddKeybind = new RelayCommand(OpenAddKeybind_Executed);
+            OpenAdjustVolume = new RelayCommand(OpenAdjustVolume_Executed);
             //Application
             ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
             ExitCommand = new RelayCommand(ExitCommand_Executed);
@@ -1203,7 +1267,7 @@ namespace SoundBoard
                 //set file with the audio location
                 file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
-                file.Volume = volume;
+                file.Volume = volume * sound.Volume;
                 wavePlayer.Init(file);
                 wavePlayer.Play();
             }
@@ -1602,6 +1666,10 @@ namespace SoundBoard
                         Keybindings.Remove(keybind);
                     }
                 }
+                catch (FileNotFoundException fnfe)
+                {
+                    WriteStatusEntry(fnfe.Message);
+                }
                 catch (Exception e)
                 {
                     WriteStatusEntry("Unknown error, please try again.");
@@ -1610,7 +1678,7 @@ namespace SoundBoard
             }
             else
             {
-                WriteStatusEntry("Something went wrong removing the sound, try again.");
+                WriteStatusEntry("Something was removed from the folder. It did not exist in the sounds collection.");
                 return;
             }
         }
@@ -1670,11 +1738,6 @@ namespace SoundBoard
             string keyBind = this.Keybind;
             string modifier = this.Modifier;
             string soundName = CurrentName;
-            
-            //if(modifier == "")
-            //{
-            //    modifier = "Ctrl+Alt";
-            //}
 
             //Check if the keybinding already exists, then remove it.
             var key = Keybindings.FirstOrDefault(k => k.Keybind == keyBind && k.Modifier == modifier);
@@ -1704,22 +1767,32 @@ namespace SoundBoard
                 //Add the keybinding to the View
                 App.Current.MainWindow.InputBindings.Add(kb);
 
-                //Add the keybinding to the Keybindings list, and so also the xml file.
+                //Add the keybinding to the Keybindings list
                 var modifiers = kb.Modifiers.ToString();
                 Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
+                //Add the keybinding to the Sounds collection, and so to the xml file on closing.
+                var modSound = Sounds.FirstOrDefault(s => s.Name == soundName);
+                if(modSound != null)
+                {
+                    modSound.Keybind = kb.Key.ToString();
+                    modSound.Modifier = modifier;
+                }
 
                 //If the ShowKeybindings window is open, close and reopen it
                 if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
                 {
+                    var top = App.Current.Windows.OfType<ShowKeybindingsView>().First().Top;
+                    var left = App.Current.Windows.OfType<ShowKeybindingsView>().First().Left;
                     App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
                     ShowKeybindingsView view = new ShowKeybindingsView(this);
-                    view.Owner = Application.Current.MainWindow;
                     view.Show();
+                    view.Top = top;
+                    view.Left = left;
                 }
             }
             catch(NullReferenceException nre)
-            { 
-                 
+            {
+                WriteStatusEntry("-->" + nre.Message);
             }
             catch (Exception e)
             {
@@ -1729,9 +1802,28 @@ namespace SoundBoard
 
             //Close the view
             App.Current.Windows.OfType<AddKeyBindingView>().First().Close();
-            }
+        }
         #endregion
-        
+
+        #region --Open Adjust volume
+        private void OpenAdjustVolume_Executed(object param)
+        {
+            var sound = Sounds.Where(s => s.Name == param as string).FirstOrDefault();
+            if(sound != null)
+            {
+                //Set the volume with the current value
+                SoundVolume = sound.Volume;
+
+                AdjustVolumeView view = new AdjustVolumeView(this);
+                view.Owner = Application.Current.MainWindow;
+                view.ShowDialog();
+                if(view.DialogResult.HasValue && view.DialogResult.Value)
+                {
+                    sound.Volume = SoundVolume;
+                }
+            }
+        }
+        #endregion
         #endregion
 
         #region -Application
@@ -1806,11 +1898,19 @@ namespace SoundBoard
             if (FolderWatch == false)
             {
                 FolderWatch = true;
+                //This event will check for  new files added to the watching folder
+                this.fs.Created += new FileSystemEventHandler(this.Newfile);
+                //this event will check for any deletion of file in the watching folder
+                this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
                 WriteStatusEntry("Started watching folder for changes.");
             }
             else
             {
                 FolderWatch = false;
+                //This event will check for  new files added to the watching folder
+                this.fs.Created -= new FileSystemEventHandler(this.Newfile);
+                //this event will check for any deletion of file in the watching folder
+                this.fs.Deleted -= new FileSystemEventHandler(this.Fs_Deleted);
                 WriteStatusEntry("Stopped watching folder for changes.");
             }
         }
@@ -1833,11 +1933,20 @@ namespace SoundBoard
         #region --Show Keybindings
         private void ShowKeybindings_Executed(object sender, EventArgs e)
         {
-            //Sort the keybinds by soundname
-            Keybindings.Sort((a, b) => a.Keybind.CompareTo(b.Keybind));
-
+            if(Keybindings.Count() > 0)
+            {
+                //Sort the keybinds by soundname
+                Keybindings.Sort((a, b) => a.Keybind.CompareTo(b.Keybind));
+            }
+            else
+            {
+                MessageBox.Show("No keybinds to display");
+                return;
+            }
+            
             ShowKeybindingsView view = new ShowKeybindingsView(this);
-            view.Owner = Application.Current.MainWindow;
+            //No ownership of the window means it has full freedom to be minimized, in front or behind the main view, etc.
+            //view.Owner = Application.Current.MainWindow;
             view.Show();
         }
         #endregion
@@ -1932,10 +2041,6 @@ namespace SoundBoard
         /// <param name="Eventocc"></param>
         protected void Newfile(object fscreated, FileSystemEventArgs Eventocc)
         {
-            if(FolderWatch == false)
-            {
-                return;
-            }
             //Do logic here when a file gets added to the defaultDirectory
             try
             {
@@ -1976,11 +2081,6 @@ namespace SoundBoard
         /// <param name="changeEvent"></param>
         protected void Fs_Deleted(object fschanged, FileSystemEventArgs changeEvent)
         {
-            if(FolderWatch == false)
-            {
-                return;
-            }
-
             var file = changeEvent.Name;
             var ext = Path.GetExtension(file);
             //Do logic here when a file gets deleted from the defaultDirectory
@@ -2060,31 +2160,26 @@ namespace SoundBoard
                 keyCombo = "Ctrl+Shift+Alt" + "+" + e.KeyCode;
             }
 
-            WriteStatusEntry(String.Format("KeyPress: \t{0}", keyCombo));
+            //Output the keycombination, for testing how keys are registerd and their names.
+            //WriteStatusEntry(String.Format("KeyPress: \t{0}", keyCombo));
 
             //Default keybinding to stop the sound.
-            if(keyCombo == "Ctrl+P" || keyCombo == "Ctrl+Space")
+            if(keyCombo == "Ctrl+Space")
             {
                 StopSound_Executed(null);
                 return;
             }
-            //Needs testing on a keyboard with actual media buttons
+            //use mediakeys to stop a sound
             if(e.KeyCode.ToString() == Key.MediaStop.ToString() || e.KeyCode.ToString() == Key.MediaPlayPause.ToString())
             {
                 StopSound_Executed(null);
                 return;
             }
 
-            //var sound = Sounds.FirstOrDefault(s => s.Keybind == keyCombo);
-            //if(sound != null)
-            //{
-            //    PlaySound_Executed(sound.Name);
-            //}
-
-            var key = Keybindings.FirstOrDefault(k => k.Keybind == e.KeyCode.ToString() && k.Modifier == mod);
-            if (key != null)
+            var sound = Keybindings.FirstOrDefault(s => s.Keybind == e.KeyCode.ToString() && s.Modifier == mod);
+            if (sound != null)
             {
-                PlaySound_Executed(key.SoundName);
+                PlaySound_Executed(sound.SoundName);
             }
 
             keyCombo = "";

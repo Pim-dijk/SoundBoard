@@ -129,12 +129,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Directory\Data\Devices.cs" />
-    <Compile Include="Directory\Data\Keybindings.cs" />
+    <Compile Include="Directory\Data\KeyBindings.cs" />
     <Compile Include="Directory\Data\KeyboardHook.cs" />
+    <Compile Include="Directory\Data\ListEntries.cs" />
     <Compile Include="Directory\ViewModels\DeviceViewModel.cs" />
     <Compile Include="Directory\ViewModels\KeybindingsViewModel.cs" />
+    <Compile Include="Directory\ViewModels\ListEntriesViewModel.cs" />
     <Compile Include="Directory\Views\AboutView.xaml.cs">
       <DependentUpon>AboutView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Directory\Views\AdjustVolumeView.xaml.cs">
+      <DependentUpon>AdjustVolumeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Directory\Views\AddKeyBindingView.xaml.cs">
       <DependentUpon>AddKeyBindingView.xaml</DependentUpon>
@@ -154,6 +159,10 @@
     <Page Include="Directory\Views\AboutView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Directory\Views\AdjustVolumeView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Directory\Views\AddKeyBindingView.xaml">
       <SubType>Designer</SubType>

@@ -24,6 +24,10 @@ namespace SoundBoard
         public bool IsPlaying { get; set; }
         //Assigned keybinding
         public string Keybind { get; set; }
+        //Assiciated Modifier
+        public string Modifier { get; set; }
+        //Adjusted volume
+        public float Volume { get; set; }
         #endregion
 
         #region Constructor
@@ -31,6 +35,7 @@ namespace SoundBoard
         public SoundViewModel(string audioLocation)
         {
             this.AudioLocation = audioLocation;
+            Volume = 1;
         }
 
         #endregion

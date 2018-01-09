@@ -66,7 +66,6 @@ namespace SoundBoard
             }
         }
 
-
         //Drag and drop buttons around, doesn't work in conjunction with the existing item drop
         // will have to merge the 2 together since the parent controll now takes over and that does not allow
         // me to drop a button because it is not a audio/video file.

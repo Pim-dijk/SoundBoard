@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:utilities="clr-namespace:SoundBoard.Utilities"
         mc:Ignorable="d"
-        Title="List of all Keybindings" Height="250" Width="400" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
-        WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13" ResizeMode="CanResize" >
+        Title="Display the keybindings" Height="250" Width="400" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
+        WindowStartupLocation="CenterScreen" FontFamily="Tahoma" FontSize="13" ResizeMode="CanResize" >
     
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
