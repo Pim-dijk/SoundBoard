@@ -45,12 +45,17 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "..\SoundBoard\bin\Release\SoundBoard.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\SoundBoard\bin\Release\SoundBoard.exe.config"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\SoundBoard\bin\Release\SoundBoard.pdb"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\AngleSharp.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\AngleSharp.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\Gma.System.MouseKeyHook.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\MediaToolkit.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\NAudio.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\NAudio.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\Newtonsoft.Json.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\Newtonsoft.Json.xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\SoundBoard.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\SoundBoard.exe.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\SoundBoard\bin\Release\SoundBoard.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.xml"; DestDir: "{app}"; Flags: ignoreversion
 ; Source: "..\SoundBoard\bin\Release\Keybindings.xml"; DestDir: "{userappdata}\{#MyAppName}"; Flags: ignoreversion createallsubdirs recursesubdirs

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using System.Configuration;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -57,9 +56,18 @@ namespace SoundBoard
         //Name to display in the namechange dialog
         private string nameToChange { get; set; }
 
+        //Image bitmap 
+        private ImageSource imageBitmap { get; set; }
+
+        //Temp image location
+        private string tempImageLocation = "";
+
+        //Has image
+        private bool hasImage { get; set; }
+
         //New url string
         private string urlUri { get; set; }
-
+        
         //new url name
         private string urlName { get; set; }
 
@@ -235,6 +243,39 @@ namespace SoundBoard
 
         //Omit Imagesource
         public ImageSource ImageSource { get; set; }
+
+        //Image bitmap 
+        public ImageSource ImageBitmap { get; set; }
+
+        //Temo image location
+        public string TempImageLocation
+        {
+            get
+            {
+                return this.tempImageLocation;
+            }
+            set
+            {
+                //if(value == "")
+                //{
+                //    tempImageLocation = value;
+                //    return;
+                //}
+
+                if (this.tempImageLocation == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.tempImageLocation = value;
+                    ImageBitmap = LoadImage(value);
+                }
+            }
+        }
+
+        //Has Image
+        public bool HasImage { get; set; }
 
         //Output Devices
         public ObservableCollection<DevicesViewModel> Devices { get; set; }
@@ -490,12 +531,14 @@ namespace SoundBoard
             timer.Start();
             //Get the available output devices
             GetDevices();
+            TempImageLocation = "";
         }
         #endregion
 
         #region Methods
 
-        #region -Get files
+        #region -Collection
+        #region --Get files
         /// <summary>
         /// Method to get the files from the directory
         /// </summary>
@@ -537,7 +580,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Add Audio files
+        #region --Add Audio files
         /// <summary>
         /// Add one or more files to the collection
         /// </summary>
@@ -573,235 +616,8 @@ namespace SoundBoard
             fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
-
-        #region -FindImage
-        /// <summary>
-        /// Try to find an image with the same name as the file
-        /// </summary>
-        /// <param name="justName">The filename for which to search the image for, without extension</param>
-        public void FindImage(string justName)
-        {
-            //The name of the added image
-            var soundName = justName;
-            //A list of all images in the folder
-            var images = FolderContents.GetImages(DefaultImageDirectory);
-            foreach(var image in images)
-            {
-                //Normalize the name of the image, no path, no extension
-                var normImage = Path.GetFileNameWithoutExtension(Path.GetFileName(image));
-                if(soundName == normImage)
-                {
-                    var item = Sounds.FirstOrDefault(i => i.NormalizedName == normImage);
-                    item.ImagePath = image;
-                    item.ImageBitMap = LoadImage(image);
-                    item.HasImage = true;
-                    WriteStatusEntry("Image added to " + justName);
-                    return;
-                }
-            }
-        }
-        #endregion
         
-        #region -BitmapConverter
-        /// <summary>
-        /// Convert a given image to a bitmap image to release it's source for other uses
-        /// </summary>
-        /// <param name="path">full path to the image</param>
-        /// <returns></returns>
-        private ImageSource LoadImage(string path)
-        {
-            var bitmapImage = new BitmapImage();
-
-            using (var stream = new FileStream(path, FileMode.Open))
-            {
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
-                bitmapImage.Freeze(); // optional
-            }
-            return bitmapImage;
-        }
-        #endregion
-        
-        #region -Read Application settings
-        /// <summary>
-        /// Read the stored application settings
-        /// </summary>
-        private void ReadCustomSettings()
-        {
-            DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
-            Volume = SoundBoard.Properties.Settings.Default.Volume;
-            FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
-            DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
-            DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
-            GlobalHook = SoundBoard.Properties.Settings.Default.GlobalHook;
-            if(GlobalHook == true)
-            {
-                Subscribe();
-            }
-
-            this.Sounds = new ObservableCollection<SoundViewModel>();
-
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
-            if (File.Exists(xmlPath))
-            {
-                XmlReader xmlReader = XmlReader.Create(xmlPath);
-                try
-                {
-                    while (xmlReader.Read())
-                    {
-                        if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "Sound"))
-                        {
-                            if (xmlReader.HasAttributes)
-                            {
-                                SoundViewModel sound = new SoundViewModel(xmlReader.GetAttribute("Path"));
-
-                                if (xmlReader.GetAttribute("Image") != "")
-                                {
-                                    sound.ImagePath = xmlReader.GetAttribute("Image");
-                                    sound.ImageBitMap = LoadImage(sound.ImagePath);
-                                    sound.HasImage = true;
-                                }
-                                sound.Volume = float.Parse(xmlReader.GetAttribute("AdjustedVolume"));
-                                if (xmlReader.GetAttribute("Keybind") != "")
-                                {
-                                    sound.Keybind = xmlReader.GetAttribute("Keybind");
-                                }
-                                if (xmlReader.GetAttribute("Modifier") != "")
-                                {
-                                    sound.Modifier = xmlReader.GetAttribute("Modifier");
-                                }
-
-                                var key = sound.Keybind;
-                                var modifier = sound.Modifier;
-                                if(key != null)
-                                {
-                                    //Set the keybinding to add to the view
-                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
-                                    kb.CommandParameter = sound.Name;
-
-                                    //Add the keybinding to the View
-                                    App.Current.MainWindow.InputBindings.Add(kb);
-
-                                    KeybindingsViewModel keybind = new KeybindingsViewModel(key, modifier, sound.Name);
-
-                                    Keybindings.Add(keybind);
-                                }
-
-                                //Add the sound to the collection
-                                Sounds.Add(sound);
-                            }
-                        }
-                    }
-                    xmlReader.Close();
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message);
-                }
-            }
-            else
-            {
-                GetFiles();
-            }
-        }
-        #endregion
-
-        #region -Application closing
-        /// <summary>
-        /// When the application closes, save the status of the volume
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        public void MainWindow_Closing(object sender, CancelEventArgs e)
-        {
-            //Store the current value of Volume in the settings
-            SoundBoard.Properties.Settings.Default.Volume = Volume;
-            //Store the current value of FolderWatcher in the settings
-            SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
-            //Save the selected output device
-            SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
-            //Save the converter option
-            SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
-            //Save the global hook setting
-            SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
-            //Save settings
-            SoundBoard.Properties.Settings.Default.Save();
-
-            //Write keybinding combinations to xml
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
-            XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
-            
-            xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("Sounds");
-            
-            foreach (var sound in Sounds)
-            {
-                xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
-                xmlWriter.WriteAttributeString("Path", sound.AudioLocation);
-                xmlWriter.WriteAttributeString("Image", sound.ImagePath);
-                xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
-                xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
-                xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
-                xmlWriter.WriteAttributeString("Name", sound.Name);
-                xmlWriter.WriteEndElement();
-            }
-
-            xmlWriter.WriteEndElement();
-            xmlWriter.WriteEndDocument();
-            xmlWriter.Close();
-
-            if(GlobalHook == true)
-            {
-                Unsubscribe();
-            }
-
-            //Close the keybindingsview if it's open
-            //if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
-            //{
-            //    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
-            //}
-        }
-        #endregion
-
-        #region -Write status entry
-        /// <summary>
-        /// A listview for status message updates
-        /// </summary>
-        /// <param name="statusText">The message to display</param>
-        private void WriteStatusEntry(string statusText)
-        {
-            System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
-            {
-                var entry = new ListEntriesViewModel(DateTime.Now + ": " + statusText, statusText);
-                StatusListView.Insert(0, entry);
-            }));
-        }
-        #endregion
-
-        #region -Initialize folder watcher
-        /// <summary>
-        /// Initialize the folderwatcher
-        /// </summary>
-        private void InitializeWatcher()
-        {
-            //Folder watcher event handler
-            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
-            this.fs.IncludeSubdirectories = false;
-            if(FolderWatch == true)
-            {
-                //This event will check for  new files added to the watching folder
-                this.fs.Created += new FileSystemEventHandler(this.Newfile);
-                //this event will check for any deletion of file in the watching folder
-                this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
-            }
-            //Enable the watcher
-            this.fs.EnableRaisingEvents = true;
-        }
-        #endregion
-        
-        #region -Save video to folder
+        #region --Save video to folder
         /// <summary>
         /// Save an audio file from a supplied url
         /// </summary>
@@ -813,7 +629,7 @@ namespace SoundBoard
                 Directory.CreateDirectory(DefaultDirectory + "Downloads");
             }
 
-            if(!Directory.Exists(DefaultDirectory + "Images"))
+            if (!Directory.Exists(DefaultDirectory + "Images"))
             {
                 Directory.CreateDirectory(DefaultDirectory + "Images");
             }
@@ -827,7 +643,7 @@ namespace SoundBoard
                 DownloadProgress = true;
 
                 //Do heavy tasks here, download file and convert file
-                await Task.Run(async() =>
+                await Task.Run(async () =>
                 {
                     if (new[] { "youtube", "youtu.be" }.Any(c => param.Contains(c)))
                     {
@@ -867,7 +683,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Save youtube audio
+        #region --Save youtube audio
         private async Task<string> YoutubeAudio(string param)
         {
             string output = "";
@@ -881,13 +697,13 @@ namespace SoundBoard
 
                 if (!YoutubeClient.TryParseVideoId(link, out string linkId)) //Convert url to video ID
                     linkId = link;
-                
+
                 var streamInfoSet = await client.GetVideoMediaStreamInfosAsync(linkId); //gets a video object with information about the video
 
                 var videoInfo = streamInfoSet.Muxed.WithHighestVideoQuality();
                 var audioInfo = streamInfoSet.Audio.WithHighestBitrate();
                 var audioFileExt = audioInfo.Container.GetFileExtension();
-                if(!audioFileExt.StartsWith("."))
+                if (!audioFileExt.StartsWith("."))
                 {
                     audioFileExt = "." + audioFileExt;
                 }
@@ -914,7 +730,7 @@ namespace SoundBoard
                     WriteStatusEntry("------Download complete------");
 
                     //var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-                    
+
                     //Convert file to.mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
                     outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
@@ -971,11 +787,11 @@ namespace SoundBoard
             else
             {
                 return output;
-            } 
+            }
         }
         #endregion
-        
-        #region -Save other media link
+
+        #region --Save other media link
         private async Task<string> GenericAudio(string param)
         {
             //link is the url that was passed into the dialog
@@ -987,7 +803,7 @@ namespace SoundBoard
             var outputD = DefaultDirectory + "Downloads\\" + UrlName + ext;
 
             var inputImage = new MediaFile { Filename = output };
-            var inputFile = new MediaFile { Filename = outputD};
+            var inputFile = new MediaFile { Filename = outputD };
             var outputFile = new MediaFile { Filename = $"{DefaultDirectory + UrlName }.mp3" };
             try
             {
@@ -1065,29 +881,65 @@ namespace SoundBoard
             }
         }
         #endregion
+        #endregion
 
-        #region -Output Devices
+        #region -Helpers
+        #region --FindImage
         /// <summary>
-        /// Get all the audio output devices from the machine
+        /// Try to find an image with the same name as the file
         /// </summary>
-        private void GetDevices()
+        /// <param name="justName">The filename for which to search the image for, without extension</param>
+        public void FindImage(string justName)
         {
-            this.Devices = new ObservableCollection<DevicesViewModel>();
-            for (int deviceId = 0; deviceId < WaveOut.DeviceCount; deviceId++)
+            //The name of the added image
+            var soundName = justName;
+            //A list of all images in the folder
+            var images = FolderContents.GetImages(DefaultImageDirectory);
+            foreach(var image in images)
             {
-                var capabilities = WaveOut.GetCapabilities(deviceId);
-                var device = new DevicesViewModel(capabilities.ProductName, deviceId);
-                Devices.Add(device);
-                //If this is the selected device read from app settings, set it as selected.
-                if (deviceId == this.DeviceId)
+                //Normalize the name of the image, no path, no extension
+                var normImage = Path.GetFileNameWithoutExtension(Path.GetFileName(image));
+                if(soundName == normImage)
                 {
-                    device.isChecked = true;
+                    var item = Sounds.FirstOrDefault(i => i.NormalizedName == normImage);
+                    item.ImagePath = image;
+                    item.ImageBitMap = LoadImage(image);
+                    item.HasImage = true;
+                    WriteStatusEntry("Image added to " + justName);
+                    return;
                 }
             }
         }
         #endregion
+        
+        #region --BitmapConverter
+        /// <summary>
+        /// Convert a given image to a bitmap image to release it's source for other uses
+        /// </summary>
+        /// <param name="path">full path to the image</param>
+        /// <returns></returns>
+        private ImageSource LoadImage(string path)
+        {
+            if(path == "" || path == null)
+            {
+                return null;
+            }
 
-        #region -Convert filesize to string
+            var bitmapImage = new BitmapImage();
+            
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = stream;
+                bitmapImage.EndInit();
+                bitmapImage.Freeze(); // optional
+            }
+            return bitmapImage;
+        }
+        #endregion
+        
+        #region --Convert filesize to string
         /// <summary>
         /// Convert the filesize from bits to whatever is most suited
         /// </summary>
@@ -1111,7 +963,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Subscribe to keyboard hook
+        #region --Subscribe to keyboard hook
         public void Subscribe()
         {
             m_GlobalHook = Hook.GlobalEvents();
@@ -1119,7 +971,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Unsubscribe from keyboard hook
+        #region --Unsubscribe from keyboard hook
         public void Unsubscribe()
         {
             m_GlobalHook.KeyDown -= GlobalHookKeyPress;
@@ -1128,7 +980,374 @@ namespace SoundBoard
             m_GlobalHook.Dispose();
         }
         #endregion
+        #endregion
+
+        #region -Application
+        #region --Read Application settings
+        /// <summary>
+        /// Read the stored application settings
+        /// </summary>
+        private void ReadCustomSettings()
+        {
+            DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
+            Volume = SoundBoard.Properties.Settings.Default.Volume;
+            FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
+            DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
+            DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
+            GlobalHook = SoundBoard.Properties.Settings.Default.GlobalHook;
+            if(GlobalHook == true)
+            {
+                Subscribe();
+            }
+
+            this.Sounds = new ObservableCollection<SoundViewModel>();
+
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+            if (File.Exists(xmlPath))
+            {
+                XmlReader xmlReader = XmlReader.Create(xmlPath);
+                try
+                {
+                    while (xmlReader.Read())
+                    {
+                        if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "Sound"))
+                        {
+                            if (xmlReader.HasAttributes)
+                            {
+                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + xmlReader.GetAttribute("Name"));
+
+                                if (xmlReader.GetAttribute("Image") != "")
+                                {
+                                    sound.ImagePath = xmlReader.GetAttribute("Image");
+                                    sound.ImageBitMap = LoadImage(sound.ImagePath);
+                                    sound.HasImage = true;
+                                }
+                                sound.Volume = float.Parse(xmlReader.GetAttribute("AdjustedVolume"));
+                                if (xmlReader.GetAttribute("Keybind") != "")
+                                {
+                                    sound.Keybind = xmlReader.GetAttribute("Keybind");
+                                }
+                                if (xmlReader.GetAttribute("Modifier") != "")
+                                {
+                                    sound.Modifier = xmlReader.GetAttribute("Modifier");
+                                }
+
+                                var key = sound.Keybind;
+                                var modifier = sound.Modifier;
+                                if(key != null)
+                                {
+                                    //Set the keybinding to add to the view
+                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
+                                    kb.CommandParameter = sound.Name;
+
+                                    //Add the keybinding to the View
+                                    App.Current.MainWindow.InputBindings.Add(kb);
+
+                                    KeybindingsViewModel keybind = new KeybindingsViewModel(key, modifier, sound.Name);
+
+                                    Keybindings.Add(keybind);
+                                }
+
+                                //Add the sound to the collection
+                                Sounds.Add(sound);
+                            }
+                        }
+                    }
+                    xmlReader.Close();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                }
+            }
+            else
+            {
+                GetFiles();
+            }
+        }
+        #endregion
+
+        #region --Application closing
+        /// <summary>
+        /// When the application closes, save the status of the volume
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void MainWindow_Closing(object sender, CancelEventArgs e)
+        {
+            //Store the current value of Volume in the settings
+            SoundBoard.Properties.Settings.Default.Volume = Volume;
+            //Store the current value of FolderWatcher in the settings
+            SoundBoard.Properties.Settings.Default.FolderWatcher = FolderWatch;
+            //Save the selected output device
+            SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
+            //Save the converter option
+            SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
+            //Save the global hook setting
+            SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
+            //Save settings
+            SoundBoard.Properties.Settings.Default.Save();
+
+            //Write keybinding combinations to xml
+            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+            XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
+            
+            xmlWriter.WriteStartDocument();
+            xmlWriter.WriteStartElement("Sounds");
+            
+            foreach (var sound in Sounds)
+            {
+                xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
+                //xmlWriter.WriteAttributeString("Path", sound.AudioLocation);
+                xmlWriter.WriteAttributeString("Image", sound.ImagePath);
+                xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
+                xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
+                xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
+                xmlWriter.WriteAttributeString("Name", sound.Name);
+                xmlWriter.WriteEndElement();
+            }
+
+            xmlWriter.WriteEndElement();
+            xmlWriter.WriteEndDocument();
+            xmlWriter.Close();
+
+            if(GlobalHook == true)
+            {
+                Unsubscribe();
+            }
+
+            //Close the keybindingsview if it's open
+            //if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
+            //{
+            //    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+            //}
+        }
+        #endregion
+
+        #region --Write status entry
+        /// <summary>
+        /// A listview for status message updates
+        /// </summary>
+        /// <param name="statusText">The message to display</param>
+        private void WriteStatusEntry(string statusText)
+        {
+            System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+            {
+                var entry = new ListEntriesViewModel(DateTime.Now + ": " + statusText, statusText);
+                StatusListView.Insert(0, entry);
+            }));
+        }
+        #endregion
+
+        #region --Initialize folder watcher
+        /// <summary>
+        /// Initialize the folderwatcher
+        /// </summary>
+        private void InitializeWatcher()
+        {
+            //Folder watcher event handler
+            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
+            this.fs.IncludeSubdirectories = false;
+            if(FolderWatch == true)
+            {
+                //This event will check for  new files added to the watching folder
+                this.fs.Created += new FileSystemEventHandler(this.Newfile);
+                //this event will check for any deletion of file in the watching folder
+                this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+            }
+            //Enable the watcher
+            this.fs.EnableRaisingEvents = true;
+        }
+        #endregion
         
+        #region --Output Devices
+        /// <summary>
+        /// Get all the audio output devices from the machine
+        /// </summary>
+        private void GetDevices()
+        {
+            this.Devices = new ObservableCollection<DevicesViewModel>();
+            for (int deviceId = 0; deviceId < WaveOut.DeviceCount; deviceId++)
+            {
+                var capabilities = WaveOut.GetCapabilities(deviceId);
+                var device = new DevicesViewModel(capabilities.ProductName, deviceId);
+                Devices.Add(device);
+                //If this is the selected device read from app settings, set it as selected.
+                if (deviceId == this.DeviceId)
+                {
+                    device.isChecked = true;
+                }
+            }
+        }
+        #endregion
+        #endregion
+
+        #region -Sounds Settings
+        #region --Change file name
+        /// <summary>
+        /// Save the new name to the file
+        /// </summary>
+        /// <param name="param"></param>
+        private void ChangeSoundName(SoundViewModel param)
+        {
+            try
+            {
+                SoundViewModel sound = param;
+
+                //Gets the sound file extension
+                var extension = Path.GetExtension(CurrentName);
+                var fullCurrentPath = sound.AudioLocation;
+
+                var newName = NameToChange + extension;
+                var fullNewPath = DefaultDirectory + newName;
+
+                //If the file has an image attached, rename it aswell
+                if (sound.HasImage == true)
+                {
+                    var oldImageName = Path.GetFileName(sound.ImagePath);
+                    var imageExt = Path.GetExtension(oldImageName);
+                    var newPath = DefaultImageDirectory + NameToChange + imageExt;
+                    var oldPath = sound.ImagePath;
+                    sound.ImagePath = newPath;
+                    File.Move(oldPath, newPath);
+                }
+                sound.AudioLocation = fullNewPath;
+                File.Move(fullCurrentPath, fullNewPath);
+
+                //If there is a keybind associated, change it to point to the new name
+                var keybind = Keybindings.FirstOrDefault(k => k.SoundName == CurrentName);
+                if (keybind != null)
+                {
+                    keybind.SoundName = newName;
+                }
+            }
+            catch(IOException ioe)
+            {
+                WriteStatusEntry("A file with the same name already exists!");
+            }
+            catch(Exception e)
+            {
+                WriteStatusEntry("Oops! Something seems to have gone wrong, but don't worry it still works.");
+            }
+            
+        }
+        #endregion
+
+        #region --Add Image
+        /// <summary>
+        /// Add image to the sound that requested it
+        /// </summary>
+        /// <param name="param">Normalized name of the sound that send the request</param>
+        private void AddImage(SoundViewModel param)
+        {
+            var sound = param;
+            fs.EnableRaisingEvents = false;
+            var soundName = sound.NormalizedName;
+
+            var imagePath = TempImageLocation;
+            var ext = Path.GetExtension(imagePath);
+
+            //the new imageLocation with original extention but new name
+            var newImageLocation = DefaultImageDirectory + soundName + ext;
+
+            //Create bitmapimage from file
+            var bitmapImage = LoadImage(imagePath);
+
+            try
+            {
+                //Move the file and rename it at the same time
+                File.Copy(imagePath, newImageLocation, true);
+                //Set the image to the sound
+                sound.ImageBitMap = bitmapImage;
+                sound.ImagePath = newImageLocation;
+                sound.HasImage = true;
+
+                WriteStatusEntry("New image added");
+            }
+            catch (IOException)
+            {
+                WriteStatusEntry("File already assigned to this sound or in use by other program.");
+            }
+            catch (Exception e)
+            {
+                WriteStatusEntry(e.Message);
+            }
+
+            fs.EnableRaisingEvents = FolderWatch;
+        }
+        #endregion
+
+        #region --AddKeybind
+        private void AddKeybind(SoundViewModel param)
+        {
+            //Keybind can be something like "Ctrl + Alt + 1"
+            string keyBind = this.Keybind;
+            string modifier = this.Modifier;
+            string soundName = param.Name;
+
+            //Check if the keybinding already exists, then remove it.
+            var key = Keybindings.FirstOrDefault(k => k.Keybind == keyBind && k.Modifier == modifier);
+            if (key != null)
+            {
+                Keybindings.Remove(key);
+            }
+            //Check if the song already has a keybinding, then remove it
+            var sound = Keybindings.FirstOrDefault(k => k.SoundName == soundName);
+            if (sound != null)
+            {
+                Keybindings.Remove(sound);
+            }
+
+            //Convert the inputs to Key and ModifierKeys
+            var keyConverter = new KeyConverter();
+            var myKey = (Key)keyConverter.ConvertFromString(keyBind);
+
+            var modConverter = new ModifierKeysConverter();
+            var myMod = (ModifierKeys)modConverter.ConvertFromString(modifier);
+
+            try
+            {
+                //Create a keybinding that goes into the view
+                var kb = new KeyBinding(PlaySound, myKey, myMod);
+                kb.CommandParameter = soundName;
+                //Add the keybinding to the View
+                App.Current.MainWindow.InputBindings.Add(kb);
+
+                //Add the keybinding to the Keybindings list
+                var modifiers = kb.Modifiers.ToString();
+                Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
+                //Add the keybinding to the Sounds collection, and so to the xml file on closing.
+                var modSound = Sounds.FirstOrDefault(s => s.Name == soundName);
+                if (modSound != null)
+                {
+                    modSound.Keybind = kb.Key.ToString();
+                    modSound.Modifier = modifier;
+                }
+            }
+            catch (NullReferenceException nre)
+            {
+                WriteStatusEntry("-->" + nre.Message);
+            }
+            catch (Exception e)
+            {
+                WriteStatusEntry("-->" + e.Message);
+            }
+
+            //If the ShowKeybindings window is open, close and reopen it
+            if (App.Current.Windows.OfType<ShowKeybindingsView>().Any())
+            {
+                var top = App.Current.Windows.OfType<ShowKeybindingsView>().First().Top;
+                var left = App.Current.Windows.OfType<ShowKeybindingsView>().First().Left;
+                App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+                ShowKeybindingsView view = new ShowKeybindingsView(this);
+                view.Show();
+                view.Top = top;
+                view.Left = left;
+            }
+        }
+        #endregion
+        #endregion
+
         #region -Test
         /// <summary>
         /// Location for a test method
@@ -1170,15 +1389,8 @@ namespace SoundBoard
             public RelayCommand RefreshFiles { get; set; }
             public RelayCommand RemoveSound { get; set; }
             public RelayCommand DeleteSound { get; set; }
-            public RelayCommand AddImage { get; set; }
-            public RelayCommand RemoveImage { get; set; }
-            public RelayCommand ChangeSoundNameSaved { get; set; }
-            public RelayCommand OpenChangeName { get; set; }
             public RelayCommand AddUrl { get; set; }
             public CommandBase OpenUrl { get; set; }
-            public RelayCommand AddKeybind { get; set; }
-            public RelayCommand OpenAddKeybind { get; set; }
-            public RelayCommand OpenAdjustVolume { get; set; }
             #endregion
 
             #region --Application
@@ -1189,10 +1401,11 @@ namespace SoundBoard
             public RelayCommand SelectOutput { get; set; }
             public CommandBase ShowKeybindings { get; set; }
             public RelayCommand SetGlobalHook { get; set; }
+            public RelayCommand SoundSettings { get; set; }
             #endregion
 
-            #region --Test
-            public RelayCommand TestCommand { get; set; }
+        #region --Test
+        public RelayCommand TestCommand { get; set; }
             #endregion
 
         #endregion
@@ -1210,15 +1423,8 @@ namespace SoundBoard
             RefreshFiles = new RelayCommand(RefreshFiles_Executed);
             RemoveSound = new RelayCommand(RemoveSound_Executed);
             DeleteSound = new RelayCommand(DeleteSound_Executed);
-            AddImage = new RelayCommand(AddImage_Executed);
-            RemoveImage = new RelayCommand(RemoveImage_Executed);
-            OpenChangeName = new RelayCommand(OpenChangeName_Executed);
-            ChangeSoundNameSaved = new RelayCommand(ChangeSoundNameSaved_Executed);
             AddUrl = new RelayCommand(AddUrl_Executed);
             OpenUrl = new CommandBase(OpenUrl_Executed);
-            AddKeybind = new RelayCommand(AddKeybind_Executed);
-            OpenAddKeybind = new RelayCommand(OpenAddKeybind_Executed);
-            OpenAdjustVolume = new RelayCommand(OpenAdjustVolume_Executed);
             //Application
             ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
             ExitCommand = new RelayCommand(ExitCommand_Executed);
@@ -1227,6 +1433,7 @@ namespace SoundBoard
             SelectOutput = new RelayCommand(SelectOutput_Executed);
             ShowKeybindings = new CommandBase(ShowKeybindings_Executed);
             SetGlobalHook = new RelayCommand(SetGlobalHook_Executed);
+            SoundSettings = new RelayCommand(SoundSettings_Executed);
             //Test
             TestCommand = new RelayCommand(TestCommand_Executed);
         }
@@ -1466,150 +1673,34 @@ namespace SoundBoard
             fs.EnableRaisingEvents = FolderWatch;
         }
         #endregion
-
-        #region --Add Image
-        /// <summary>
-        /// Add image to the sound that requested it
-        /// </summary>
-        /// <param name="param">Normalized name of the sound that send the request</param>
-        private void AddImage_Executed(object param)
-        {
-            fs.EnableRaisingEvents = false;
-            var soundName = param as string;
-
-            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.Filter = "All Graphics Types|*.jpg;*.gif;*.bmp;*.png;|All Files(*.*)|*.*";
-            ofd.Multiselect = false;
-
-            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                //path to the selected file
-                FileInfo imageFile = new FileInfo(ofd.FileName);
-                
-                //the new imageLocation with original extention but new name
-                var newImageLocation = DefaultImageDirectory + soundName + imageFile.Extension;
-                
-                //Create bitmapimage from file
-                var bitmapImage = LoadImage(ofd.FileName);
-
-                try
-                {
-                    //Check if the image with the same name as the sound exists and add it to the SoundViewModel
-                    var item = Sounds.First(i => i.NormalizedName == soundName);
-                    if (item != null)
-                    {
-                        //Move the file and rename it at the same time
-                        imageFile.CopyTo(newImageLocation, true);
-                        //Set the imagelocation to the new image
-                        item.ImageBitMap = bitmapImage;
-                        item.ImagePath = newImageLocation;
-                        item.HasImage = true;
-
-                        WriteStatusEntry("New image added");
-                    }
-                }
-                catch(IOException)
-                {
-                    WriteStatusEntry("File already assigned to this sound or in use by other program.");
-                }
-                catch(Exception e)
-                {
-                    WriteStatusEntry(e.Message);
-                }
-            }
-            fs.EnableRaisingEvents = FolderWatch;
-        }
-        #endregion
-
-        #region --Open Change Name
-        /// <summary>
-        /// Opens the change name view
-        /// </summary>
-        /// <param name="param">The name of the file with extension</param>
-        private void OpenChangeName_Executed(object param)
-        {
-            //Store the current name
-            //Name with extension
-            CurrentName = param as string;
-
-            //If the sound is not currently playing...
-            if (Sounds.Any(p => p.IsPlaying == false && p.Name == CurrentName))
-            {
-                //Name without extension
-                NameToChange = Path.GetFileNameWithoutExtension(CurrentName);
-                WriteStatusEntry(CurrentName);
-                //Display the view
-                ChangeNameView view = new ChangeNameView(this);
-                view.Owner = Application.Current.MainWindow;
-                view.ShowDialog();
-            }
-            else
-            {
-                WriteStatusEntry("Cannot rename while playing (" + CurrentName + ")");
-            }
-        }
-        #endregion
-
-        #region --Change file name
-        /// <summary>
-        /// Save the new name to the file
-        /// </summary>
-        /// <param name="param"></param>
-        private void ChangeSoundNameSaved_Executed(object param)
-        {
-            //Gets the sound file extension
-            var extension = Path.GetExtension(CurrentName);
-            var fullCurrentPath = DefaultDirectory + CurrentName;
-            
-            var newName = NameToChange + extension;
-            var sound = Sounds.Where(n => n.Name == CurrentName).First();
-            var fullNewPath = DefaultDirectory + newName;
-
-            //If the file has an image attached, rename it aswell
-            if(sound.HasImage == true)
-            {
-                var oldImageName = Path.GetFileName(sound.ImagePath);
-                var imageExt = Path.GetExtension(oldImageName);
-                var newPath = DefaultImageDirectory + NameToChange + imageExt;
-                var oldPath = sound.ImagePath;
-                sound.ImagePath = newPath;
-                File.Move(oldPath, newPath);
-            }
-            sound.AudioLocation = fullNewPath;
-            File.Move(fullCurrentPath, fullNewPath);
-
-            //If there is a keybind associated, change it to point to the new name
-            var keybind = Keybindings.FirstOrDefault(k => k.SoundName == CurrentName);
-            if(keybind != null)
-            {
-                keybind.SoundName = newName;
-            }
-            
-            //Close the window on save
-            App.Current.Windows.OfType<ChangeNameView>().First().Close();
-        }
-        #endregion
-
+        
         #region --Remove Image
         /// <summary>
         /// Delete the image from a sound
         /// </summary>
         /// <param name="param">Name of the sound that requested it</param>
-        private void RemoveImage_Executed(object param)
+        private void RemoveImage(object param)
         {
             fs.EnableRaisingEvents = false;
-            var soundName = param as string;
-            var sound = Sounds.Where(s => s.HasImage == true && s.NormalizedName == soundName).FirstOrDefault();
+            var soundName = CurrentName;
+            var sound = Sounds.Where(s => s.HasImage == true && s.Name == soundName).FirstOrDefault();
 
-            if(sound != null)
+            if (sound != null)
             {
-                //Delete the imagefile from the directory
-                var imageLocation = sound.ImagePath;
-                File.Delete(imageLocation);
-                //Unset the image and hasimage properties
-                sound.ImageBitMap = null;
-                sound.HasImage = false;
-
+                try
+                {
+                    //Delete the imagefile from the directory
+                    var imageLocation = sound.ImagePath;
+                    File.Delete(imageLocation);
+                    //Unset the image and hasimage properties
+                    sound.ImageBitMap = null;
+                    sound.HasImage = false;
+                    sound.ImagePath = "";
+                }
+                catch (Exception e)
+                {
+                    WriteStatusEntry(e.Message);
+                }
                 WriteStatusEntry("Image removed");
             }
             else
@@ -1720,108 +1811,66 @@ namespace SoundBoard
         }
         #endregion
 
-        #region --Open AddKeybind
-        private void OpenAddKeybind_Executed(object param)
+        #region --Open Sound Settings
+        public void SoundSettings_Executed(object param)
         {
-            CurrentName = param as string;
+            var sound = Sounds.FirstOrDefault(s => s.Name == param as string);
+            if (sound != null)
+            {
+                if(sound.IsPlaying)
+                {
+                    WriteStatusEntry("==Cannot change settings while the sound is playing!==");
+                    return;
+                }
+                NameToChange = sound.NormalizedName; //Without extension
+                CurrentName = sound.Name; //With extension
+                SoundVolume = sound.Volume; //Adjusted volume
+                Keybind = sound.Keybind; //Key
+                Modifier = sound.Modifier; //Modifier
+                TempImageLocation = sound.ImagePath;
+                if (sound.HasImage)
+                {
+                    HasImage = true;
+                    ImageBitmap = sound.ImageBitMap;
+                }
+                else
+                {
+                    HasImage = false;
+                    ImageBitmap = null;
+                }
+            }
 
-            AddKeyBindingView view = new AddKeyBindingView(this);
+            var view = new SoundSettingsView(this);
             view.Owner = Application.Current.MainWindow;
             view.ShowDialog();
-        }
-        #endregion
 
-        #region --AddKeybind
-        private void AddKeybind_Executed(object param)
-        {
-            //Keybind can be something like "Ctrl + Alt + 1"
-            string keyBind = this.Keybind;
-            string modifier = this.Modifier;
-            string soundName = CurrentName;
-
-            //Check if the keybinding already exists, then remove it.
-            var key = Keybindings.FirstOrDefault(k => k.Keybind == keyBind && k.Modifier == modifier);
-            if(key != null)
+            if (view.DialogResult.HasValue && view.DialogResult.Value)
             {
-                Keybindings.Remove(key);
-            }
-            //Check if the song already has a keybinding, then remove it
-            var sound = Keybindings.FirstOrDefault(k => k.SoundName == soundName);
-            if(sound != null)
-            {
-                Keybindings.Remove(sound);
-            }
-            
-            //Convert the inputs to Key and ModifierKeys
-            var keyConverter = new KeyConverter();
-            var myKey = (Key)keyConverter.ConvertFromString(keyBind);
-
-            var modConverter = new ModifierKeysConverter();
-            var myMod = (ModifierKeys)modConverter.ConvertFromString(modifier);
-
-            try
-            {
-                //Create a keybinding that goes into the view
-                var kb = new KeyBinding(PlaySound, myKey, myMod);
-                kb.CommandParameter = soundName;
-                //Add the keybinding to the View
-                App.Current.MainWindow.InputBindings.Add(kb);
-
-                //Add the keybinding to the Keybindings list
-                var modifiers = kb.Modifiers.ToString();
-                Keybindings.Add(new KeybindingsViewModel(kb.Key.ToString(), modifier, soundName));
-                //Add the keybinding to the Sounds collection, and so to the xml file on closing.
-                var modSound = Sounds.FirstOrDefault(s => s.Name == soundName);
-                if(modSound != null)
+                if (sound.NormalizedName != NameToChange)
                 {
-                    modSound.Keybind = kb.Key.ToString();
-                    modSound.Modifier = modifier;
+                    ChangeSoundName(sound);
                 }
-
-                //If the ShowKeybindings window is open, close and reopen it
-                if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
+                if (TempImageLocation != sound.ImagePath)
                 {
-                    var top = App.Current.Windows.OfType<ShowKeybindingsView>().First().Top;
-                    var left = App.Current.Windows.OfType<ShowKeybindingsView>().First().Left;
-                    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
-                    ShowKeybindingsView view = new ShowKeybindingsView(this);
-                    view.Show();
-                    view.Top = top;
-                    view.Left = left;
+                    if (TempImageLocation == "")
+                    {
+                        RemoveImage(sound.NormalizedName);
+                    }
+                    else
+                    {
+                        AddImage(sound);
+                    }
                 }
-            }
-            catch(NullReferenceException nre)
-            {
-                WriteStatusEntry("-->" + nre.Message);
-            }
-            catch (Exception e)
-            {
-                WriteStatusEntry("-->" + e.Message);
-            }
-
-
-            //Close the view
-            App.Current.Windows.OfType<AddKeyBindingView>().First().Close();
-        }
-        #endregion
-
-        #region --Open Adjust volume
-        private void OpenAdjustVolume_Executed(object param)
-        {
-            var sound = Sounds.Where(s => s.Name == param as string).FirstOrDefault();
-            if(sound != null)
-            {
-                //Set the volume with the current value
-                SoundVolume = sound.Volume;
-
-                AdjustVolumeView view = new AdjustVolumeView(this);
-                view.Owner = Application.Current.MainWindow;
-                view.ShowDialog();
-                if(view.DialogResult.HasValue && view.DialogResult.Value)
+                if (sound.Volume != SoundVolume)
                 {
                     sound.Volume = SoundVolume;
                 }
+                if (sound.Keybind != Keybind || sound.Modifier != Modifier)
+                {
+                    AddKeybind(sound);
+                }
             }
+            TempImageLocation = "";
         }
         #endregion
         #endregion
@@ -1945,8 +1994,6 @@ namespace SoundBoard
             }
             
             ShowKeybindingsView view = new ShowKeybindingsView(this);
-            //No ownership of the window means it has full freedom to be minimized, in front or behind the main view, etc.
-            //view.Owner = Application.Current.MainWindow;
             view.Show();
         }
         #endregion
@@ -1987,23 +2034,7 @@ namespace SoundBoard
         /// <param name="param"></param>
         private void TestCommand_Executed(object param)
         {
-            WriteStatusEntry("Testing numpad binding");
-            //await Task.Run(() =>
-            //{
-            //    //TTS Style
-            //    PromptStyle promptStyle = new PromptStyle();
-            //    promptStyle.Rate = PromptRate.Slow;
-            //    //TTS string builder
-            //    PromptBuilder promptBuilder = new PromptBuilder();
-
-            //    promptBuilder.StartStyle(promptStyle);
-            //    promptBuilder.AppendText("chu chu motherfucker, <3");
-            //    promptBuilder.AppendText("Kappa!");
-            //    promptBuilder.EndStyle();
-
-            //    SpeechSynthesizer ttsSynt = new SpeechSynthesizer();
-            //    ttsSynt.Speak(promptBuilder);
-            //});
+            
         }
         #endregion
 
@@ -2098,7 +2129,7 @@ namespace SoundBoard
                 {
                     Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
                     {
-                        RemoveImage_Executed(Path.GetFileNameWithoutExtension(file));
+                        RemoveImage(Path.GetFileNameWithoutExtension(file));
                     }));
                 }
             }

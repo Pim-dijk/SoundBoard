@@ -1,1 +1,11 @@
 Just don't use it to blow up the moon please.
+Or if you do, atleast mention my name.
+
+
+Credits to the makers of the following:
+
+YoutubeExplode at https://github.com/Tyrrrz/YoutubeExplode
+AngleSharp at https://github.com/AngleSharp/AngleSharp
+Newtonsoft at https://github.com/JamesNK/Newtonsoft.Json
+NAudio at https://github.com/naudio/NAudio
+globalmousekeyhook at https://github.com/gmamaladze/globalmousekeyhook

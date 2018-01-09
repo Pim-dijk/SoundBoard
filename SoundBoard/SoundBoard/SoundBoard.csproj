@@ -138,20 +138,14 @@
     <Compile Include="Directory\Views\AboutView.xaml.cs">
       <DependentUpon>AboutView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Directory\Views\AdjustVolumeView.xaml.cs">
-      <DependentUpon>AdjustVolumeView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Directory\Views\AddKeyBindingView.xaml.cs">
-      <DependentUpon>AddKeyBindingView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Directory\Views\AddStreamView.xaml.cs">
       <DependentUpon>AddStreamView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Directory\Views\ChangeNameView.xaml.cs">
-      <DependentUpon>ChangeNameView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Directory\Views\ShowKeybindingsView.xaml.cs">
       <DependentUpon>ShowKeybindingsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Directory\Views\SoundSettingsView.xaml.cs">
+      <DependentUpon>SoundSettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utilities\NotEmptyStringConverter.cs" />
     <Compile Include="Services\DialogService.cs" />
@@ -160,21 +154,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Directory\Views\AdjustVolumeView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Directory\Views\AddKeyBindingView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Directory\Views\AddStreamView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Directory\Views\ChangeNameView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Directory\Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -196,6 +178,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Directory\Views\ShowKeybindingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Directory\Views\SoundSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
