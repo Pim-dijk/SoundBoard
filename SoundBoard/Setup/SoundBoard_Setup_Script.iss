@@ -58,7 +58,6 @@ Source: "..\SoundBoard\bin\Release\SoundBoard.exe.config"; DestDir: "{app}"; Fla
 Source: "..\SoundBoard\bin\Release\SoundBoard.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.xml"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "..\SoundBoard\bin\Release\Keybindings.xml"; DestDir: "{userappdata}\{#MyAppName}"; Flags: ignoreversion createallsubdirs recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
