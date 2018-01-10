@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dat="clr-namespace:System.Windows.Data;assembly=PresentationFramework"
+        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         mc:Ignorable="d"
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="427" Width="689" Height="450"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize" 
@@ -11,6 +13,17 @@
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <CollectionViewSource Source="{Binding Sounds}" x:Key="sounds">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Category" Direction="Ascending" />
+                <scm:SortDescription PropertyName="Name" Direction="Ascending" />
+            </CollectionViewSource.SortDescriptions>
+            <CollectionViewSource.GroupDescriptions>
+                <dat:PropertyGroupDescription PropertyName="Category"/> <!---->
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+
     </Window.Resources>
 
     <Window.InputBindings>
@@ -159,15 +172,26 @@
         </StackPanel>
 
         <!--Enables the use of the scrollbar when needed-->
-        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" PreviewDragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True">
+        <ScrollViewer x:Name="mainView" Grid.ColumnSpan="7" Grid.Row="2" VerticalScrollBarVisibility="Auto" PreviewDragOver="MySounds_DragEnter" Drop="MySounds_Drop" AllowDrop="True" >
             <!--Items control to create a button for every item in the collection-->
-            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Sounds}">
+            <ItemsControl x:Name="MySounds" ItemsSource="{Binding Source={StaticResource sounds}}" >
                 <!--Defines the template to use a wrappanel-->
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
+
+                <ItemsControl.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="5" FontWeight="Bold" Text="{Binding Path=Name}" />
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ItemsControl.GroupStyle>
+                
                 <!--Sets the item template for every button-->
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

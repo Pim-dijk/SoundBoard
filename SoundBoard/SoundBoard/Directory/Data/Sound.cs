@@ -21,5 +21,7 @@
         public string Modifier { get; set; }
 
         public float Volume { get; set; }
+
+        public string Category { get; set; }
     }
 }

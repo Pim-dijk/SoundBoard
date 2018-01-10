@@ -16,7 +16,7 @@ namespace SoundBoard
             this.DataContext = new MainWindowViewModel();
         }
         
-        //Drag and drop file allowed or not based on extension
+        //Determine if the file is allowed or not based on extension
         private void MySounds_DragEnter(object sender, DragEventArgs e)
         {
             bool dropEnabled = true;
@@ -56,7 +56,7 @@ namespace SoundBoard
             ((MainWindowViewModel)this.DataContext).AddAudioFiles(files);
         }
 
-        //Supress Alt functionality to enable keybindings with Alt in it
+        //Supress Alt functionality to enable keybindings with Alt in it to fire when app has focus
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if(e.Key == Key.System || e.Key == Key.LeftAlt || e.Key == Key.RightAlt)

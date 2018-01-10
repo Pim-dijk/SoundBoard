@@ -237,6 +237,9 @@ namespace SoundBoard
         #region -Collection
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
+
+        //Temp sounds list when refreshing the directory
+        public ObservableCollection<SoundViewModel> BackupSounds { get; set; }
         
         //Keybindingslist
         public List<KeybindingsViewModel> Keybindings { get; set; }
@@ -288,6 +291,9 @@ namespace SoundBoard
 
         //Adjusted volume
         public float SoundVolume { get; set; }
+
+        //Sound Category
+        public string Category { get; set; }
 
         //Default Directory for the application to get the files from
         public string DefaultDirectory
@@ -568,18 +574,6 @@ namespace SoundBoard
                     item.HasImage = true;
                 }
             }
-
-            //Add keybindings to the sounds if they already had one before refreshing
-            foreach(var key in Keybindings)
-            {
-                var sound = Sounds.FirstOrDefault(s => s.Name == key.SoundName);
-                if(sound != null)
-                {
-                    sound.Keybind = key.Keybind;
-                    sound.Modifier = key.Modifier;
-                }
-            }
-            
         }
         #endregion
 
@@ -983,7 +977,27 @@ namespace SoundBoard
             m_GlobalHook.Dispose();
         }
         #endregion
-        
+
+        #region --Restore Settings
+        public void RestoreSettings()
+        {
+            //Restore sound settings for files that already existed before rescanning the directory
+            foreach (var backup in BackupSounds)
+            {
+                //See if the sound from the backup is in the new collection
+                var sound = Sounds.FirstOrDefault(s => s.AudioLocation == backup.AudioLocation);
+                if (sound != null)
+                {
+                    Sounds.Remove(sound);
+                    sound.Keybind = backup.Keybind;
+                    sound.Modifier = backup.Modifier;
+                    sound.Category = backup.Category;
+                    sound.Volume = backup.Volume;
+                    Sounds.Add(sound);
+                }
+            }
+        }
+        #endregion
         #endregion
 
         #region -Application
@@ -1035,6 +1049,7 @@ namespace SoundBoard
                                 {
                                     sound.Modifier = xmlReader.GetAttribute("Modifier");
                                 }
+                                sound.Category = xmlReader.GetAttribute("Category");
 
                                 var key = sound.Keybind;
                                 var modifier = sound.Modifier;
@@ -1108,7 +1123,7 @@ namespace SoundBoard
                 foreach (var sound in Sounds)
                 {
                     xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
-                                                          //xmlWriter.WriteAttributeString("Path", sound.AudioLocation); //No need for the path as we can generate this from the Name, makes the .xml more readable
+                    xmlWriter.WriteAttributeString("Category", sound.Category); 
                     xmlWriter.WriteAttributeString("Image", sound.ImagePath);
                     xmlWriter.WriteAttributeString("Name", sound.Name);
                     xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
@@ -1737,13 +1752,19 @@ namespace SoundBoard
         /// <param name="sender"></param>
         public async void RefreshFiles_Executed(object sender)
         {
+            BackupSounds = Sounds;
+
             await Task.Factory.StartNew(() =>
             {
                 GetFiles();
             }
             ).ContinueWith((t2) =>
             {
+                RestoreSettings();
+            }).ContinueWith((t3) =>
+            {
                 WriteStatusEntry("List refreshed.");
+            
             });
         }
         #endregion
@@ -1848,6 +1869,7 @@ namespace SoundBoard
                 Keybind = sound.Keybind; //Key
                 Modifier = sound.Modifier; //Modifier
                 TempImageLocation = sound.ImagePath;
+                Category = sound.Category;
                 if (sound.HasImage)
                 {
                     HasImage = true;
@@ -1892,6 +1914,23 @@ namespace SoundBoard
                 if (sound.Keybind != Keybind || sound.Modifier != Modifier)
                 {
                     AddKeybind(sound);
+                    HasChanged = true;
+                }
+                if(sound.Category != Category)
+                {
+                    Sounds.Remove(sound);
+
+                    if(Category == "")
+                    {
+                        sound.Category = "";
+                        Sounds.Add(sound);
+                    }
+                    else
+                    {
+                        sound.Category = Category;
+                        Sounds.Add(sound);
+                    }
+
                     HasChanged = true;
                 }
             }
