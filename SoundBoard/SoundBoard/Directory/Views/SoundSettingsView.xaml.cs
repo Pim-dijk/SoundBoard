@@ -17,6 +17,13 @@ namespace SoundBoard.Views
 
         private void soundKeybindKey_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if(e.Key == Key.Delete || e.Key == Key.Back)
+            {
+                e.Handled = true;
+                soundKeybindKey.Text = "";
+                return;
+            }
+
             if (e.Key == Key.Tab)
             {
                 e.Handled = true;
@@ -37,6 +44,13 @@ namespace SoundBoard.Views
             if (e.Key == Key.Enter)
             {
                 e.Handled = true;
+                return;
+            }
+
+            if(e.Key == Key.Delete || e.Key == Key.Back)
+            {
+                e.Handled = true;
+                soundKeybindModifier.Text = "";
                 return;
             }
 
@@ -67,7 +81,7 @@ namespace SoundBoard.Views
                 }
             }
 
-            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+            else if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
                 if (soundKeybindModifier.Text == "")
                 {
@@ -94,7 +108,7 @@ namespace SoundBoard.Views
                 }
             }
 
-            if (e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
+            else if (e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
             {
                 if (soundKeybindModifier.Text == "")
                 {
@@ -119,6 +133,11 @@ namespace SoundBoard.Views
                     soundKeybindModifier.Text = "Ctrl+Alt";
                     return;
                 }
+            }
+            else
+            {
+                e.Handled = true;
+                return;
             }
         }
 
@@ -160,8 +179,7 @@ namespace SoundBoard.Views
             {
                 return;
             }
-
-            if (MessageBox.Show("Are you sure you want to remove the image, it will be deleted from the directory aswell.", "Caustion", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            else
             {
                 ImageLocation.Text = "";
             }

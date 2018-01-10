@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:utilities="clr-namespace:SoundBoard.Utilities"
         mc:Ignorable="d"
-        Title="Sound Settings" Height="350" Width="325" FontFamily="Tahoma" FontSize="13" ResizeMode="NoResize">
+        Title="Sound Settings" Height="340" Width="325" FontFamily="Tahoma" FontSize="13" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
 
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
@@ -26,7 +26,7 @@
             <RowDefinition Height="2" />
             <RowDefinition Height="75"/>
             <RowDefinition Height="2" />
-            <RowDefinition Height="35"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!--Name-->

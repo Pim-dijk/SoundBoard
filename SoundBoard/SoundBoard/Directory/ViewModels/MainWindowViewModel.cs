@@ -24,6 +24,7 @@ using MediaToolkit.Options;
 using System.Xml;
 using System.Windows.Input;
 using Gma.System.MouseKeyHook;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 
 #endregion
@@ -237,7 +238,7 @@ namespace SoundBoard
         #region -Collection
         //Create a list for all the files in the folder
         public ObservableCollection<SoundViewModel> Sounds { get; set; }
-
+        
         //Keybindingslist
         public List<KeybindingsViewModel> Keybindings { get; set; }
 
@@ -496,6 +497,10 @@ namespace SoundBoard
                 globalHook = value;
             }
         }
+
+        //Set to true if collection is modified
+        public bool HasChanged { get; set; }
+
         #endregion
 
         #endregion
@@ -511,9 +516,8 @@ namespace SoundBoard
             //Initialize collection lists
             InitializeCollections();
             //Sets the directory to the appSettings value
+            //Gets the files from the directory or xml
             ReadCustomSettings();
-            //Gets the files from the directory
-                //GetFiles();
             //Clear the statusListView
             StatusListView.Clear();
             //Write application loaded
@@ -980,6 +984,7 @@ namespace SoundBoard
             m_GlobalHook.Dispose();
         }
         #endregion
+        
         #endregion
 
         #region -Application
@@ -1054,15 +1059,18 @@ namespace SoundBoard
                         }
                     }
                     xmlReader.Close();
+                    //Copy the sounds to the temp collection
                 }
                 catch (Exception e)
                 {
                     MessageBox.Show(e.Message);
+                    HasChanged = false;
                 }
             }
             else
             {
                 GetFiles();
+                HasChanged = true;
             }
         }
         #endregion
@@ -1087,29 +1095,33 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
-
-            //Write keybinding combinations to xml
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
-            XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
             
-            xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("Sounds");
-            
-            foreach (var sound in Sounds)
+            //If the collection has changed
+            if (HasChanged)
             {
-                xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
-                //xmlWriter.WriteAttributeString("Path", sound.AudioLocation);
-                xmlWriter.WriteAttributeString("Image", sound.ImagePath);
-                xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
-                xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
-                xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
-                xmlWriter.WriteAttributeString("Name", sound.Name);
-                xmlWriter.WriteEndElement();
-            }
+                //Write Sounds collection to xml
+                var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+                XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
 
-            xmlWriter.WriteEndElement();
-            xmlWriter.WriteEndDocument();
-            xmlWriter.Close();
+                xmlWriter.WriteStartDocument();
+                xmlWriter.WriteStartElement("Sounds");
+
+                foreach (var sound in Sounds)
+                {
+                    xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
+                                                          //xmlWriter.WriteAttributeString("Path", sound.AudioLocation); //No need for the path as we can generate this from the Name, makes the .xml more readable
+                    xmlWriter.WriteAttributeString("Image", sound.ImagePath);
+                    xmlWriter.WriteAttributeString("Name", sound.Name);
+                    xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
+                    xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
+                    xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
+                    xmlWriter.WriteEndElement();
+                }
+
+                xmlWriter.WriteEndElement();
+                xmlWriter.WriteEndDocument();
+                xmlWriter.Close();
+            }
 
             if(GlobalHook == true)
             {
@@ -1117,10 +1129,10 @@ namespace SoundBoard
             }
 
             //Close the keybindingsview if it's open
-            //if (App.Current.Windows.OfType<ShowKeybindingsView>().FirstOrDefault().IsLoaded)
-            //{
-            //    App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
-            //}
+            if (App.Current.Windows.OfType<ShowKeybindingsView>().Any())
+            {
+                App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+            }
         }
         #endregion
 
@@ -1251,7 +1263,7 @@ namespace SoundBoard
             var newImageLocation = DefaultImageDirectory + soundName + ext;
 
             //Create bitmapimage from file
-            var bitmapImage = LoadImage(imagePath);
+            var bitmapImage = ImageBitmap;
 
             try
             {
@@ -1296,6 +1308,14 @@ namespace SoundBoard
             if (sound != null)
             {
                 Keybindings.Remove(sound);
+            }
+
+            //If the keybind is empty, return after it has been deleted
+            if(keyBind == "" && Modifier == "")
+            {
+                param.Keybind = "";
+                param.Modifier = "";
+                return;
             }
 
             //Convert the inputs to Key and ModifierKeys
@@ -1453,11 +1473,10 @@ namespace SoundBoard
         private void PlaySound_Executed(object param)
         {
             //Stop any other file that was playing
-            var soundToStop = this.Sounds.Where(s => s.IsPlaying == true);
-            if (soundToStop.Count() > 0)
+            var soundToStop = Sounds.FirstOrDefault(s => s.IsPlaying == true);
+            if (soundToStop != null)
             {
-                var stopSound = soundToStop.First<SoundViewModel>();
-                stopSound.IsPlaying = false;
+                soundToStop.IsPlaying = false;
                 //Cleans up the waveplayer and stops everything
                 CleanUp();
             }
@@ -1484,7 +1503,8 @@ namespace SoundBoard
             }
             catch (FileNotFoundException e)
             {
-                MessageBox.Show("File could not be found." + Environment.NewLine + "Try refreshing the application to resolve.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                RemoveSound_Executed(param as string);
+                MessageBox.Show("File could not be found." + Environment.NewLine + "The file got removed from the list.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception e)
             {
@@ -1750,6 +1770,7 @@ namespace SoundBoard
                 try
                 {
                     Sounds.Remove(soundToRemove);
+                    HasChanged = true;
                     WriteStatusEntry("File '" + sound + "' removed successfully.");
                     var keybind = Keybindings.FirstOrDefault(k => k.SoundName == sound);
                     if(keybind != null)
@@ -1849,25 +1870,30 @@ namespace SoundBoard
                 if (sound.NormalizedName != NameToChange)
                 {
                     ChangeSoundName(sound);
+                    HasChanged = true;
                 }
                 if (TempImageLocation != sound.ImagePath)
                 {
                     if (TempImageLocation == "")
                     {
                         RemoveImage(sound.NormalizedName);
+                        HasChanged = true;
                     }
                     else
                     {
                         AddImage(sound);
+                        HasChanged = true;
                     }
                 }
                 if (sound.Volume != SoundVolume)
                 {
                     sound.Volume = SoundVolume;
+                    HasChanged = true;
                 }
                 if (sound.Keybind != Keybind || sound.Modifier != Modifier)
                 {
                     AddKeybind(sound);
+                    HasChanged = true;
                 }
             }
             TempImageLocation = "";
