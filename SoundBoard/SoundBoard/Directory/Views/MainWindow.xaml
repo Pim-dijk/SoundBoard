@@ -7,7 +7,7 @@
         Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="427" Width="689" Height="450"
         WindowStartupLocation="CenterScreen" ResizeMode="CanResize" 
         FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png"
-        KeyDown="Window_PreviewKeyDown">
+        KeyDown="Window_KeyDown" >
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -43,8 +43,8 @@
         <!--The menu-->
         <Menu Grid.ColumnSpan="7">
             <!--File-->
-            <MenuItem Header="_File">
-                <MenuItem Header="_Add Sound" Command="{Binding AddSound}" ToolTip="Add one or more files" >
+            <MenuItem Header="File">
+                <MenuItem Header="Add Sound" Command="{Binding AddSound}" ToolTip="Add one or more files" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/addSoundIcon.png" />
                     </MenuItem.Icon>
@@ -59,6 +59,18 @@
                         <Image Height="18" Source="/SoundBoard;component/Images/addUrlIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <Separator/>
+                <MenuItem Header="Refresh files" Command="{Binding RefreshFiles}" ToolTip="Reload the files in the folder">
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/SoundBoard;component/Images/refreshIcon.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Change Directory" Command="{Binding ChangeDefaultDirectory}" ToolTip="Change the directory">
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/SoundBoard;component/Images/changeFolderIcon.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}" >
                     <MenuItem.Icon>
@@ -67,25 +79,22 @@
                 </MenuItem>
             </MenuItem>
             <!--Edit-->
-            <MenuItem Header="_Edit">
-                <MenuItem Header="_Refresh files" Command="{Binding RefreshFiles}" ToolTip="Reload the files in the folder">
-                    <MenuItem.Icon>
-                        <Image Height="18" Source="/SoundBoard;component/Images/refreshIcon.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
-            </MenuItem>
+            <!--<MenuItem Header="_Edit">
+                
+            </MenuItem>-->
             <!--Options-->
-            <MenuItem Header="_Options">
-                <MenuItem Header="_Change Directory" Command="{Binding ChangeDefaultDirectory}" ToolTip="Change the directory">
-                    <MenuItem.Icon>
-                        <Image Height="18" Source="/SoundBoard;component/Images/changeFolderIcon.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
+            <MenuItem Header="Options">
                 <MenuItem Header="Folder Watch" IsCheckable="True" IsChecked="{Binding FolderWatch, Mode=OneWay}" Command="{Binding ToggleFolderWatch}" ToolTip="Listen for changes in the folder and take action accordingly.">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/observeIcon.png" />
                     </MenuItem.Icon>
                 </MenuItem>
+                <MenuItem Header="Global keyhook" Command="{Binding SetGlobalHook}" IsChecked="{Binding GlobalHook, Mode=OneWay}" ToolTip="Enable global windows keyboard hooking">
+                    <MenuItem.Icon>
+                        <Image Width="20" Source="/SoundBoard;component/Images/KeyboardHook.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
                 <MenuItem Header="Output Devices" ItemsSource="{Binding Devices}" ToolTip="Select the output device.">
                     <MenuItem.Icon>
                         <Image Height="22" Source="/SoundBoard;component/Images/deviceIcon.png" />
@@ -104,18 +113,21 @@
                         </Style>
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
-                <Separator/>
-                <MenuItem Header="Global keyhook" Command="{Binding SetGlobalHook}" IsChecked="{Binding GlobalHook, Mode=OneWay}" ToolTip="Enable global windows keyboard hooking">
-                    <MenuItem.Icon>
-                        <Image Width="20" Source="/SoundBoard;component/Images/KeyboardHook.png" />
-                    </MenuItem.Icon>
-                </MenuItem>
+                
+            </MenuItem>
+            <!--Help-->
+            <MenuItem Header="Help">
                 <MenuItem Header="Keybindings" Command="{Binding ShowKeybindings}" ToolTip="Display a list of all keybindings">
                     <MenuItem.Icon>
                         <Image Height="20" Source="/SoundBoard;component/Images/keyboard.png"/>
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
+                <MenuItem Header="Info" Command="{Binding DisplayHelp}" ToolTip="Open a help file" >
+                    <MenuItem.Icon>
+                        <Image Height="18" Source="/SoundBoard;component/Images/info.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
                 <MenuItem Header="About" Command="{Binding OpenAbout}" ToolTip="Opens the about info">
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/infoIcon.png" />

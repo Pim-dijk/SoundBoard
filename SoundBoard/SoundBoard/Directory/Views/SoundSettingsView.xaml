@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:utilities="clr-namespace:SoundBoard.Utilities"
         mc:Ignorable="d"
-        Title="Sound Settings" Height="340" Width="325" FontFamily="Tahoma" FontSize="13" ResizeMode="NoResize" WindowStartupLocation="CenterOwner">
+        Title="Sound Settings" Height="340" Width="325" FontFamily="Tahoma" FontSize="13" ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+        KeyDown="Window_KeyDown" >
 
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>

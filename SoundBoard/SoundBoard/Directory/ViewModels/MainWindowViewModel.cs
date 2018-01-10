@@ -24,7 +24,6 @@ using MediaToolkit.Options;
 using System.Xml;
 using System.Windows.Input;
 using Gma.System.MouseKeyHook;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 
 #endregion

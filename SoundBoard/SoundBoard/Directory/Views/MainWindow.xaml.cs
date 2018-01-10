@@ -57,9 +57,9 @@ namespace SoundBoard
         }
 
         //Supress Alt functionality to enable keybindings with Alt in it
-        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
+            if(e.Key == Key.System || e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
             {
                 e.Handled = true;
                 return;
