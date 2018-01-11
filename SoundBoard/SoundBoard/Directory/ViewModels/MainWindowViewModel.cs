@@ -525,8 +525,6 @@ namespace SoundBoard
             ReadCustomSettings();
             //Clear the statusListView
             StatusListView.Clear();
-            //Write application loaded
-            WriteStatusEntry("Application loaded");
             //Set default for timelabel
             TimeLabel = "No file selected...";
             //Initialize folder watcher
@@ -541,6 +539,8 @@ namespace SoundBoard
             //Get the available output devices
             GetDevices();
             TempImageLocation = "";
+            //Write application loaded
+            WriteStatusEntry("Application loaded");
         }
         #endregion
 
@@ -556,6 +556,11 @@ namespace SoundBoard
             //Get all sounds and create SoundViewModels for each
             this.Sounds = new ObservableCollection<SoundViewModel>
             (FolderContents.GetFolderContents(this.defaultDirectory).Select(content => new SoundViewModel(content.AudioLocation)));
+
+            foreach(var sound in Sounds)
+            {
+                sound.Category = "";
+            }
 
             //Get a list of all the found images
             List<string> images = FolderContents.GetImages(DefaultImageDirectory);
@@ -574,6 +579,8 @@ namespace SoundBoard
                     item.HasImage = true;
                 }
             }
+
+            WriteStatusEntry("All files found have been added");
         }
         #endregion
 
@@ -979,8 +986,10 @@ namespace SoundBoard
         #endregion
 
         #region --Restore Settings
-        public void RestoreSettings()
+        public async void RestoreSettings()
         {
+            await System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => 
+            { 
             //Restore sound settings for files that already existed before rescanning the directory
             foreach (var backup in BackupSounds)
             {
@@ -996,6 +1005,41 @@ namespace SoundBoard
                     Sounds.Add(sound);
                 }
             }
+            }));
+        }
+        #endregion
+
+        #region --InBounds
+        private bool InBounds()
+        {
+            //If the app launches for the first time, set it to the center of the main screen
+            //else check if the window is within bounds, maibe a screen got disconnected.
+            var top = Properties.Settings.Default.Top;
+            var left = Properties.Settings.Default.Left;
+            var windowWidth = Properties.Settings.Default.Width;
+            var windowHeight = Properties.Settings.Default.Height;
+            System.Drawing.Rectangle rect = new System.Drawing.Rectangle(left, top, windowWidth, windowHeight);
+
+            if(rect != System.Drawing.Rectangle.Empty)
+            {
+                var screens = System.Windows.Forms.Screen.AllScreens;
+                foreach (var screen in screens)
+                {
+                    if(screen.WorkingArea.IntersectsWith(rect))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            //If it's a first start or it's out of bounds, reset the window size, position and state
+            Properties.Settings.Default.Left = (System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width / 2) - (windowWidth / 2);
+            Properties.Settings.Default.Top = (System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height / 2) - (windowHeight / 2);
+            Properties.Settings.Default.Width = 689;
+            Properties.Settings.Default.Height = 450;
+            Properties.Settings.Default.Save();
+
+            return false;
         }
         #endregion
         #endregion
@@ -1008,12 +1052,19 @@ namespace SoundBoard
         private void ReadCustomSettings()
         {
             DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
-            Volume = SoundBoard.Properties.Settings.Default.Volume;
-            FolderWatch = SoundBoard.Properties.Settings.Default.FolderWatcher;
-            DeviceId = SoundBoard.Properties.Settings.Default.DeviceId;
-            DownloadVideo = SoundBoard.Properties.Settings.Default.ConvertChecked;
-            GlobalHook = SoundBoard.Properties.Settings.Default.GlobalHook;
-            if(GlobalHook == true)
+            Volume = Properties.Settings.Default.Volume;
+            FolderWatch = Properties.Settings.Default.FolderWatcher;
+            DeviceId = Properties.Settings.Default.DeviceId;
+            DownloadVideo = Properties.Settings.Default.ConvertChecked;
+            GlobalHook = Properties.Settings.Default.GlobalHook;
+
+            //If the window is not within bounds
+            if(!InBounds())
+            {
+                WriteStatusEntry("Position could not be restored from previous session.");
+            }
+            
+            if (GlobalHook == true)
             {
                 Subscribe();
             }
@@ -1109,7 +1160,7 @@ namespace SoundBoard
             SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
             //Save settings
             SoundBoard.Properties.Settings.Default.Save();
-            
+
             //If the collection has changed
             if (HasChanged)
             {
@@ -1761,6 +1812,7 @@ namespace SoundBoard
             }).ContinueWith((t3) =>
             {
                 WriteStatusEntry("List refreshed.");
+                HasChanged = true;
             
             });
         }

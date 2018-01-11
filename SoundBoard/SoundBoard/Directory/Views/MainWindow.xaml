@@ -5,9 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:dat="clr-namespace:System.Windows.Data;assembly=PresentationFramework"
         xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:p="clr-namespace:SoundBoard.Properties"
         mc:Ignorable="d"
-        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="427" Width="689" Height="450"
-        WindowStartupLocation="CenterScreen" ResizeMode="CanResize" 
+        Title="My customizable Soundboard" x:Name="Window" MinHeight="250" MinWidth="427" 
+        Height="{Binding Source={x:Static p:Settings.Default}, Path=Height, Mode=TwoWay}" 
+        Width="{Binding Source={x:Static p:Settings.Default}, Path=Width, Mode=TwoWay}"
+        Top="{Binding Source={x:Static p:Settings.Default}, Path=Top, Mode=TwoWay}"
+        Left="{Binding Source={x:Static p:Settings.Default}, Path=Left, Mode=TwoWay}"
+        WindowState="Normal"
+        WindowStartupLocation="Manual" ResizeMode="CanResize" 
         FontSize="16" Background="WhiteSmoke" Icon="/SoundBoard;component/Images/musicIcon.png"
         KeyDown="Window_KeyDown" >
 
@@ -262,6 +268,7 @@
 
         <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1" />
         
+        <!--Display the messages and set the tooltip so it displays the full message when it's too long for the box-->
         <ItemsControl x:Name="Status_List"  Background="Black" Foreground="White" Grid.Row="4" Grid.Column="3" Grid.ColumnSpan="2" ItemsSource="{Binding StatusListView}" FontSize="11" Padding="5" >
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
