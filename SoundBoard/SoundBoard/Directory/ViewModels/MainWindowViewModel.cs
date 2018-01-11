@@ -1496,7 +1496,8 @@ namespace SoundBoard
             }
 
             //new instance of waveplayer
-            wavePlayer = new WaveOut();
+            wavePlayer = new WaveOut(WaveCallbackInfo.FunctionCallback());
+            wavePlayer.PlaybackStopped += new EventHandler<StoppedEventArgs>(PlaybackEnded);
             wavePlayer.DeviceNumber = DeviceId;
             
             //Start playing
@@ -1541,14 +1542,9 @@ namespace SoundBoard
             }
             else
             {
-                //Check if the file has a timespan before writing it to the label, otherwise throws exception
                 if (file != null)
                 {
                     TimeLabel = String.Format("{0} / {1}", file.CurrentTime.ToString(@"hh\:mm\:ss"), file.TotalTime.ToString(@"hh\:mm\:ss"));
-                    if(file.CurrentTime == file.TotalTime)
-                    {
-                        StopSound_Executed(null);
-                    }
                 }
             }
         }
@@ -1567,6 +1563,7 @@ namespace SoundBoard
             }
             if (this.wavePlayer != null)
             {
+                this.wavePlayer.PlaybackStopped -= new EventHandler<StoppedEventArgs>(PlaybackEnded); //Unsubscribe from the event
                 this.wavePlayer.Dispose();
                 this.wavePlayer = null;
             }
@@ -2105,8 +2102,14 @@ namespace SoundBoard
         #endregion
 
         #region Events
+        #region - Playback ended
+        private void PlaybackEnded(object sender, EventArgs e)
+        {
+            StopSound_Executed(null);
+        }
+        #endregion
 
-        #region -Conversion progress -- Not used when converting to audio
+        #region -Conversion progress -- Not firing when converting to audio
         private void ConvertProgressEvent(object sender, ConvertProgressEventArgs e)
         {
             //WriteStatusEntry("Conversion in progress: " + e.SizeKb + e.TotalDuration);
@@ -2118,7 +2121,7 @@ namespace SoundBoard
         }
         #endregion
 
-        #region -Conversion Completed -- Not used when converting to audio
+        #region -Conversion Completed -- Not firing when converting to audio
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
             //DownloadProgress = false;
