@@ -4,7 +4,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SoundBoard"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "Omahenk"
 #define MyAppURL "https://github.com/Pim-dijk/SoundBoard"
 #define MyAppExeName "SoundBoard.exe"
@@ -58,7 +58,6 @@ Source: "..\SoundBoard\bin\Release\SoundBoard.exe.config"; DestDir: "{app}"; Fla
 Source: "..\SoundBoard\bin\Release\SoundBoard.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\SoundBoard\bin\Release\YoutubeExplode.xml"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "..\SoundBoard\bin\Release\Keybindings.xml"; DestDir: "{userappdata}\{#MyAppName}"; Flags: ignoreversion createallsubdirs recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="About" Height="150" Width="200"
-        Icon="/SoundBoard;component/Images/infoIcon.png" ShowInTaskbar="False" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13">
+        Icon="/SoundBoard;component/Images/infoIcon.png" ShowInTaskbar="True" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13">
 
     <StackPanel Margin="25" HorizontalAlignment="Center" >
         <TextBlock Text="Soundboard" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center" TextAlignment="Center" Width="185"/>

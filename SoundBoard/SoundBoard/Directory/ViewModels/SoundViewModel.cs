@@ -28,6 +28,8 @@ namespace SoundBoard
         public string Modifier { get; set; }
         //Adjusted volume
         public float Volume { get; set; }
+        //Category
+        public string Category { get; set; }
         #endregion
 
         #region Constructor

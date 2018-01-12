@@ -1,0 +1,55 @@
+﻿<Window x:Class="SoundBoard.Views.InfoView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Info" Height="572" Width="450" Icon="/SoundBoard;component/Images/infoIcon.png" ShowInTaskbar="True" ResizeMode="CanResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13">
+    <StackPanel>
+
+        <TextBlock TextWrapping="Wrap" Margin="5" FontSize="15"
+                   Text="Some information on how to use the soundboard in case you get stuck somehow." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="Files are sorted from A-Z, same goes for Categories." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="To change a sounds name, image, volume, keybind or category right click the desired sound and press 'change settings'." />
+        <TextBlock TextWrapping="Wrap" Margin="3"
+                   Text="To remove a keybind, select the field and press either delete or backspace, when the fields are empty 'save settings'." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="Adding through a URL: Make sure it is a valid Youtube link, playlist songs might not work." />
+        <TextBlock TextWrapping="Wrap" Margin="3"
+                   Text="When it is not a Youtube link, make sure to link directly to the file, so the link should end in an audio or video extension." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3, 0"
+                   Text="When adding sounds, keep in mind that not all formats are supported, however most are." />
+        <TextBlock TextWrapping="Wrap" Margin="3"
+                   Text="This includes: .mp3, .wav, .mp4, .flv, .wmv, .mov, .avi, .mpeg4, .mpegps for audio files." />
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="This includes: .mp4, .flv, .wmv, .mov, .avi, .mpeg4, .mpegps, .webm, .ogg" />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="Option -> Folderwatch" />
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="When this option is enabled it will listen for changes in the folder, when this is detected the program will try to resolve it." />
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="This can mean that a new sound was added to the folder or something was removed." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="Option -> Global Keyhook" />
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="When this option is enabled the soundboard will listen for keybindings on a windows level, so even when minimized or when working in a different program or game." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="File -> Refresh" />
+        <TextBlock TextWrapping="Wrap" Margin="3,0"
+                   Text="When the folder has changed between sessions you will need to rescan the folder to reflect the changes." />
+        <TextBlock TextWrapping="Wrap" Margin="3"
+                   Text="You can also do this when you for some reason do not see all your expected files showing up." />
+        <Separator/>
+        
+
+    </StackPanel>
+</Window>

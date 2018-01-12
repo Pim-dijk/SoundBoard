@@ -1,6 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace SoundBoard.Views
 {
@@ -15,12 +15,20 @@ namespace SoundBoard.Views
             this.DataContext = dataContext;
         }
 
+        //Keybind
         private void soundKeybindKey_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if(e.Key == Key.Delete || e.Key == Key.Back)
             {
                 e.Handled = true;
                 soundKeybindKey.Text = "";
+                return;
+            }
+
+            //Supress modifier keys
+            if(e.Key == Key.System || e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.LeftShift || e.Key == Key.RightShift || e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
+            {
+                e.Handled = true;
                 return;
             }
 
@@ -36,6 +44,7 @@ namespace SoundBoard.Views
             }
         }
 
+        //Modifier
         private void soundKeybindModifier_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             //Easily add the modifier keys by just pressing them when typing in the textfield
@@ -81,7 +90,7 @@ namespace SoundBoard.Views
                 }
             }
 
-            else if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
                 if (soundKeybindModifier.Text == "")
                 {
@@ -108,7 +117,7 @@ namespace SoundBoard.Views
                 }
             }
 
-            else if (e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
+            if (e.Key == Key.LeftAlt || e.Key == Key.RightAlt)
             {
                 if (soundKeybindModifier.Text == "")
                 {
@@ -134,13 +143,9 @@ namespace SoundBoard.Views
                     return;
                 }
             }
-            else
-            {
-                e.Handled = true;
-                return;
-            }
         }
 
+        //Modifier lost focus check
         private void soundKeybindModifier_LostFocus(object sender, RoutedEventArgs e)
         {
             if (soundKeybindModifier.Text == "Shift")
@@ -156,11 +161,13 @@ namespace SoundBoard.Views
             }
         }
 
+        //Volume slider
         private void soundVolumeSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             soundVolumeSlider.Value = 1;
         }
 
+        //Add image
         private void soundImageButton_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
@@ -173,6 +180,7 @@ namespace SoundBoard.Views
             }
         }
         
+        //Remove image
         private void soundImageRemoveButton_Click(object sender, RoutedEventArgs e)
         {
             if(ImageLocation.Text == "")
@@ -185,10 +193,46 @@ namespace SoundBoard.Views
             }
         }
 
+        //Save settings
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
             this.Close();
+        }
+
+        //Supress the default Alt key behaviour
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.OriginalSource is TextBox)
+            {
+                if (e.Key == Key.LeftAlt || e.Key == Key.RightAlt || e.Key == Key.System)
+                {
+                    e.Handled = true;
+                    if (soundKeybindModifier.Text == "")
+                    {
+                        soundKeybindModifier.Text = "Alt";
+                    }
+                    else if (soundKeybindModifier.Text.Contains("Alt"))
+                    {
+                        return;
+                    }
+                    else if (soundKeybindModifier.Text.Contains("Ctrl+Shift"))
+                    {
+                        soundKeybindModifier.Text = "Ctrl+Shift+Alt";
+                        return;
+                    }
+                    else if (soundKeybindModifier.Text.Contains("Shift"))
+                    {
+                        soundKeybindModifier.Text = "Shift+Alt";
+                        return;
+                    }
+                    else if (soundKeybindModifier.Text.Contains("Ctrl"))
+                    {
+                        soundKeybindModifier.Text = "Ctrl+Alt";
+                        return;
+                    }
+                }
+            }
         }
     }
 }
