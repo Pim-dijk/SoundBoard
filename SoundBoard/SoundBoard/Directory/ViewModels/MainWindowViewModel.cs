@@ -1753,6 +1753,7 @@ namespace SoundBoard
                 {
                     foreach (var sound in newSound)
                     {
+                        sound.Category = "";
                         Sounds.Add(sound);
 
                         var filePath = sound.AudioLocation;
