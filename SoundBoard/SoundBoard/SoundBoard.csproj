@@ -142,6 +142,9 @@
     <Compile Include="Directory\Views\AddStreamView.xaml.cs">
       <DependentUpon>AddStreamView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Directory\Views\InfoView.xaml.cs">
+      <DependentUpon>InfoView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Directory\Views\ShowKeybindingsView.xaml.cs">
       <DependentUpon>ShowKeybindingsView.xaml</DependentUpon>
     </Compile>
@@ -158,6 +161,10 @@
     <Page Include="Directory\Views\AddStreamView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Directory\Views\InfoView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Directory\Views\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

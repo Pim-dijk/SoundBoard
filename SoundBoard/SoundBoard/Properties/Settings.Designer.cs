@@ -62,12 +62,12 @@ namespace SoundBoard.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool ConvertChecked {
+        public bool DownloadVideo {
             get {
-                return ((bool)(this["ConvertChecked"]));
+                return ((bool)(this["DownloadVideo"]));
             }
             set {
-                this["ConvertChecked"] = value;
+                this["DownloadVideo"] = value;
             }
         }
         

@@ -142,7 +142,7 @@
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator/>
-                <MenuItem Header="Info" Command="{Binding DisplayHelp}" ToolTip="Open a help file" >
+                <MenuItem Header="Info" Command="{Binding OpenInfo}" ToolTip="Open a help file" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/info.png" />
                     </MenuItem.Icon>
@@ -246,25 +246,19 @@
         <GridSplitter BorderBrush="Gray" Grid.Row="3" Grid.ColumnSpan="7" Height="3" HorizontalAlignment="Stretch" BorderThickness="1" />
 
         <!--<TextBlock Background="Black" Foreground="White" Grid.Row="4" Grid.ColumnSpan="2" Text="{Binding DefaultDirectory}" FontSize="11" Padding="5" />-->
-        <ItemsControl x:Name="folderList"  Background="Black" Foreground="White" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding DefaultDirectory}" FontSize="11" Padding="5" >
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <WrapPanel>
-                        <TextBlock Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.DefaultDirectory}">
-                            <TextBlock.Style>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.DefaultDirectory}" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </WrapPanel>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+
+        <TextBlock Background="Black" Foreground="White" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" FontSize="11" Padding="5"
+                    Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.DefaultDirectory}">
+            <TextBlock.Style>
+                <Style TargetType="{x:Type TextBlock}">
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=DataContext.DefaultDirectory}" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
 
         <GridSplitter Grid.Row="4" Grid.Column="2" HorizontalAlignment="Stretch" BorderBrush="Gray" BorderThickness="1" />
         

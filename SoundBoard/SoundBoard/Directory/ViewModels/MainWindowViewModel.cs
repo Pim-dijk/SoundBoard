@@ -725,7 +725,7 @@ namespace SoundBoard
                 var videoFileSize = ConvertFileSizeToString(videoInfo.Size); //Get the video filesize
                 audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
 
-                //if (!extensions.Contains(audioFileExtLower) || ConvertChecked == true && audioFileExt != null) //If converting the file
+                //if (!extensions.Contains(audioFileExtLower) || DownloadVideo == true && audioFileExt != null) //If converting the file
                 if (!audioExtensions.Contains(audioFileExtLower))
                 {
                     WriteStatusEntry("-----Downloading audio-----");
@@ -1020,7 +1020,7 @@ namespace SoundBoard
             var windowHeight = Properties.Settings.Default.Height;
             System.Drawing.Rectangle rect = new System.Drawing.Rectangle(left, top, windowWidth, windowHeight);
 
-            if(rect != System.Drawing.Rectangle.Empty)
+            if(rect.Left != 0 && rect.Top != 0)
             {
                 var screens = System.Windows.Forms.Screen.AllScreens;
                 foreach (var screen in screens)
@@ -1051,11 +1051,18 @@ namespace SoundBoard
         /// </summary>
         private void ReadCustomSettings()
         {
-            DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
+            if(Properties.Settings.Default.DefaultDirectroy != "C:\\")
+            {
+                DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
+            }
+            else
+            {
+                DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            }
             Volume = Properties.Settings.Default.Volume;
             FolderWatch = Properties.Settings.Default.FolderWatcher;
             DeviceId = Properties.Settings.Default.DeviceId;
-            DownloadVideo = Properties.Settings.Default.ConvertChecked;
+            DownloadVideo = Properties.Settings.Default.DownloadVideo;
             GlobalHook = Properties.Settings.Default.GlobalHook;
 
             //If the window is not within bounds
@@ -1155,7 +1162,7 @@ namespace SoundBoard
             //Save the selected output device
             SoundBoard.Properties.Settings.Default.DeviceId = DeviceId;
             //Save the converter option
-            SoundBoard.Properties.Settings.Default.ConvertChecked = DownloadVideo;
+            SoundBoard.Properties.Settings.Default.DownloadVideo = DownloadVideo;
             //Save the global hook setting
             SoundBoard.Properties.Settings.Default.GlobalHook = GlobalHook;
             //Save settings
@@ -1187,6 +1194,8 @@ namespace SoundBoard
                 xmlWriter.WriteEndDocument();
                 xmlWriter.Close();
             }
+
+            CleanUp();
 
             if(GlobalHook == true)
             {
@@ -1482,6 +1491,7 @@ namespace SoundBoard
             public CommandBase ChangeDefaultDirectory { get; set; }
             public RelayCommand ExitCommand { get; set; }
             public CommandBase OpenAbout { get; set; }
+            public CommandBase OpenInfo { get; set; }
             public RelayCommand ToggleFolderWatch { get; set; }
             public RelayCommand SelectOutput { get; set; }
             public CommandBase ShowKeybindings { get; set; }
@@ -1514,6 +1524,7 @@ namespace SoundBoard
             ChangeDefaultDirectory = new CommandBase(ChangeDefaultDirectory_Executed);
             ExitCommand = new RelayCommand(ExitCommand_Executed);
             OpenAbout = new CommandBase(OpenAbout_Executed);
+            OpenInfo = new CommandBase(OpenInfo_Executed);
             ToggleFolderWatch = new RelayCommand(ToggleFolderWatch_Executed);
             SelectOutput = new RelayCommand(SelectOutput_Executed);
             ShowKeybindings = new CommandBase(ShowKeybindings_Executed);
@@ -2092,6 +2103,15 @@ namespace SoundBoard
         }
         #endregion
 
+        #region --Open Info
+        private void OpenInfo_Executed(object sender, EventArgs e)
+        {
+            InfoView view = new InfoView(this);
+            view.Owner = Application.Current.MainWindow;
+            view.Show();
+        }
+        #endregion
+
         #region --Show Keybindings
         private void ShowKeybindings_Executed(object sender, EventArgs e)
         {
@@ -2264,6 +2284,7 @@ namespace SoundBoard
         {
             //If the app has focus, don't use global keyhooks
             //you know, to save some resources for the rest of us
+            //and not to delay the sound playback as it gets called two times
             if (App.Current.MainWindow.IsActive)
             {
                 //WriteStatusEntry("Supress the keyhook when the app has focus.");
@@ -2313,14 +2334,15 @@ namespace SoundBoard
             //Output the keycombination, for testing how keys are registerd and their names.
             //WriteStatusEntry(String.Format("KeyPress: \t{0}", keyCombo));
 
-            //Default keybinding to stop the sound.
-            if(keyCombo == "Ctrl+Space")
+            //Default keybinding to stop the sound. 
+            if (keyCombo == "Ctrl+Space")
             {
                 StopSound_Executed(null);
                 return;
             }
+
             //use mediakeys to stop a sound
-            if(e.KeyCode.ToString() == Key.MediaStop.ToString() || e.KeyCode.ToString() == Key.MediaPlayPause.ToString())
+            if (e.KeyCode.ToString() == Key.MediaStop.ToString())
             {
                 StopSound_Executed(null);
                 return;

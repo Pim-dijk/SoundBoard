@@ -4,7 +4,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SoundBoard"
-#define MyAppVersion "1.0"
+#define MyAppVersion "1.1"
 #define MyAppPublisher "Omahenk"
 #define MyAppURL "https://github.com/Pim-dijk/SoundBoard"
 #define MyAppExeName "SoundBoard.exe"
