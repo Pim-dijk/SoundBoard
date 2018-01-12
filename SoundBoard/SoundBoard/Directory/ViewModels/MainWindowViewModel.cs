@@ -18,6 +18,7 @@ using MediaToolkit.Model;
 using MediaToolkit;
 using NAudio.Wave;
 using YoutubeExplode;
+using YoutubeExplode.Models;
 using YoutubeExplode.Models.MediaStreams;
 using System.Net;
 using MediaToolkit.Options;
@@ -610,6 +611,7 @@ namespace SoundBoard
                     //If file has been succesfully moved, add it to the list.
                     SoundViewModel s1 = new SoundViewModel(sound);
                     s1.AudioLocation = fileDestination;
+                    s1.Category = "";
                     Sounds.Add(s1);
                     WriteStatusEntry("File: " + fileName + " succesfully added.");
 
@@ -693,6 +695,7 @@ namespace SoundBoard
             string output = "";
             MediaFile outputFile = null;
             string audioFileExtLower = "";
+            Video video;
 
             try
             {
@@ -703,7 +706,7 @@ namespace SoundBoard
                     linkId = link;
 
                 var streamInfoSet = await client.GetVideoMediaStreamInfosAsync(linkId); //gets a video object with information about the video
-
+                
                 var videoInfo = streamInfoSet.Muxed.WithHighestVideoQuality();
                 var audioInfo = streamInfoSet.Audio.WithHighestBitrate();
                 var audioFileExt = audioInfo.Container.GetFileExtension();
@@ -717,6 +720,10 @@ namespace SoundBoard
                     videoFileExt = "." + videoFileExt;
                 }
 
+                //Get the thumbnail
+                video = await client.GetVideoAsync(linkId);
+                var thumbnailUrl = video.Thumbnails.MediumResUrl;
+
                 output = DefaultDirectory + UrlName + audioFileExt; //Set the output path if not converting
                 var outputA = DefaultDirectory + "Downloads\\" + UrlName + audioFileExt; //Set the output path for the audio file
                 var outputV = DefaultDirectory + "Downloads\\" + UrlName + videoFileExt; //Set the output path for the video file
@@ -724,7 +731,7 @@ namespace SoundBoard
                 var audioFileSize = ConvertFileSizeToString(audioInfo.Size); //Get the audio filesize
                 var videoFileSize = ConvertFileSizeToString(videoInfo.Size); //Get the video filesize
                 audioFileExtLower = audioFileExt.ToString().ToLower(); //Get the fileextension in all lower case
-
+                
                 //if (!extensions.Contains(audioFileExtLower) || DownloadVideo == true && audioFileExt != null) //If converting the file
                 if (!audioExtensions.Contains(audioFileExtLower))
                 {
@@ -732,9 +739,7 @@ namespace SoundBoard
                     WriteStatusEntry("---File size: " + audioFileSize);
                     await client.DownloadMediaStreamAsync(audioInfo, outputA); //Download file to disk
                     WriteStatusEntry("------Download complete------");
-
-                    //var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-
+                    
                     //Convert file to.mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
                     outputFile = new MediaFile { Filename = $"{ DefaultDirectory + UrlName }.mp3" }; //Set the output file for conversion
@@ -747,11 +752,11 @@ namespace SoundBoard
                         engine.Convert(inputFile, outputFile);
                     }
                     WriteStatusEntry("------Conversion done------");
-                    //WriteStatusEntry("-----Grabbing the thumbnail-----");
-                    //using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                    //{
-                    //    imageClient.DownloadFile(thumbnailUrl, outputImage);
-                    //}
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
                 }
                 else
                 {
@@ -759,16 +764,14 @@ namespace SoundBoard
                     WriteStatusEntry("---File size: " + audioFileSize + "---");
                     await client.DownloadMediaStreamAsync(audioInfo, output); //Download file to disk
                     WriteStatusEntry("------Download complete------");
-
-                    //var thumbnailUrl = video.Thumbnails.HighResUrl; //get the link to the video thumbnail
-                    //WriteStatusEntry("-----Grabbing the thumbnail-----");
-
-                    //var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
-                    //var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
-                    //using (var imageClient = new WebClient()) //Download the thumbnail of the video
-                    //{
-                    //    imageClient.DownloadFile(thumbnailUrl, outputImage);
-                    //}
+                    
+                    WriteStatusEntry("-----Grabbing the thumbnail-----");
+                    var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
+                    var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
+                    using (var imageClient = new WebClient()) //Download the thumbnail of the video
+                    {
+                        imageClient.DownloadFile(thumbnailUrl, outputImage);
+                    }
                 }
 
                 if (DownloadVideo == true) //Download the video aswell
@@ -777,8 +780,7 @@ namespace SoundBoard
                     WriteStatusEntry("---File size: " + videoFileSize + "---");
                     await client.DownloadMediaStreamAsync(videoInfo, outputV);
                     WriteStatusEntry("------Download complete------");
-                }
-            }
+                }            }
             catch (Exception e)
             {
                 WriteStatusEntry(e.Message);
