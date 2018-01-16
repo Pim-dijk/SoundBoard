@@ -3,17 +3,31 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:utilities="clr-namespace:SoundBoard.Utilities"
         mc:Ignorable="d"
         Title="Display the keybindings" Height="250" Width="400" Icon="/SoundBoard;component/Images/musicIcon.png" ShowInTaskbar="True" 
         WindowStartupLocation="CenterScreen" FontFamily="Tahoma" FontSize="13" ResizeMode="CanResize" >
-    
+
     <Window.Resources>
         <utilities:NotEmptyStringConverter x:Key="NESConverter"/>
     </Window.Resources>
 
     <Grid>
-        <ListView ItemsSource="{Binding Keybindings, Mode=TwoWay}">
+        <Grid.Resources>
+            <Style TargetType="ListViewItem">
+                <Style.Triggers>
+                    <Trigger Property="ItemsControl.AlternationIndex"  Value="0">
+                        <Setter Property="Background" Value="LightGray" />
+                    </Trigger>
+                    <Trigger Property="ItemsControl.AlternationIndex"  Value="1">
+                        <Setter Property="Background" Value="LightSteelBlue" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
+
+        <ListView x:Name="view" ItemsSource="{Binding Keybindings, Mode=TwoWay}" Background="White" AlternationCount="2" >
             <ListView.View>
                 <GridView>
                     <GridViewColumn Width="70" DisplayMemberBinding="{Binding Keybind}">
@@ -35,4 +49,5 @@
             </ListView.View>
         </ListView>
     </Grid>
+
 </Window>

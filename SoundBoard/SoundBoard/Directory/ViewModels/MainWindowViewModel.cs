@@ -1044,6 +1044,74 @@ namespace SoundBoard
             return false;
         }
         #endregion
+
+        #region --Read xml
+        private void ReadXML(string xmlPath)
+        {
+            this.Sounds = new ObservableCollection<SoundViewModel>();
+
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
+            {
+                XmlReader xmlReader = XmlReader.Create(xmlPath);
+                try
+                {
+                    while (xmlReader.Read())
+                    {
+                        if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "Sound"))
+                        {
+                            if (xmlReader.HasAttributes)
+                            {
+                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + xmlReader.GetAttribute("Name"));
+
+                                if (xmlReader.GetAttribute("Image") != "")
+                                {
+                                    sound.ImagePath = xmlReader.GetAttribute("Image");
+                                    sound.ImageBitMap = LoadImage(sound.ImagePath);
+                                    sound.HasImage = true;
+                                }
+                                sound.Volume = float.Parse(xmlReader.GetAttribute("AdjustedVolume"));
+                                if (xmlReader.GetAttribute("Keybind") != "")
+                                {
+                                    sound.Keybind = xmlReader.GetAttribute("Keybind");
+                                }
+                                if (xmlReader.GetAttribute("Modifier") != "")
+                                {
+                                    sound.Modifier = xmlReader.GetAttribute("Modifier");
+                                }
+                                sound.Category = xmlReader.GetAttribute("Category");
+
+                                var key = sound.Keybind;
+                                var modifier = sound.Modifier;
+                                if (key != null)
+                                {
+                                    //Set the keybinding to add to the view
+                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
+                                    kb.CommandParameter = sound.Name;
+
+                                    //Add the keybinding to the View
+                                    App.Current.MainWindow.InputBindings.Add(kb);
+
+                                    KeybindingsViewModel keybind = new KeybindingsViewModel(key, modifier, sound.Name);
+
+                                    Keybindings.Add(keybind);
+                                }
+
+                                //Add the sound to the collection
+                                Sounds.Add(sound);
+                            }
+                        }
+                    }
+                    xmlReader.Close();
+                    //Copy the sounds to the temp collection
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                    HasChanged = false;
+                }
+            }));
+        }
+        #endregion
         #endregion
 
         #region -Application
@@ -1078,68 +1146,11 @@ namespace SoundBoard
                 Subscribe();
             }
 
-            this.Sounds = new ObservableCollection<SoundViewModel>();
-
-            var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+            //var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+            var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
             if (File.Exists(xmlPath))
             {
-                XmlReader xmlReader = XmlReader.Create(xmlPath);
-                try
-                {
-                    while (xmlReader.Read())
-                    {
-                        if ((xmlReader.NodeType == XmlNodeType.Element) && (xmlReader.Name == "Sound"))
-                        {
-                            if (xmlReader.HasAttributes)
-                            {
-                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + xmlReader.GetAttribute("Name"));
-
-                                if (xmlReader.GetAttribute("Image") != "")
-                                {
-                                    sound.ImagePath = xmlReader.GetAttribute("Image");
-                                    sound.ImageBitMap = LoadImage(sound.ImagePath);
-                                    sound.HasImage = true;
-                                }
-                                sound.Volume = float.Parse(xmlReader.GetAttribute("AdjustedVolume"));
-                                if (xmlReader.GetAttribute("Keybind") != "")
-                                {
-                                    sound.Keybind = xmlReader.GetAttribute("Keybind");
-                                }
-                                if (xmlReader.GetAttribute("Modifier") != "")
-                                {
-                                    sound.Modifier = xmlReader.GetAttribute("Modifier");
-                                }
-                                sound.Category = xmlReader.GetAttribute("Category");
-
-                                var key = sound.Keybind;
-                                var modifier = sound.Modifier;
-                                if(key != null)
-                                {
-                                    //Set the keybinding to add to the view
-                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
-                                    kb.CommandParameter = sound.Name;
-
-                                    //Add the keybinding to the View
-                                    App.Current.MainWindow.InputBindings.Add(kb);
-
-                                    KeybindingsViewModel keybind = new KeybindingsViewModel(key, modifier, sound.Name);
-
-                                    Keybindings.Add(keybind);
-                                }
-
-                                //Add the sound to the collection
-                                Sounds.Add(sound);
-                            }
-                        }
-                    }
-                    xmlReader.Close();
-                    //Copy the sounds to the temp collection
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message);
-                    HasChanged = false;
-                }
+                ReadXML(xmlPath);
             }
             else
             {
@@ -1174,10 +1185,13 @@ namespace SoundBoard
             if (HasChanged)
             {
                 //Write Sounds collection to xml
-                var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+                //var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
+                var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
                 XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
 
                 xmlWriter.WriteStartDocument();
+                xmlWriter.WriteComment("Modify this file at your own risk!");
+                xmlWriter.WriteComment("If something goes wrong, you might lose all your settings. In the worst case, delete this fill to generate a fresh one without any settings.");
                 xmlWriter.WriteStartElement("Sounds");
 
                 foreach (var sound in Sounds)
@@ -2036,8 +2050,16 @@ namespace SoundBoard
                     //Save the default directory to the config file
                     Properties.Settings.Default.DefaultDirectroy = DefaultDirectory;
                     WriteStatusEntry("Retreving files from new directory...");
-                    GetFiles();
-
+                    var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
+                    if (File.Exists(xmlPath))
+                    {
+                        ReadXML(xmlPath);
+                    }
+                    else
+                    {
+                        GetFiles();
+                    }
+                    HasChanged = true;
                 }).ContinueWith((t2) =>
                 {
                     WriteStatusEntry("Directory changed, contents updated.");
