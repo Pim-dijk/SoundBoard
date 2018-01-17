@@ -61,7 +61,7 @@ namespace SoundBoard
         private ImageSource imageBitmap { get; set; }
 
         //Temp image location
-        private string tempImageLocation = "";
+        private string tempImageLocation = "No file selected...";
 
         //Has image
         private bool hasImage { get; set; }
@@ -90,7 +90,7 @@ namespace SoundBoard
         private AudioFileReader file;
         
         //Timelabel string to display the running time
-        private string timeLabel;
+        private string timeLabel = "No file selected...";
 
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
@@ -526,8 +526,6 @@ namespace SoundBoard
             ReadCustomSettings();
             //Clear the statusListView
             StatusListView.Clear();
-            //Set default for timelabel
-            TimeLabel = "No file selected...";
             //Initialize folder watcher
             InitializeWatcher();
             //Add eventhandler for when the window closes
@@ -539,7 +537,6 @@ namespace SoundBoard
             timer.Start();
             //Get the available output devices
             GetDevices();
-            TempImageLocation = "";
             //Write application loaded
             WriteStatusEntry("Application loaded");
         }
@@ -617,6 +614,10 @@ namespace SoundBoard
 
                     //Check if there is an image for this file and add it
                     FindImage(s1.NormalizedName);
+                }
+                else
+                {
+                    WriteStatusEntry("Sound " + fileName + " already exists");
                 }
             }
             fs.EnableRaisingEvents = FolderWatch;
@@ -1112,6 +1113,36 @@ namespace SoundBoard
             }));
         }
         #endregion
+
+        #region --Write xml
+        private void WriteXML()
+        {
+            //Write Sounds collection to xml
+            var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
+            XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
+
+            xmlWriter.WriteStartDocument();
+            xmlWriter.WriteComment("Modify this file at your own risk!");
+            xmlWriter.WriteComment("If something goes wrong, you might lose all your settings. In the worst case, delete this fill to generate a fresh one without any settings.");
+            xmlWriter.WriteStartElement("Sounds");
+
+            foreach (var sound in Sounds)
+            {
+                xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
+                xmlWriter.WriteAttributeString("Category", sound.Category);
+                xmlWriter.WriteAttributeString("Image", sound.ImagePath);
+                xmlWriter.WriteAttributeString("Name", sound.Name);
+                xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
+                xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
+                xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
+                xmlWriter.WriteEndElement();
+            }
+
+            xmlWriter.WriteEndElement();
+            xmlWriter.WriteEndDocument();
+            xmlWriter.Close();
+        }
+        #endregion
         #endregion
 
         #region -Application
@@ -1184,31 +1215,7 @@ namespace SoundBoard
             //If the collection has changed
             if (HasChanged)
             {
-                //Write Sounds collection to xml
-                //var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
-                var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
-                XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
-
-                xmlWriter.WriteStartDocument();
-                xmlWriter.WriteComment("Modify this file at your own risk!");
-                xmlWriter.WriteComment("If something goes wrong, you might lose all your settings. In the worst case, delete this fill to generate a fresh one without any settings.");
-                xmlWriter.WriteStartElement("Sounds");
-
-                foreach (var sound in Sounds)
-                {
-                    xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
-                    xmlWriter.WriteAttributeString("Category", sound.Category); 
-                    xmlWriter.WriteAttributeString("Image", sound.ImagePath);
-                    xmlWriter.WriteAttributeString("Name", sound.Name);
-                    xmlWriter.WriteAttributeString("AdjustedVolume", sound.Volume.ToString());
-                    xmlWriter.WriteAttributeString("Modifier", sound.Modifier);
-                    xmlWriter.WriteAttributeString("Keybind", sound.Keybind);
-                    xmlWriter.WriteEndElement();
-                }
-
-                xmlWriter.WriteEndElement();
-                xmlWriter.WriteEndDocument();
-                xmlWriter.Close();
+                WriteXML();
             }
 
             CleanUp();
@@ -1222,6 +1229,12 @@ namespace SoundBoard
             if (App.Current.Windows.OfType<ShowKeybindingsView>().Any())
             {
                 App.Current.Windows.OfType<ShowKeybindingsView>().First().Close();
+            }
+
+            //Close the info view if it's open
+            if(App.Current.Windows.OfType<InfoView>().Any())
+            {
+                App.Current.Windows.OfType<InfoView>().First().Close();
             }
         }
         #endregion
@@ -1274,7 +1287,7 @@ namespace SoundBoard
                 var capabilities = WaveOut.GetCapabilities(deviceId);
                 var device = new DevicesViewModel(capabilities.ProductName, deviceId);
                 Devices.Add(device);
-                //If this is the selected device read from app settings, set it as selected.
+                //If this is the selected device, read from app settings, set it as selected.
                 if (deviceId == this.DeviceId)
                 {
                     device.isChecked = true;
@@ -1581,12 +1594,12 @@ namespace SoundBoard
             //Start playing
             try
             {
-                //Get the model from the given param
+                //Get the sound from the given param
                 var sound = Sounds.First(s => s.Name == param as string);
                 //set file with the audio location
                 file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
-                file.Volume = volume * sound.Volume;
+                file.Volume = volume * sound.Volume; //Cannot exceed 1.0
                 wavePlayer.Init(file);
                 wavePlayer.Play();
             }
@@ -1634,16 +1647,23 @@ namespace SoundBoard
         /// </summary>
         private void CleanUp()
         {
-            if (this.file != null)
+            try
             {
-                this.file.Dispose();
-                this.file = null;
+                if (this.file != null)
+                {
+                    this.file.Dispose();
+                    this.file = null;
+                }
+                if (this.wavePlayer != null)
+                {
+                    this.wavePlayer.PlaybackStopped -= new EventHandler<StoppedEventArgs>(PlaybackEnded); //Unsubscribe from the event
+                    this.wavePlayer.Dispose();
+                    this.wavePlayer = null;
+                }
             }
-            if (this.wavePlayer != null)
+            catch(Exception e)
             {
-                this.wavePlayer.PlaybackStopped -= new EventHandler<StoppedEventArgs>(PlaybackEnded); //Unsubscribe from the event
-                this.wavePlayer.Dispose();
-                this.wavePlayer = null;
+                WriteStatusEntry("Oops! Something went wrong. But don't worry, nothing major.");
             }
         }
         #endregion
@@ -2059,9 +2079,9 @@ namespace SoundBoard
                     {
                         GetFiles();
                     }
-                    HasChanged = true;
                 }).ContinueWith((t2) =>
                 {
+                    HasChanged = true;
                     WriteStatusEntry("Directory changed, contents updated.");
                 });
             }
@@ -2132,7 +2152,6 @@ namespace SoundBoard
         private void OpenInfo_Executed(object sender, EventArgs e)
         {
             InfoView view = new InfoView(this);
-            view.Owner = Application.Current.MainWindow;
             view.Show();
         }
         #endregion

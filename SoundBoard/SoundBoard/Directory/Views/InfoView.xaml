@@ -4,49 +4,60 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Info" Height="572" Width="450" Icon="/SoundBoard;component/Images/infoIcon.png" ShowInTaskbar="True" ResizeMode="CanResize" WindowStartupLocation="CenterOwner" FontFamily="Tahoma" FontSize="13">
+        Title="Info" Height="740" Width="450" Icon="/SoundBoard;component/Images/infoIcon.png" 
+        ShowInTaskbar="True" ResizeMode="CanResize" WindowStartupLocation="CenterOwner" 
+        FontFamily="Tahoma" FontSize="13" >
     <StackPanel>
 
-        <TextBlock TextWrapping="Wrap" Margin="5" FontSize="15"
-                   Text="Some information on how to use the soundboard in case you get stuck somehow." />
+        <TextBlock TextWrapping="Wrap" Padding="10" FontSize="15"
+                   Text="Some general information and how to use the soundboard in case you get stuck somehow." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="Files are sorted from A-Z, same goes for Categories." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
+                   Text="Sound settings: " />
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="To change a sounds name, image, volume, keybind or category right click the desired sound and press 'change settings'." />
-        <TextBlock TextWrapping="Wrap" Margin="3"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="To remove a keybind, select the field and press either delete or backspace, when the fields are empty 'save settings'." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
-                   Text="Adding through a URL: Make sure it is a valid Youtube link, playlist songs might not work." />
-        <TextBlock TextWrapping="Wrap" Margin="3"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
+                   Text="Drag/Drop files:" />
+        <TextBlock TextWrapping="Wrap" Padding="5" 
+                   Text="You can add files by dragging and dropping them onto the application if the file is of an ellegible extension." />
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
+                   Text="Adding through a URL: " />
+        <TextBlock TextWrapping="Wrap" Padding="5" 
+                   Text="Make sure it is a valid Youtube link, playlist songs might not work." />
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="When it is not a Youtube link, make sure to link directly to the file, so the link should end in an audio or video extension." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3, 0"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
+                   Text="File Extensions:" />
+        <TextBlock TextWrapping="Wrap" Padding="5, 0"
                    Text="When adding sounds, keep in mind that not all formats are supported, however most are." />
-        <TextBlock TextWrapping="Wrap" Margin="3"
-                   Text="This includes: .mp3, .wav, .mp4, .flv, .wmv, .mov, .avi, .mpeg4, .mpegps for audio files." />
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
-                   Text="This includes: .mp4, .flv, .wmv, .mov, .avi, .mpeg4, .mpegps, .webm, .ogg" />
+        <TextBlock TextWrapping="Wrap" Padding="5"
+                   Text="This includes: .mp5, .wav, .mp4, .flv, .wmv, .mov, .avi, .mpeg4, .mpegps" />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
                    Text="Option -> Folderwatch" />
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="When this option is enabled it will listen for changes in the folder, when this is detected the program will try to resolve it." />
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="This can mean that a new sound was added to the folder or something was removed." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
                    Text="Option -> Global Keyhook" />
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="When this option is enabled the soundboard will listen for keybindings on a windows level, so even when minimized or when working in a different program or game." />
         <Separator/>
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5,0" FontWeight="Bold"
                    Text="File -> Refresh" />
-        <TextBlock TextWrapping="Wrap" Margin="3,0"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="When the folder has changed between sessions you will need to rescan the folder to reflect the changes." />
-        <TextBlock TextWrapping="Wrap" Margin="3"
+        <TextBlock TextWrapping="Wrap" Padding="5"
                    Text="You can also do this when you for some reason do not see all your expected files showing up." />
         <Separator/>
         

@@ -63,7 +63,7 @@
         <Menu Grid.ColumnSpan="7">
             <!--File-->
             <MenuItem Header="File">
-                <MenuItem Header="Add Sound" Command="{Binding AddSound}" ToolTip="Add one or more files" >
+                <MenuItem Header="Add Sound(s)" Command="{Binding AddSound}" ToolTip="Add one or more files" >
                     <MenuItem.Icon>
                         <Image Height="18" Source="/SoundBoard;component/Images/addSoundIcon.png" />
                     </MenuItem.Icon>
