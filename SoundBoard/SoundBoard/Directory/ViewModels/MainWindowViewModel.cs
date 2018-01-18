@@ -40,6 +40,9 @@ namespace SoundBoard
         #region Fields
 
         #region -Controls
+        //Timelabel string to display the running time
+        private string timeLabel = "No file selected...";
+
         //Volume control
         private float volume;
 
@@ -52,34 +55,43 @@ namespace SoundBoard
 
         #region -Collection
         //current name used for changing name
-        private string currentName { get; set; }
+        private string currentName;
 
         //Name to display in the namechange dialog
-        private string nameToChange { get; set; }
+        private string nameToChange;
 
         //Image bitmap 
-        private ImageSource imageBitmap { get; set; }
+        private ImageSource imageBitmap;
 
         //Temp image location
         private string tempImageLocation = "No file selected...";
 
-        //Has image
-        private bool hasImage { get; set; }
-
         //New url string
-        private string urlUri { get; set; }
-        
+        private string urlUri;
+
         //new url name
-        private string urlName { get; set; }
+        private string urlName;
+
+        //Has image
+        private bool hasImage;
+
+        //keybind key
+        private string keybind;
+
+        //keybind modifier
+        private string modifier;
+
+        //sound modifier
+        private float soundVolume;
+
+        //category
+        private string category;
 
         //size of the downloaded file
-        private string fileSize { get; set; }
+        private string fileSize;
 
         //filesize string collection
         private static readonly string[] Units = { "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-
-        //Adjusted volume
-        private float soundVolume { get; set; }
         #endregion
 
         #region -Application
@@ -89,9 +101,6 @@ namespace SoundBoard
         //Audiofilereader
         private AudioFileReader file;
         
-        //Timelabel string to display the running time
-        private string timeLabel = "No file selected...";
-
         //Set the default folder location, want this to be changeable via application
         private string defaultDirectory;
 
@@ -130,12 +139,11 @@ namespace SoundBoard
 
         //Global keyboard hook
         private bool globalHook = true;
-        #endregion
 
-        #region -Test
-        private List<WaveOutCapabilities> devicesList;
+        //Has the collectio changed
+        private bool hasChanged = false;
         #endregion
-
+        
         #endregion
 
         #region Properties
@@ -150,11 +158,12 @@ namespace SoundBoard
             }
             set
             {
-                if(this.timeLabel == value)
-                {
+                if (timeLabel == value)
                     return;
+                else
+                {
+                    timeLabel = value;
                 }
-                this.timeLabel = value;
             }
         }
 
@@ -208,11 +217,12 @@ namespace SoundBoard
             }
             set
             {
-                if (this.restoreVolume == value)
-                {
+                if (restoreVolume == value)
                     return;
+                else
+                {
+                    restoreVolume = value;
                 }
-                this.restoreVolume = value;
             }
         }
 
@@ -225,14 +235,15 @@ namespace SoundBoard
             }
             set
             {
-                if (this.muted == value)
-                {
+                if (muted == value)
                     return;
+                else
+                {
+                    muted = value;
                 }
-                this.muted = value;
             }
         }
-        
+
         #endregion
 
         #region -Collection
@@ -249,7 +260,22 @@ namespace SoundBoard
         public ImageSource ImageSource { get; set; }
 
         //Image bitmap 
-        public ImageSource ImageBitmap { get; set; }
+        public ImageSource ImageBitmap
+        {
+            get
+            {
+                return imageBitmap;
+            }
+            set
+            {
+                if (imageBitmap == value)
+                    return;
+                else
+                {
+                    imageBitmap = value;
+                }
+            }
+        }
 
         //Temo image location
         public string TempImageLocation
@@ -260,12 +286,6 @@ namespace SoundBoard
             }
             set
             {
-                //if(value == "")
-                //{
-                //    tempImageLocation = value;
-                //    return;
-                //}
-
                 if (this.tempImageLocation == value)
                 {
                     return;
@@ -279,22 +299,97 @@ namespace SoundBoard
         }
 
         //Has Image
-        public bool HasImage { get; set; }
+        public bool HasImage
+        {
+            get
+            {
+                return hasImage;
+            }
+            set
+            {
+                if (hasImage == value)
+                    return;
+                else
+                {
+                    hasImage = value;
+                }
+            }
+        }
 
         //Output Devices
         public ObservableCollection<DevicesViewModel> Devices { get; set; }
 
         //Keybinding
-        public String Keybind { get; set; }
+        public String Keybind
+        {
+            get
+            {
+                return keybind;
+            }
+            set
+            {
+                if (keybind == value)
+                    return;
+                else
+                {
+                    keybind = value;
+                }
+            }
+        }
 
         //Modifier
-        public String Modifier { get; set; }
+        public String Modifier
+        {
+            get
+            {
+                return modifier;
+            }
+            set
+            {
+                if (modifier == value)
+                    return;
+                else
+                {
+                    modifier = value;
+                }
+            }
+        }
 
         //Adjusted volume
-        public float SoundVolume { get; set; }
+        public float SoundVolume
+        {
+            get
+            {
+                return soundVolume;
+            }
+            set
+            {
+                if (soundVolume == value)
+                    return;
+                else
+                {
+                    soundVolume = value;
+                }
+            }
+        }
 
         //Sound Category
-        public string Category { get; set; }
+        public string Category
+        {
+            get
+            {
+                return category;
+            }
+            set
+            {
+                if (category == value)
+                    return;
+                else
+                {
+                    category = value;
+                }
+            }
+        }
 
         //Default Directory for the application to get the files from
         public string DefaultDirectory
@@ -322,7 +417,7 @@ namespace SoundBoard
         {
             get
             {
-                return this.imageDirectory;
+                return imageDirectory;
             }
             set
             {
@@ -358,13 +453,64 @@ namespace SoundBoard
         }
 
         //Current name
-        public string CurrentName { get; set; }
+        public string CurrentName
+        {
+            get
+            {
+                return currentName;
+            }
+            set
+            {
+                if (this.currentName == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.currentName = value;
+                }
+            }
+        }
 
         //Current name without extension
-        public string NameToChange { get; set; }
+        public string NameToChange
+        {
+            get
+            {
+                return nameToChange;
+            }
+            set
+            {
+                if (this.nameToChange == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.nameToChange = value;
+                }
+            }
+        }
 
         //New url Uri
-        public string UrlUri { get; set; }
+        public string UrlUri
+        {
+            get
+            {
+                return urlUri;
+            }
+            set
+            {
+                if (this.urlUri == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.urlUri = value;
+                }
+            }
+        }
 
         //New url Name
         public string UrlName
@@ -375,11 +521,14 @@ namespace SoundBoard
             }
             set
             {
-                if(this.urlName == value)
+                if (this.urlName == value)
                 {
                     return;
                 }
-                this.urlName = value;
+                else
+                {
+                    this.urlName = value;
+                }
             }
         }
 
@@ -392,11 +541,14 @@ namespace SoundBoard
             }
             set
             {
-                if(this.fileSize == value)
+                if (this.fileSize == value)
                 {
                     return;
                 }
-                this.fileSize = value;
+                else
+                {
+                    this.fileSize = value;
+                }
             }
         }
         #endregion
@@ -407,7 +559,7 @@ namespace SoundBoard
         {
             get
             {
-                return this.folderWatch;
+                return folderWatch;
             }
             set
             {
@@ -415,7 +567,24 @@ namespace SoundBoard
                 {
                     return;
                 }
-                this.folderWatch = value;
+                else
+                {
+                    if(value == true)
+                    {
+                        //This event will check for  new files added to the watching folder
+                        this.fs.Created += new FileSystemEventHandler(this.Newfile);
+                        //this event will check for any deletion of file in the watching folder
+                        this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
+                    }
+                    else
+                    {
+                        //This event will check for  new files added to the watching folder
+                        this.fs.Created -= new FileSystemEventHandler(this.Newfile);
+                        //this event will check for any deletion of file in the watching folder
+                        this.fs.Deleted -= new FileSystemEventHandler(this.Fs_Deleted);
+                    }
+                    this.folderWatch = value;
+                }
             }
         }
 
@@ -428,11 +597,14 @@ namespace SoundBoard
             }
             set
             {
-                if(this.restoreFolderWatch == value)
+                if (this.restoreFolderWatch == value)
                 {
                     return;
                 }
-                this.restoreFolderWatch = value;
+                else
+                {
+                    this.restoreFolderWatch = value;
+                }
             }
         }
 
@@ -449,7 +621,10 @@ namespace SoundBoard
                 {
                     return;
                 }
-                this.downloadProgress = value;
+                else
+                {
+                    this.downloadProgress = value;
+                }
             }
         }
 
@@ -466,7 +641,10 @@ namespace SoundBoard
                 {
                     return;
                 }
-                this.downloadVideo = value;
+                else
+                {
+                    this.downloadVideo = value;
+                }
             }
         }
 
@@ -479,11 +657,14 @@ namespace SoundBoard
             }
             set
             {
-                if(this.deviceId == value)
+                if (this.deviceId == value)
                 {
                     return;
                 }
-                deviceId = value;
+                else
+                {
+                    this.deviceId = value;
+                }
             }
         }
 
@@ -496,16 +677,36 @@ namespace SoundBoard
             }
             set
             {
-                if(this.globalHook == value)
+                if (this.globalHook == value)
                 {
                     return;
                 }
-                globalHook = value;
+                else
+                {
+                    this.globalHook = value;
+                }
             }
         }
 
         //Set to true if collection is modified
-        public bool HasChanged { get; set; }
+        public bool HasChanged
+        {
+            get
+            {
+                return hasChanged;
+            }
+            set
+            {
+                if (this.hasChanged == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.hasChanged = value;
+                }
+            }
+        }
 
         #endregion
 
@@ -530,11 +731,6 @@ namespace SoundBoard
             InitializeWatcher();
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
-            //Start the timer 
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(250);
-            timer.Tick += Timer_Tick;
-            timer.Start();
             //Get the available output devices
             GetDevices();
             //Write application loaded
@@ -606,9 +802,7 @@ namespace SoundBoard
                         FileSystem.CopyFile(fileLocation, fileDestination, UIOption.AllDialogs, UICancelOption.DoNothing);
                     }
                     //If file has been succesfully moved, add it to the list.
-                    SoundViewModel s1 = new SoundViewModel(sound);
-                    s1.AudioLocation = fileDestination;
-                    s1.Category = "";
+                    SoundViewModel s1 = new SoundViewModel(fileDestination);
                     Sounds.Add(s1);
                     WriteStatusEntry("File: " + fileName + " succesfully added.");
 
@@ -629,18 +823,8 @@ namespace SoundBoard
         /// Save an audio file from a supplied url
         /// </summary>
         /// <param name="param">The link url</param>
-        private async void SaveVideoToDisk(string param)
+        private async void SaveUrlToDisk(string param)
         {
-            if (!Directory.Exists(DefaultDirectory + "Downloads"))
-            {
-                Directory.CreateDirectory(DefaultDirectory + "Downloads");
-            }
-
-            if (!Directory.Exists(DefaultDirectory + "Images"))
-            {
-                Directory.CreateDirectory(DefaultDirectory + "Images");
-            }
-
             string output = "";
             try
             {
@@ -1188,6 +1372,16 @@ namespace SoundBoard
                 GetFiles();
                 HasChanged = true;
             }
+
+            //Check if the Download and Images folders exists, else create them
+            if (!Directory.Exists(DefaultDirectory + "Downloads"))
+            {
+                Directory.CreateDirectory(DefaultDirectory + "Downloads");
+            }
+            if (!Directory.Exists(DefaultDirectory + "Images"))
+            {
+                Directory.CreateDirectory(DefaultDirectory + "Images");
+            }
         }
         #endregion
 
@@ -1493,6 +1687,12 @@ namespace SoundBoard
         { 
             StatusListView = new ObservableCollection<ListEntriesViewModel>();
             Keybindings = new List<KeybindingsViewModel>();
+
+            //Start the timer 
+            DispatcherTimer timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(250);
+            timer.Tick += Timer_Tick;
+            timer.Start();
         }
         #endregion
 
@@ -1756,7 +1956,7 @@ namespace SoundBoard
         {
             var urlLink = UrlUri;
             urlLink = urlLink.Replace("https", "http");
-            SaveVideoToDisk(urlLink);
+            SaveUrlToDisk(urlLink);
             App.Current.Windows.OfType<AddStreamView>().First().Close();
         }
 
@@ -1957,7 +2157,7 @@ namespace SoundBoard
             {
                 if(sound.IsPlaying)
                 {
-                    WriteStatusEntry("==Cannot change settings while the sound is playing!==");
+                    WriteStatusEntry("==> Cannot change settings while the sound is playing!");
                     return;
                 }
                 NameToChange = sound.NormalizedName; //Without extension
@@ -1965,12 +2165,12 @@ namespace SoundBoard
                 SoundVolume = sound.Volume; //Adjusted volume
                 Keybind = sound.Keybind; //Key
                 Modifier = sound.Modifier; //Modifier
-                TempImageLocation = sound.ImagePath;
-                Category = sound.Category;
+                TempImageLocation = sound.ImagePath; //Imagepath
+                Category = sound.Category; //Category
                 if (sound.HasImage)
                 {
                     HasImage = true;
-                    ImageBitmap = sound.ImageBitMap;
+                    ImageBitmap = sound.ImageBitMap; //image bitmap
                 }
                 else
                 {
@@ -2082,6 +2282,17 @@ namespace SoundBoard
                 }).ContinueWith((t2) =>
                 {
                     HasChanged = true;
+
+                    //Check if the Download and Images folders exists, else create them
+                    if (!Directory.Exists(DefaultDirectory + "Downloads"))
+                    {
+                        Directory.CreateDirectory(DefaultDirectory + "Downloads");
+                    }
+                    if (!Directory.Exists(DefaultDirectory + "Images"))
+                    {
+                        Directory.CreateDirectory(DefaultDirectory + "Images");
+                    }
+
                     WriteStatusEntry("Directory changed, contents updated.");
                 });
             }
@@ -2116,19 +2327,11 @@ namespace SoundBoard
             if (FolderWatch == false)
             {
                 FolderWatch = true;
-                //This event will check for  new files added to the watching folder
-                this.fs.Created += new FileSystemEventHandler(this.Newfile);
-                //this event will check for any deletion of file in the watching folder
-                this.fs.Deleted += new FileSystemEventHandler(this.Fs_Deleted);
                 WriteStatusEntry("Started watching folder for changes.");
             }
             else
             {
                 FolderWatch = false;
-                //This event will check for  new files added to the watching folder
-                this.fs.Created -= new FileSystemEventHandler(this.Newfile);
-                //this event will check for any deletion of file in the watching folder
-                this.fs.Deleted -= new FileSystemEventHandler(this.Fs_Deleted);
                 WriteStatusEntry("Stopped watching folder for changes.");
             }
         }

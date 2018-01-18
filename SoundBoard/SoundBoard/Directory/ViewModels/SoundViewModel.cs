@@ -38,6 +38,7 @@ namespace SoundBoard
         {
             this.AudioLocation = audioLocation;
             Volume = 1;
+            Category = "";
         }
 
         #endregion

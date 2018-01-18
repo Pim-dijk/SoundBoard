@@ -130,7 +130,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Directory\Data\Devices.cs" />
-    <Compile Include="Directory\Data\KeyBindings.cs" />
+    <Compile Include="Directory\Data\Keybindings.cs" />
     <Compile Include="Directory\Data\KeyboardHook.cs" />
     <Compile Include="Directory\Data\ListEntries.cs" />
     <Compile Include="Directory\ViewModels\DeviceViewModel.cs" />
