@@ -74,12 +74,12 @@ namespace SoundBoard.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\")]
-        public string DefaultDirectroy {
+        public string DefaultDirectory {
             get {
-                return ((string)(this["DefaultDirectroy"]));
+                return ((string)(this["DefaultDirectory"]));
             }
             set {
-                this["DefaultDirectroy"] = value;
+                this["DefaultDirectory"] = value;
             }
         }
         

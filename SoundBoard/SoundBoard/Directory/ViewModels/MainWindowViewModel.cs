@@ -114,7 +114,7 @@ namespace SoundBoard
         private FileSystemWatcher fs;
 
         //Folder watch enabled/disabled
-        private bool folderWatch = true;
+        private bool folderWatch = false;
 
         //Restore FolderWatch
         private bool restoreFolderWatch;
@@ -1336,16 +1336,20 @@ namespace SoundBoard
         /// </summary>
         private void ReadCustomSettings()
         {
-            if(Properties.Settings.Default.DefaultDirectroy != "C:\\")
+            if(Properties.Settings.Default.DefaultDirectory != "C:\\")
             {
-                DefaultDirectory = Properties.Settings.Default.DefaultDirectroy;
+                DefaultDirectory = Properties.Settings.Default.DefaultDirectory;
             }
             else
             {
                 DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
             }
             Volume = Properties.Settings.Default.Volume;
-            FolderWatch = Properties.Settings.Default.FolderWatcher;
+            if(Properties.Settings.Default.FolderWatcher != false)
+            {
+                FolderWatch = Properties.Settings.Default.FolderWatcher;
+            }
+            
             DeviceId = Properties.Settings.Default.DeviceId;
             DownloadVideo = Properties.Settings.Default.DownloadVideo;
             GlobalHook = Properties.Settings.Default.GlobalHook;
@@ -2268,7 +2272,7 @@ namespace SoundBoard
                     DefaultDirectory = pathSave.SelectedPath.ToString() + "\\";
 
                     //Save the default directory to the config file
-                    Properties.Settings.Default.DefaultDirectroy = DefaultDirectory;
+                    Properties.Settings.Default.DefaultDirectory = DefaultDirectory;
                     WriteStatusEntry("Retreving files from new directory...");
                     var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
                     if (File.Exists(xmlPath))
