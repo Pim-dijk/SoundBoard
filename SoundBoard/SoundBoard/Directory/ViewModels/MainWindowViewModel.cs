@@ -727,8 +727,6 @@ namespace SoundBoard
             ReadCustomSettings();
             //Clear the statusListView
             StatusListView.Clear();
-            //Initialize folder watcher
-            InitializeWatcher();
             //Add eventhandler for when the window closes
             Application.Current.MainWindow.Closing += new CancelEventHandler(MainWindow_Closing);
             //Get the available output devices
@@ -1246,7 +1244,7 @@ namespace SoundBoard
                         {
                             if (xmlReader.HasAttributes)
                             {
-                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + xmlReader.GetAttribute("Name"));
+                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + "\\" + xmlReader.GetAttribute("Name"));
 
                                 if (xmlReader.GetAttribute("Image") != "")
                                 {
@@ -1345,11 +1343,6 @@ namespace SoundBoard
                 DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
             }
             Volume = Properties.Settings.Default.Volume;
-            if(Properties.Settings.Default.FolderWatcher != false)
-            {
-                FolderWatch = Properties.Settings.Default.FolderWatcher;
-            }
-            
             DeviceId = Properties.Settings.Default.DeviceId;
             DownloadVideo = Properties.Settings.Default.DownloadVideo;
             GlobalHook = Properties.Settings.Default.GlobalHook;
@@ -1386,6 +1379,10 @@ namespace SoundBoard
             {
                 Directory.CreateDirectory(DefaultDirectory + "Images");
             }
+            
+            //Initialize folder watcher
+            InitializeWatcher();
+            FolderWatch = Properties.Settings.Default.FolderWatcher;
         }
         #endregion
 
@@ -1423,6 +1420,7 @@ namespace SoundBoard
                 Unsubscribe();
             }
 
+            //Since the windows don't have an owner, close them manually if open
             //Close the keybindingsview if it's open
             if (App.Current.Windows.OfType<ShowKeybindingsView>().Any())
             {
@@ -2296,6 +2294,8 @@ namespace SoundBoard
                     {
                         Directory.CreateDirectory(DefaultDirectory + "Images");
                     }
+
+                    InitializeWatcher();
 
                     WriteStatusEntry("Directory changed, contents updated.");
                 });
