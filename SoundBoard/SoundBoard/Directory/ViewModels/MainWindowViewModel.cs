@@ -1373,11 +1373,11 @@ namespace SoundBoard
             //Check if the Download and Images folders exists, else create them
             if (!Directory.Exists(DefaultDirectory + "Downloads"))
             {
-                Directory.CreateDirectory(DefaultDirectory + "Downloads");
+                Directory.CreateDirectory(DefaultDirectory + "\\" + "Downloads");
             }
             if (!Directory.Exists(DefaultDirectory + "Images"))
             {
-                Directory.CreateDirectory(DefaultDirectory + "Images");
+                Directory.CreateDirectory(DefaultDirectory + "\\" + "Images");
             }
             
             //Initialize folder watcher
@@ -2288,11 +2288,11 @@ namespace SoundBoard
                     //Check if the Download and Images folders exists, else create them
                     if (!Directory.Exists(DefaultDirectory + "Downloads"))
                     {
-                        Directory.CreateDirectory(DefaultDirectory + "Downloads");
+                        Directory.CreateDirectory(DefaultDirectory + "\\" + "Downloads");
                     }
                     if (!Directory.Exists(DefaultDirectory + "Images"))
                     {
-                        Directory.CreateDirectory(DefaultDirectory + "Images");
+                        Directory.CreateDirectory(DefaultDirectory + "\\" + "Images");
                     }
 
                     InitializeWatcher();
