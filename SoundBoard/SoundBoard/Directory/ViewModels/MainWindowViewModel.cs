@@ -256,6 +256,9 @@ namespace SoundBoard
         //Keybindingslist
         public List<KeybindingsViewModel> Keybindings { get; set; }
 
+        //Categories
+        public List<String> CategoryList { get; set; }
+
         //Omit Imagesource
         public ImageSource ImageSource { get; set; }
 
@@ -1173,6 +1176,7 @@ namespace SoundBoard
         #region --Restore Settings
         public async void RestoreSettings()
         {
+            CategoryList = new List<string>();
             await System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() => 
             { 
             //Restore sound settings for files that already existed before rescanning the directory
@@ -1186,6 +1190,11 @@ namespace SoundBoard
                     sound.Keybind = backup.Keybind;
                     sound.Modifier = backup.Modifier;
                     sound.Category = backup.Category;
+                    //Add category to the list if it doesn't already exist.
+                    if(!CategoryList.Contains(backup.Category))
+                    {
+                        CategoryList.Add(backup.Category);
+                    }
                     sound.Volume = backup.Volume;
                     Sounds.Add(sound);
                 }
@@ -1231,7 +1240,8 @@ namespace SoundBoard
         #region --Read xml
         private void ReadXML(string xmlPath)
         {
-            this.Sounds = new ObservableCollection<SoundViewModel>();
+            CategoryList = new List<string>();
+            Sounds = new ObservableCollection<SoundViewModel>();
 
             Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(() =>
             {
@@ -1262,14 +1272,21 @@ namespace SoundBoard
                                     sound.Modifier = xmlReader.GetAttribute("Modifier");
                                 }
                                 sound.Category = xmlReader.GetAttribute("Category");
+                                //If the category doesn't exist yet, add it.
+                                if(!CategoryList.Contains(xmlReader.GetAttribute("Category")))
+                                {
+                                    CategoryList.Add(xmlReader.GetAttribute("Category"));
+                                }
 
                                 var key = sound.Keybind;
                                 var modifier = sound.Modifier;
                                 if (key != null)
                                 {
                                     //Set the keybinding to add to the view
-                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture);
-                                    kb.CommandParameter = sound.Name;
+                                    var kb = new KeyBinding(PlaySound, new KeyGestureConverter().ConvertFromString(modifier + "+" + key) as KeyGesture)
+                                    {
+                                        CommandParameter = sound.Name
+                                    };
 
                                     //Add the keybinding to the View
                                     App.Current.MainWindow.InputBindings.Add(kb);
@@ -1457,9 +1474,11 @@ namespace SoundBoard
         private void InitializeWatcher()
         {
             //Folder watcher event handler
-            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*");
-            this.fs.IncludeSubdirectories = false;
-            if(FolderWatch == true)
+            this.fs = new FileSystemWatcher(DefaultDirectory, "*.*")
+            {
+                IncludeSubdirectories = false
+            };
+            if (FolderWatch == true)
             {
                 //This event will check for  new files added to the watching folder
                 this.fs.Created += new FileSystemEventHandler(this.Newfile);
@@ -1532,11 +1551,11 @@ namespace SoundBoard
                     keybind.SoundName = newName;
                 }
             }
-            catch(IOException ioe)
+            catch(IOException)
             {
                 WriteStatusEntry("A file with the same name already exists!");
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 WriteStatusEntry("Oops! Something seems to have gone wrong, but don't worry it still works.");
             }
@@ -1627,8 +1646,10 @@ namespace SoundBoard
             try
             {
                 //Create a keybinding that goes into the view
-                var kb = new KeyBinding(PlaySound, myKey, myMod);
-                kb.CommandParameter = soundName;
+                var kb = new KeyBinding(PlaySound, myKey, myMod)
+                {
+                    CommandParameter = soundName
+                };
                 //Add the keybinding to the View
                 App.Current.MainWindow.InputBindings.Add(kb);
 
@@ -1691,8 +1712,10 @@ namespace SoundBoard
             Keybindings = new List<KeybindingsViewModel>();
 
             //Start the timer 
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(250);
+            DispatcherTimer timer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(250)
+            };
             timer.Tick += Timer_Tick;
             timer.Start();
         }
@@ -1809,7 +1832,7 @@ namespace SoundBoard
             {
                 WriteStatusEntry(anE + "Null exception");
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 RemoveSound_Executed(param as string);
                 MessageBox.Show("File could not be found." + Environment.NewLine + "The file got removed from the list.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -1863,7 +1886,7 @@ namespace SoundBoard
                     this.wavePlayer = null;
                 }
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 WriteStatusEntry("Oops! Something went wrong. But don't worry, nothing major.");
             }
@@ -1920,11 +1943,13 @@ namespace SoundBoard
         private void AddSound_Executed(object sender)
         {
             fs.EnableRaisingEvents = false;
-            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.Filter = "Mp3 files (*.mp3*)|*.mp3";
-            ofd.Multiselect = true;
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog
+            {
+                Filter = "Mp3 files (*.mp3*)|*.mp3",
+                Multiselect = true
+            };
 
-            if(ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 String[] files = ofd.FileNames;
                 AddAudioFiles(files);
@@ -1944,8 +1969,10 @@ namespace SoundBoard
         {
             if(!DownloadProgress)
             {
-                AddStreamView view = new AddStreamView(this);
-                view.Owner = Application.Current.MainWindow;
+                AddStreamView view = new AddStreamView(this)
+                {
+                    Owner = Application.Current.MainWindow
+                };
                 view.ShowDialog();
             }
             else
@@ -2154,6 +2181,7 @@ namespace SoundBoard
         #region --Open Sound Settings
         public void SoundSettings_Executed(object param)
         {
+            //Find the correct SoundViewModel and extract the needed data
             var sound = Sounds.FirstOrDefault(s => s.Name == param as string);
             if (sound != null)
             {
@@ -2181,17 +2209,23 @@ namespace SoundBoard
                 }
             }
 
-            var view = new SoundSettingsView(this);
-            view.Owner = Application.Current.MainWindow;
+            //Show the view
+            var view = new SoundSettingsView(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
             view.ShowDialog();
 
+            //Process the data
             if (view.DialogResult.HasValue && view.DialogResult.Value)
             {
+                //If the name has changed...
                 if (sound.NormalizedName != NameToChange)
                 {
                     ChangeSoundName(sound);
                     HasChanged = true;
                 }
+                //If the image has changed...
                 if (TempImageLocation != sound.ImagePath)
                 {
                     if (TempImageLocation == "")
@@ -2205,16 +2239,19 @@ namespace SoundBoard
                         HasChanged = true;
                     }
                 }
+                //If the volume has changed...
                 if (sound.Volume != SoundVolume)
                 {
                     sound.Volume = SoundVolume;
                     HasChanged = true;
                 }
+                //If the keybinding has changed
                 if (sound.Keybind != Keybind || sound.Modifier != Modifier)
                 {
                     AddKeybind(sound);
                     HasChanged = true;
                 }
+                //If the category has changed...
                 if(sound.Category != Category)
                 {
                     Sounds.Remove(sound);
@@ -2228,6 +2265,11 @@ namespace SoundBoard
                     {
                         sound.Category = Category;
                         Sounds.Add(sound);
+                    }
+                    //Add the category to the list if not present
+                    if (!CategoryList.Contains(Category))
+                    {
+                        CategoryList.Add(Category);
                     }
 
                     HasChanged = true;
@@ -2349,8 +2391,10 @@ namespace SoundBoard
         /// <param name="e"></param>
         private void OpenAbout_Executed(object sender, EventArgs e)
         {
-            AboutView view = new AboutView(this);
-            view.Owner = Application.Current.MainWindow;
+            AboutView view = new AboutView(this)
+            {
+                Owner = Application.Current.MainWindow
+            };
             view.ShowDialog();
         }
         #endregion
@@ -2487,7 +2531,7 @@ namespace SoundBoard
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 WriteStatusEntry("File could not be added to the collection.");
             }
@@ -2523,7 +2567,7 @@ namespace SoundBoard
                     }));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 WriteStatusEntry("Something changed in the folder. Refresh application recommended.");
             }

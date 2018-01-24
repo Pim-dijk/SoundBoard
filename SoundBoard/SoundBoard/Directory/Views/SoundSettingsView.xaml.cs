@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Drawing;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -15,8 +16,8 @@ namespace SoundBoard.Views
             this.DataContext = dataContext;
         }
 
-        //Keybind
-        private void soundKeybindKey_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        //Keybind Key textfield
+        private void SoundKeybindKey_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if(e.Key == Key.Delete || e.Key == Key.Back)
             {
@@ -44,8 +45,8 @@ namespace SoundBoard.Views
             }
         }
 
-        //Modifier
-        private void soundKeybindModifier_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        //Keybind Modifier textfield
+        private void SoundKeybindModifier_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             //Easily add the modifier keys by just pressing them when typing in the textfield
             //If alt is pressed first, the field will lose focus
@@ -146,7 +147,7 @@ namespace SoundBoard.Views
         }
 
         //Modifier lost focus check
-        private void soundKeybindModifier_LostFocus(object sender, RoutedEventArgs e)
+        private void SoundKeybindModifier_LostFocus(object sender, RoutedEventArgs e)
         {
             if (soundKeybindModifier.Text == "Shift")
             {
@@ -162,17 +163,19 @@ namespace SoundBoard.Views
         }
 
         //Volume slider
-        private void soundVolumeSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void SoundVolumeSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             soundVolumeSlider.Value = 1;
         }
 
         //Add image
-        private void soundImageButton_Click(object sender, RoutedEventArgs e)
+        private void SoundImageButton_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
-            ofd.Filter = "All Graphics Types|*.jpg;*.gif;*.bmp;*.png;|All Files(*.*)|*.*";
-            ofd.Multiselect = false;
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog
+            {
+                Filter = "All Graphics Types|*.jpg;*.gif;*.bmp;*.png;|All Files(*.*)|*.*",
+                Multiselect = false
+            };
 
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
@@ -181,7 +184,7 @@ namespace SoundBoard.Views
         }
         
         //Remove image
-        private void soundImageRemoveButton_Click(object sender, RoutedEventArgs e)
+        private void SoundImageRemoveButton_Click(object sender, RoutedEventArgs e)
         {
             if(ImageLocation.Text == "")
             {
@@ -233,6 +236,90 @@ namespace SoundBoard.Views
                     }
                 }
             }
+        }
+
+        //Search the existing categories and return the suggestions.
+        private void SoundCategoryTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            bool found = false;
+            var border = (resultStack.Parent as ScrollViewer).Parent as Border;
+            //Get the data from the MainWindowViewModel as this is the datacontext to this view.
+            var data = ((dynamic)this.DataContext).CategoryList;
+
+            string query = (sender as TextBox).Text;
+
+            if (query.Length == 0)
+            {
+                // Clear   
+                resultStack.Children.Clear();
+                border.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                border.Visibility = Visibility.Visible;
+            }
+
+            // Clear the list   
+            resultStack.Children.Clear();
+
+            // Add the result   
+            foreach (var obj in data)
+            {
+                if (obj.ToLower().StartsWith(query.ToLower()))
+                {
+                    // The word starts with this... Autocomplete must work   
+                    AddItem(obj);
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                resultStack.Children.Add(new TextBlock() { Text = "No results found." });
+            }
+        }
+
+        //Add the found items to the stackpanel dropdown
+        private void AddItem(string text)
+        {
+            TextBlock block = new TextBlock
+            {
+                // Add the text   
+                Text = text,
+
+                // A little style...   
+                Margin = new Thickness(2, 3, 2, 3),
+                Cursor = Cursors.Hand
+            };
+
+            // Mouse events   
+            block.MouseLeftButtonUp += (sender, e) =>
+            {
+                soundCategoryTextBox.Text = (sender as TextBlock).Text;
+                hintBox.Visibility = Visibility.Hidden;
+            };
+
+            block.MouseEnter += (sender, e) =>
+            {
+                TextBlock tb = sender as TextBlock;
+                tb.Background = System.Windows.Media.Brushes.PeachPuff;
+            };
+
+            block.MouseLeave += (sender, e) =>
+            {
+                TextBlock b = sender as TextBlock;
+                b.Background = System.Windows.Media.Brushes.Transparent;
+            };
+
+            // Add to the panel   
+            resultStack.Children.Add(block);
+        }
+
+        //When clicking outside the dropdown, hide it
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            
+            hintBox.Visibility = Visibility.Hidden;
         }
     }
 }
