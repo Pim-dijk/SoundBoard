@@ -1324,15 +1324,15 @@ namespace SoundBoard
         #region --Write xml
         private void WriteXML()
         {
-            //Write Sounds collection to xml
-            var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
+            var xmlPath = DefaultDirectory + "\\SoundSettings.xml";
             XmlWriter xmlWriter = XmlWriter.Create(xmlPath);
 
+            //Write Sounds collection to xml
             xmlWriter.WriteStartDocument();
             xmlWriter.WriteComment("Modify this file at your own risk!");
             xmlWriter.WriteComment("If something goes wrong, you might lose all your settings. In the worst case, delete this fill to generate a fresh one without any settings.");
             xmlWriter.WriteStartElement("Sounds");
-
+            
             foreach (var sound in Sounds)
             {
                 xmlWriter.WriteStartElement("Sound"); //Just for looks, ís not used when read.
@@ -1348,6 +1348,7 @@ namespace SoundBoard
             xmlWriter.WriteEndElement();
             xmlWriter.WriteEndDocument();
             xmlWriter.Close();
+            
         }
         #endregion
         #endregion
@@ -1383,8 +1384,8 @@ namespace SoundBoard
                 Subscribe();
             }
 
-            //var xmlPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\SoundBoard\\Sounds.xml";
-            var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
+            //If the file exists read it, otherwise scan the folder
+            var xmlPath = DefaultDirectory + "\\SoundSettings.xml";
             if (File.Exists(xmlPath))
             {
                 ReadXML(xmlPath);
