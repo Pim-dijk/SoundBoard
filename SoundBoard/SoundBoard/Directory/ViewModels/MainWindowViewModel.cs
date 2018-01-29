@@ -1254,7 +1254,15 @@ namespace SoundBoard
                         {
                             if (xmlReader.HasAttributes)
                             {
-                                SoundViewModel sound = new SoundViewModel(DefaultDirectory + "\\" + xmlReader.GetAttribute("Name"));
+                                SoundViewModel sound;
+                                if(DefaultDirectory.EndsWith("\\") ==  true)
+                                {
+                                    sound = new SoundViewModel(DefaultDirectory + xmlReader.GetAttribute("Name"));
+                                }
+                                else
+                                {
+                                    sound = new SoundViewModel(DefaultDirectory + "\\" + xmlReader.GetAttribute("Name"));
+                                }
 
                                 if (xmlReader.GetAttribute("Image") != "")
                                 {
@@ -1824,7 +1832,7 @@ namespace SoundBoard
                 //set file with the audio location
                 file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
-                file.Volume = volume * sound.Volume; //Cannot exceed 1.0
+                file.Volume = volume * sound.Volume; //total can't exceed 1.0, no audio boosting supported
                 wavePlayer.Init(file);
                 wavePlayer.Play();
             }

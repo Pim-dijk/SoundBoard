@@ -65,6 +65,11 @@ namespace SoundBoard
                 return;
             }
         }
+
+        private void volumSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            volumSlider.Value = 0.5;
+        }
     }
 }
 

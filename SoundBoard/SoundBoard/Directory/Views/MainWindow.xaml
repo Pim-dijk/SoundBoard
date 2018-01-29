@@ -169,7 +169,7 @@
             <Button x:Name="muteButton" Height="25" Width="25" Style="{StaticResource mutedButtonImage}" VerticalAlignment="Center" Command="{Binding MuteSound, Mode=TwoWay}" />
 
             <!--Volume slider-->
-            <Slider x:Name="volumSlider" VerticalAlignment="Center" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" Width="100" Margin="10, 0" />
+            <Slider x:Name="volumSlider" VerticalAlignment="Center" Value="{Binding Volume, Mode=TwoWay}" Minimum="0" Maximum="1" Width="100" Margin="10, 0" MouseDoubleClick="volumSlider_MouseDoubleClick"/>
         </StackPanel>
 
         <!--Button to stop all sounds from playing-->

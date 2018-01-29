@@ -268,7 +268,7 @@ namespace SoundBoard.Views
                 if (obj.ToLower().StartsWith(query.ToLower()))
                 {
                     // The word starts with this... Autocomplete must work   
-                    AddItem(obj);
+                    AddSuggestion(obj);
                     found = true;
                 }
             }
@@ -280,7 +280,7 @@ namespace SoundBoard.Views
         }
 
         //Add the found items to the stackpanel dropdown
-        private void AddItem(string text)
+        private void AddSuggestion(string text)
         {
             TextBlock block = new TextBlock
             {
