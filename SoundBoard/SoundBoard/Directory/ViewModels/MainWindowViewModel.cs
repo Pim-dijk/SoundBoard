@@ -128,8 +128,14 @@ namespace SoundBoard
         //Array of image file extensions
         private static readonly string[] imageExtensions = new string[] { ".jpg", ".bmp", ".gif", ".png" };
 
+        //Download is busy
+        private bool downloadBusy = false;
+
+        //Conversion Busy
+        private bool convertBusy = false;
+
         //Download progress
-        private bool downloadProgress = false;
+        private double downloadProgress;
 
         //Convertion enabled
         private bool downloadVideo = false;
@@ -611,22 +617,42 @@ namespace SoundBoard
             }
         }
 
-        //Download Progress
-        public bool DownloadProgress
+        //Download Busy
+        public bool DownloadBusy
         {
             get
             {
-                return downloadProgress;
+                return downloadBusy;
             }
             set
             {
-                if (this.downloadProgress == value)
+                if (this.downloadBusy == value)
                 {
                     return;
                 }
                 else
                 {
-                    this.downloadProgress = value;
+                    this.downloadBusy = value;
+                }
+            }
+        }
+
+        //Convert Busy
+        public bool ConvertBusy
+        {
+            get
+            {
+                return convertBusy;
+            }
+            set
+            {
+                if (this.convertBusy == value)
+                {
+                    return;
+                }
+                else
+                {
+                    this.convertBusy = value;
                 }
             }
         }
@@ -708,6 +734,23 @@ namespace SoundBoard
                 {
                     this.hasChanged = value;
                 }
+            }
+        }
+
+        //Progressbar for the download
+        public double DownloadProgress
+        {
+            get
+            {
+                return downloadProgress;
+            }
+            set
+            {
+                if(value == downloadProgress)
+                {
+                    return;
+                }
+                downloadProgress = value;
             }
         }
 
@@ -827,12 +870,14 @@ namespace SoundBoard
         private async void SaveUrlToDisk(string param)
         {
             string output = "";
+            HasChanged = true;
+
             try
             {
                 //Temporarely disable the folderwatch feature
                 RestoreFolderWatch = FolderWatch;
                 FolderWatch = false;
-                DownloadProgress = true;
+                DownloadBusy = true;
 
                 //Do heavy tasks here, download file and convert file
                 await Task.Run(async () =>
@@ -865,7 +910,8 @@ namespace SoundBoard
                 {
                     //Re-enable the folderwatch feature
                     FolderWatch = RestoreFolderWatch;
-                    DownloadProgress = false;
+                    DownloadBusy = false;
+                    ConvertBusy = false;
                 });
             }
             catch (Exception e)
@@ -882,6 +928,7 @@ namespace SoundBoard
             MediaFile outputFile = null;
             string audioFileExtLower = "";
             Video video;
+            var progressHandler = new Progress<double>(p => DownloadProgress = p);
 
             try
             {
@@ -923,8 +970,9 @@ namespace SoundBoard
                 {
                     WriteStatusEntry("-----Downloading audio-----");
                     WriteStatusEntry("---File size: " + audioFileSize);
-                    await client.DownloadMediaStreamAsync(audioInfo, outputA); //Download file to disk
+                    await client.DownloadMediaStreamAsync(audioInfo, outputA, progressHandler); //Download file to disk
                     WriteStatusEntry("------Download complete------");
+                    DownloadBusy = false;
                     
                     //Convert file to.mp3 and place it in the folder
                     var inputFile = new MediaFile { Filename = outputA }; //Set the inputfile for conversion
@@ -932,8 +980,10 @@ namespace SoundBoard
                     var outputImage = $"{ DefaultImageDirectory + UrlName }.jpg"; //Set the output image
 
                     WriteStatusEntry("-----Started Converting-----");
+                    ConvertBusy = true;
                     using (var engine = new Engine()) //Convert the file to .mp3 if needed
                     {
+                        engine.ConvertProgressEvent += ConvertProgressEvent;
                         engine.GetMetadata(inputFile);
                         engine.Convert(inputFile, outputFile);
                     }
@@ -943,13 +993,15 @@ namespace SoundBoard
                     {
                         imageClient.DownloadFile(thumbnailUrl, outputImage);
                     }
+                    ConvertBusy = false;
                 }
                 else
                 {
                     WriteStatusEntry("-----Downloading audio-----");
                     WriteStatusEntry("---File size: " + audioFileSize + "---");
-                    await client.DownloadMediaStreamAsync(audioInfo, output); //Download file to disk
+                    await client.DownloadMediaStreamAsync(audioInfo, output, progressHandler); //Download file to disk
                     WriteStatusEntry("------Download complete------");
+                    DownloadBusy = false;
                     
                     WriteStatusEntry("-----Grabbing the thumbnail-----");
                     var inputFile = new MediaFile { Filename = output + audioFileExt }; //Set the inputfile for the image
@@ -962,11 +1014,14 @@ namespace SoundBoard
 
                 if (DownloadVideo == true) //Download the video aswell
                 {
+                    DownloadBusy = true;
                     WriteStatusEntry("-----Downloading Video-----");
                     WriteStatusEntry("---File size: " + videoFileSize + "---");
-                    await client.DownloadMediaStreamAsync(videoInfo, outputV);
+                    await client.DownloadMediaStreamAsync(videoInfo, outputV, progressHandler);
                     WriteStatusEntry("------Download complete------");
-                }            }
+                    DownloadBusy = false;
+                }
+            }
             catch (Exception e)
             {
                 WriteStatusEntry(e.Message);
@@ -986,6 +1041,8 @@ namespace SoundBoard
         #region --Save other media link
         private async Task<string> GenericAudio(string param)
         {
+            DownloadBusy = false;
+            ConvertBusy = true;
             //link is the url that was passed into the dialog
             //ext will be the last portion of the passed in url
             //UrnName is the name that was passed into the dialog
@@ -1976,7 +2033,7 @@ namespace SoundBoard
         /// <param name="e"></param>
         public void OpenUrl_Executed(object sender, EventArgs e)
         {
-            if(!DownloadProgress)
+            if(!DownloadBusy)
             {
                 AddStreamView view = new AddStreamView(this)
                 {
@@ -1986,7 +2043,7 @@ namespace SoundBoard
             }
             else
             {
-                WriteStatusEntry("Can't add stream when a download is already in progress.");
+                WriteStatusEntry("Can't add another untill previous download is completed.");
             }
         }
 
@@ -2500,10 +2557,10 @@ namespace SoundBoard
         #region -Conversion Completed -- Not firing when converting to audio
         private void ConvertCompleteEvent(object sender, ConversionCompleteEventArgs e)
         {
-            //DownloadProgress = false;
+            //DownloadBusy = false;
             //WriteStatusEntry("File converted successfully");
             Console.WriteLine("\n---------\n Conversion complete! \n-----------");
-            DownloadProgress = false;
+            DownloadBusy = false;
         }
         #endregion
 

@@ -161,9 +161,12 @@
         </Menu>
 
         <!--ProgressBar-->
-        <ProgressBar x:Name="downloadProgress" Grid.Column="4" Visibility="{Binding DownloadProgress, Converter={StaticResource BoolToVis}, Mode=OneWay}" IsIndeterminate="True" Margin="5, 0" Height="15" />
+        <!--Download Progress-->
+        <ProgressBar x:Name="downloadProgress" Grid.Column="4" Visibility="{Binding DownloadBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}" Value="{Binding DownloadProgress}" Minimum="0" Maximum="1" Margin="5, 0" Height="15" />
+        <!--Conversion Progress-->
+        <ProgressBar x:Name="convertProgress" Grid.Column="4" Visibility="{Binding ConvertBusy, Converter={StaticResource BoolToVis}, Mode=OneWay}" IsIndeterminate="True" Margin="5, 0" Height="15" />
 
-        <!--Volume controls-->
+                <!--Volume controls-->
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="0" Grid.ColumnSpan="7">
             <!--Mute sound button-->
             <Button x:Name="muteButton" Height="25" Width="25" Style="{StaticResource mutedButtonImage}" VerticalAlignment="Center" Command="{Binding MuteSound, Mode=TwoWay}" />
