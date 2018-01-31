@@ -1776,6 +1776,7 @@ namespace SoundBoard
         { 
             StatusListView = new ObservableCollection<ListEntriesViewModel>();
             Keybindings = new List<KeybindingsViewModel>();
+            CategoryList = new List<string>();
 
             //Start the timer 
             DispatcherTimer timer = new DispatcherTimer
@@ -1890,7 +1891,7 @@ namespace SoundBoard
                 //set file with the audio location
                 file = new AudioFileReader(sound.AudioLocation);
                 sound.IsPlaying = true;
-                file.Volume = volume * sound.Volume; //total can't exceed 1.0, no audio boosting supported
+                file.Volume = volume + sound.Volume;
                 wavePlayer.Init(file);
                 wavePlayer.Play();
             }
@@ -2280,6 +2281,7 @@ namespace SoundBoard
             {
                 Owner = Application.Current.MainWindow
             };
+
             view.ShowDialog();
 
             //Process the data

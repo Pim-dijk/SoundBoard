@@ -37,7 +37,7 @@ namespace SoundBoard
         public SoundViewModel(string audioLocation)
         {
             this.AudioLocation = audioLocation;
-            Volume = 1;
+            Volume = 0;
             Category = "";
         }
 

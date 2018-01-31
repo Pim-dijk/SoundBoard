@@ -165,7 +165,7 @@ namespace SoundBoard.Views
         //Volume slider
         private void SoundVolumeSlider_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            soundVolumeSlider.Value = 1;
+            soundVolumeSlider.Value = 0;
         }
 
         //Add image
@@ -318,7 +318,6 @@ namespace SoundBoard.Views
         //When clicking outside the dropdown, hide it
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            
             hintBox.Visibility = Visibility.Hidden;
         }
     }

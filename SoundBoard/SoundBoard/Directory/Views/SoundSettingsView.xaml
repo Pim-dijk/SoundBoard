@@ -67,8 +67,8 @@
 
         <!--Volume-->
         <Label x:Name="soundVolumeLabel" Margin="5" Grid.Row="8" Grid.Column="0" HorizontalAlignment="Right" Height="26" Width="56" Content="Volume:" />
-        <Slider x:Name="soundVolumeSlider" Margin="5" Grid.Row="8" Grid.Column="1" HorizontalAlignment="Center" Height="26" Width="100" Minimum="0" Maximum="2" 
-                Value="{Binding SoundVolume}" MouseDoubleClick="SoundVolumeSlider_MouseDoubleClick"/>
+        <Slider x:Name="soundVolumeSlider" Margin="5" Grid.Row="8" Grid.Column="1" HorizontalAlignment="Center" Height="26" Width="100" Minimum="-1" Maximum="1" 
+                Value="{Binding SoundVolume}" MouseDoubleClick="SoundVolumeSlider_MouseDoubleClick" />
         <Label x:Name="soundVolumeSliderLabel" Margin="5" Grid.Row="8" Grid.Column="1" HorizontalAlignment="Right" Height="26" Width="50" 
                  Content="{Binding SoundVolume, Mode=OneWay}" />
 
