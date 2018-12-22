@@ -2382,7 +2382,7 @@ namespace SoundBoard
                     //Save the default directory to the config file
                     Properties.Settings.Default.DefaultDirectory = DefaultDirectory;
                     WriteStatusEntry("Retreving files from new directory...");
-                    var xmlPath = DefaultDirectory + "\\SoundBindings.xml";
+                    var xmlPath = DefaultDirectory + "\\SoundSettings.xml";
                     if (File.Exists(xmlPath))
                     {
                         ReadXML(xmlPath);
